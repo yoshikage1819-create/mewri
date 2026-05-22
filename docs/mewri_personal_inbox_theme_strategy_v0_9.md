@@ -1,133 +1,133 @@
-# Mewri Personal Inbox Theme Strategy
+# Mewri `自分の投稿` テーマ戦略 v0.9
 
 Version: v0.9 planning draft
 Status: design only
-Last updated: 2026-05-22
+Last updated: 2026-05-23
 
-## Purpose
+## 目的
 
-This document defines `自分の投稿`, a special posting destination for moments when a user wants to post but the current daily theme does not fit.
+このドキュメントは、`自分の投稿` という特別な投稿先を定義するためのものです。
 
-It is a bridge between the current theme-first MVP and a future, more flexible posting system.
+`自分の投稿` は、今日のテーマに合わない写真を投稿したいときのための逃げ道です。ただし、Mewriを普通の写真投稿SNSにしないため、通常のテーマとは別物として扱います。
 
-## Concept
+## コンセプト
 
-`自分の投稿` is not a normal theme.
+`自分の投稿` は普通のテーマではない。
 
-It is a personal inbox theme:
+これは個人用の一時保存テーマです。
 
-- The user can post into it when no active theme fits.
-- The post remains owned by the user.
-- The post is not automatically part of a group ZINE.
-- The post can later be moved into a real theme.
+- 今日のテーマに合わない投稿を置ける。
+- 投稿はユーザー本人のものとして扱う。
+- 自動的にグループZINEには入れない。
+- 後から正式なテーマへ移動できる。
 
-This keeps the app flexible without becoming fully post-first.
+これにより、Mewriのテーマ中心設計を壊さずに、投稿の自由度を少しだけ増やせる。
 
-## Why This Is Rational
+## なぜ合理的か
 
-The current MVP says: post to today's theme.
+現在のMVPは「今日のテーマに投稿する」と決めている。
 
-That is clear, but it can feel restrictive. Users may have good photos that do not match the AI theme.
+これは分かりやすいが、ユーザーは「今撮った写真が今日のテーマに合わない」と感じることがある。
 
-`自分の投稿` solves the emotional problem without breaking the architecture:
+`自分の投稿` は、その違和感を吸収する。
 
-- Users are not blocked from posting.
-- Every post still has a `themeId`.
-- The product still teaches that posts belong to themes.
-- ZINE generation remains clean because personal inbox posts do not automatically count.
+- 投稿したい気持ちを止めない。
+- それでも投稿には `themeId` がある。
+- 投稿はテーマに属する、というMewriの考え方を保てる。
+- ZINE生成に混ざらないため、ZINEの意味が薄まらない。
 
-## Critical Risks
+## 主なリスク
 
-Risk 1: It may weaken today's theme.
+### 今日のテーマが弱くなる
 
-Mitigation:
+対策:
 
-- Keep `今日の投稿をする` as the primary CTA.
-- Present `自分の投稿` as a secondary route.
+- `今日の投稿をする` を主CTAのままにする。
+- `自分の投稿` は副導線として扱う。
 
-Risk 2: It may look like a normal public theme.
+### 普通の公開テーマに見える
 
-Mitigation:
+対策:
 
-- Label it clearly as personal.
-- Do not show it in group theme lists.
-- Do not include it in `みんなの投稿`.
+- 個人用であることを明示する。
+- グループのテーマ一覧には出さない。
+- `みんなの投稿` には出さない。
 
-Risk 3: It may pollute ZINE generation.
+### ZINE生成が濁る
 
-Mitigation:
+対策:
 
-- Personal inbox posts are excluded from ZINE generation by default.
-- A post must be moved into a real theme before it becomes ZINE-eligible.
+- `自分の投稿` はZINE生成対象にしない。
+- 正式テーマへ移動した投稿だけをZINE対象にする。
 
-Risk 4: Moving later may become confusing.
+### 後から移動するときに混乱する
 
-Mitigation:
+対策:
 
-- Start with one simple action: `テーマに移す`.
-- Avoid copy/link until later.
+- 最初は `テーマに移す` だけにする。
+- コピーや複数テーマへのリンクは後回しにする。
 
-## Initial UX
+## 最初のUX
 
-The first UI should be very small.
+最初のUIは小さく始める。
 
-Possible placement:
+置き場所の候補:
 
-- Inside the post form, below the locked today's theme display.
+- 投稿フォーム内の、今日のテーマ固定表示の下。
 
-Possible copy:
+文言の候補:
 
-- Primary: `今日のテーマに投稿する`
-- Secondary: `テーマに合わない投稿は「自分の投稿」に保存`
+- 主導線: `今日のテーマに投稿する`
+- 副導線: `テーマに合わない投稿は「自分の投稿」に保存`
 
-Avoid:
+避けること:
 
-- Making `自分の投稿` look like a competing theme card.
-- Placing it above today's theme.
-- Showing it in discovery.
+- `自分の投稿` を今日のテーマと同じ大きさで見せる。
+- 今日のテーマより上に置く。
+- 発見/回遊の中に出す。
 
-## Behavior Rules
+## 初期の動作ルール
 
-Initial behavior:
+最初に入れる場合:
 
-- User chooses `自分の投稿`.
-- User submits image URL/caption.
-- Post is stored under a personal inbox theme.
-- Post appears in a personal area or future management screen.
+1. ユーザーが `自分の投稿` を選ぶ。
+2. 画像URLとキャプションを投稿する。
+3. 投稿は個人用テーマに保存される。
+4. 個人用エリア、または将来の管理画面で見られる。
 
-Not included initially:
+最初には入れないこと:
 
-- Multi-group assignment.
-- Multi-ZINE assignment.
-- Public discovery.
-- Comments/reactions.
-- Automatic AI classification into themes.
+- 複数グループへの所属。
+- 複数ZINEへの所属。
+- 公開ディスカバリー。
+- コメント/リアクション。
+- AIによる自動分類。
 
-## Future Move Flow
+## 将来の移動フロー
 
-Later, a user can move a post:
+将来は、投稿を移動できるようにする。
 
-1. Open `自分の投稿`.
-2. Select a post.
-3. Choose `テーマに移す`.
-4. Pick one eligible active or host theme.
-5. Confirm move.
+1. `自分の投稿` を開く。
+2. 投稿を選ぶ。
+3. `テーマに移す` を選ぶ。
+4. 対象となるアクティブテーマ、またはhostテーマを選ぶ。
+5. 移動を確定する。
 
-After move:
+移動後:
 
-- The post's theme association changes.
-- It becomes eligible for that theme's ZINE rules.
-- It leaves the personal inbox list.
+- 投稿の所属テーマが変わる。
+- 移動先テーマのZINE生成対象になる。
+- `自分の投稿` の一覧からは外れる。
 
-## Data Model Notes
+## データモデルメモ
 
-The simple future model:
+将来は `ThemeSource` とは別に、テーマの役割を表す `ThemeKind` を追加するとよい。
 
 ```ts
 type ThemeKind = "daily" | "host_prompt" | "personal_inbox";
 ```
 
-Personal inbox theme:
+`自分の投稿` は次のような扱い。
 
 ```ts
 {
@@ -137,23 +137,23 @@ Personal inbox theme:
 }
 ```
 
-The `Post` can keep `themeId` required at first.
+最初は `Post.themeId` を必須のまま維持する。
 
-Do not introduce a many-to-many post/theme relation until moving has been tested.
+多対多の投稿/テーマ関係は、投稿移動の反応を見てから考える。
 
-## Acceptance Criteria
+## 受け入れ条件
 
-`自分の投稿` is acceptable when:
+`自分の投稿` を入れてよい条件:
 
-- A user understands it is personal and secondary.
-- Today's theme remains the main flow.
-- Personal inbox posts do not appear inside `みんなの投稿`.
-- Personal inbox posts do not count toward ZINE generation.
-- A future move action can be added without rewriting the whole data model.
+- ユーザーが個人用・副導線だと理解できる。
+- 今日のテーマが主導線として残る。
+- `自分の投稿` が `みんなの投稿` に出ない。
+- `自分の投稿` がZINE生成に混ざらない。
+- 将来 `テーマに移す` を追加できる。
 
-## Decision
+## 判断
 
-Mewri should not jump directly to full post-first posting.
+Mewriは、いきなり完全なpost-firstへ進まない。
 
-Instead, v0.9/v0.10 should prepare `自分の投稿` as a controlled personal inbox theme.
+まずは `自分の投稿` を、管理された個人用投稿先として準備する。実装するかどうかは、URL共有βで「今日のテーマ以外にも投稿したい」という声が強く出たかで判断する。
 

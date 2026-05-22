@@ -1,140 +1,140 @@
-# Mewri Post Routing Roadmap
+# Mewri 投稿ルーティング ロードマップ v0.9
 
 Version: v0.9 planning draft
 Status: design only
-Last updated: 2026-05-22
+Last updated: 2026-05-23
 
-## Purpose
+## 目的
 
-This roadmap defines when to add new posting destinations without destabilizing the MVP.
+このドキュメントは、Mewriに新しい投稿先を追加する順番を整理するためのものです。
 
-## Current Baseline
+今のMVPは「今日のテーマに投稿する」体験を中心にしている。ここを急に広げすぎると、MewriがZINE制作のための場所なのか、普通の写真投稿SNSなのかが分かりにくくなる。
 
-The current stable direction is:
+## 現在の安定ライン
 
-- One active daily theme is the main posting target.
-- `参加中のZINE` owns the main action.
-- `みんなの投稿` opens posts from the active ZINE, including closed themes.
-- Future discovery/follow behavior stays placeholder-only until real data and permissions exist.
+現在の安定した方向性は次の通り。
 
-This baseline should not be disturbed before nearby beta testing.
+- 1つのアクティブな今日のテーマが、主な投稿先。
+- `参加中のZINE` が最初の行動を持つ。
+- `みんなの投稿` から、参加中ZINEの投稿一覧に移動できる。
+- `このZINEの中身` で、今日のテーマ、終了済みテーマ、ZINE生成を確認できる。
+- フォローや発見は、実データや権限設計ができるまではプレースホルダーに留める。
 
-## Stage 1: v0.8 Nearby Beta
+この安定ラインは、URL共有βの反応を見るまでは崩さない。
 
-Goal:
+## Stage 1: v0.8 近距離β
 
-- Confirm that testers understand the current flow.
+目的:
 
-Questions:
+- 初見の人が現在の流れを理解できるか確認する。
 
-- Do users understand what to do first?
-- Do users understand that today's theme is the posting target?
-- Do users expect to post outside today's theme?
-- Do users understand what `みんなの投稿` contains?
-- Do users understand when ZINE generation becomes available?
+確認すること:
 
-No new posting mode should be added in this stage unless testers are blocked.
+- 最初に何をすればいいか分かるか。
+- 今日のテーマが投稿先だと分かるか。
+- 今日のテーマ以外にも投稿したいと思うか。
+- `みんなの投稿` が何を見る場所か分かるか。
+- ZINE生成できる条件がなんとなく分かるか。
 
-## Stage 2: v0.9 Design Seams
+この段階では、新しい投稿モードを追加しない。
 
-Goal:
+## Stage 2: v0.9 URL共有β
 
-- Prepare the product for host themes and personal inbox posting.
+目的:
 
-Work:
+- 友人へURLを渡して、Mewriの基本体験が伝わるか確認する。
 
-- Add design docs for theme modes.
-- Decide how `自分の投稿` is represented.
-- Decide host theme constraints.
-- Decide if UI should show a small placeholder or remain hidden.
+確認すること:
 
-Implementation should remain minimal.
+- URLで開けるか。
+- 投稿からZINE生成まで進めるか。
+- localStorageデモであることが伝わるか。
+- テーマ外投稿、hostテーマ、画像アップロード、共有DBのどれを一番求められるか。
 
-## Stage 3: v0.10 Controlled Prototype
+この段階でも、まずは観察を優先する。
 
-Goal:
+## Stage 3: v0.10 制御された柔軟化
 
-- Prototype flexibility without becoming a generic feed.
+目的:
 
-Candidate features:
+- Mewriを普通のSNSにせず、投稿の自由度を少しだけ増やす。
 
-- Host theme creation for one group.
-- `自分の投稿` as a secondary posting target.
-- Personal inbox list.
+候補:
 
-Avoid:
+- `自分の投稿` を、今日のテーマに合わない投稿の一時保存先として追加する。
+- hostテーマを、特定グループ内で人間が作るテーマとして設計する。
+- どちらを先に入れるかは、URL共有βの反応で決める。
 
-- Multi-group posting.
-- Public discovery.
-- True post-first without theme.
-- Automatic post classification.
+避けること:
 
-## Stage 4: v1.0 Beta Sharing
+- 複数グループへの同時投稿。
+- 公開ディスカバリー。
+- テーマなしの完全なpost-first。
+- AIによる自動テーマ分類。
 
-Goal:
+## Stage 4: v1.0 共有β
 
-- Let a small number of people test the app through a more stable shared environment.
+目的:
 
-Required before this stage:
+- 複数人が同じZINE体験に参加できる、より本来のMewriに近いβへ進む。
 
-- Stable persistence outside one browser.
-- Clear beta test script.
-- Basic user/group separation.
-- Known limits documented in the UI.
+必要なもの:
 
-Posting model at this stage can still be simple:
+- ブラウザ外に保存される共有DB。
+- 招待またはグループ境界。
+- サーバー側の書き込み経路。
+- 画像アップロード方針。
+- localStorageデモではないことを明示するUI。
 
-- Active daily theme.
-- Optional host theme.
-- Optional personal inbox.
+この段階に入る前に、`自分の投稿` とhostテーマの優先順位を決めておく。
 
-## Stage 5: v1.1+ Post Movement
+## Stage 5: v1.1以降 投稿の移動
 
-Goal:
+目的:
 
-- Let users reorganize posts after creation.
+- 投稿後に、投稿の所属テーマを整理できるようにする。
 
-Start with:
+最初にやること:
 
-- Move from `自分の投稿` to one real theme.
+- `自分の投稿` から、1つの正式テーマへ移動する。
 
-Delay:
+遅らせること:
 
-- Copying to multiple themes.
-- Linking one post to many ZINEs.
-- Multi-group publishing.
+- 1つの投稿を複数テーマへコピーする。
+- 1つの投稿を複数ZINEへリンクする。
+- 複数グループへの同時公開。
 
-## Why Multi-Group Posting Comes Later
+## 複数グループ投稿を後回しにする理由
 
-Posting to multiple groups at once sounds useful, but it creates hard product questions:
+複数グループに一度で投稿できると便利に見えるが、すぐに難しい問題が出る。
 
-- Which group owns the post discussion?
-- Can one group remove it without affecting another?
-- If one group is private and one is public, which visibility wins?
-- Can the same post appear in multiple finished ZINEs?
-- Does editing the post update every ZINE appearance?
+- どのグループが投稿の会話を持つのか。
+- 片方のグループだけから削除できるのか。
+- 片方が非公開、片方が公開なら、どちらの可視性が勝つのか。
+- 同じ投稿が複数の完成ZINEに入ってよいのか。
+- 投稿を編集したら、すべてのZINE表示も変わるのか。
 
-These questions are solvable, but not before single-group beta learning.
+これらは解けるが、単一グループの体験が固まる前に入れると複雑すぎる。
 
-## Practical Next Step
+## 実用的な次の一歩
 
-Before implementing new routing behavior:
+URL共有βの反応を見る。
 
-1. Run nearby beta using the v0.8 script.
-2. Watch whether users ask for non-theme posting.
-3. If yes, prototype `自分の投稿` first.
-4. Add host themes second.
-5. Add post movement third.
+反応の読み方:
 
-## Decision
+- 今日のテーマ以外に投稿したい声が強い: `自分の投稿` を先に設計する。
+- 人間がテーマを作りたい声が強い: hostテーマを先に設計する。
+- 画像URLが分かりにくい声が強い: 画像アップロードを先に検討する。
+- 共同感が足りない声が強い: 共有DB/招待設計へ進む。
 
-The next product step is not full post-first.
+## 判断
 
-The correct order is:
+次のプロダクトステップは、完全なpost-firstではない。
 
-1. Validate today's theme flow.
-2. Design and prototype `自分の投稿`.
-3. Design and prototype host themes.
-4. Add movement from personal inbox to real themes.
-5. Consider multi-group or multi-ZINE linking only after beta evidence.
+正しい順番は次のどれかを、URL共有βの反応で選ぶこと。
+
+1. `自分の投稿` を設計する。
+2. hostテーマを設計する。
+3. 画像アップロードを設計する。
+4. 共有DB/招待を設計する。
 
