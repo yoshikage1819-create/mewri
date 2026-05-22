@@ -16,7 +16,7 @@
     "typecheck": "npm --workspace apps/web run typecheck"
   },
   "engines": {
-    "node": ">=22"
+    "node": "22.x"
   },
   "devDependencies": {
     "vitest": "^4.1.7"
