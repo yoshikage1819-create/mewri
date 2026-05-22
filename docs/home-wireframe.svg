@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1280" viewBox="0 0 1440 1280" role="img" aria-labelledby="title desc">
+  <title id="title">ZINE Home Wireframe</title>
+  <desc id="desc">ホーム画面のワイヤーフレーム。必須導線と回遊導線を色分けして示す。</desc>
+  <style>
+    .bg { fill: #f5f1e8; }
+    .panel { fill: #fffdf8; stroke: #2e2a26; stroke-width: 2; rx: 24; ry: 24; }
+    .phone { fill: #fffaf1; stroke: #2e2a26; stroke-width: 3; rx: 36; ry: 36; }
+    .section-essential { fill: #f7dcc6; stroke: #2e2a26; stroke-width: 2; rx: 22; ry: 22; }
+    .section-support { fill: #f9efcf; stroke: #2e2a26; stroke-width: 2; rx: 22; ry: 22; }
+    .section-discovery { fill: #dcebd8; stroke: #2e2a26; stroke-width: 2; rx: 22; ry: 22; }
+    .mini-card { fill: #fffdf8; stroke: #2e2a26; stroke-width: 1.5; rx: 16; ry: 16; }
+    .chip-essential { fill: #e78b54; }
+    .chip-support { fill: #d8b13f; }
+    .chip-discovery { fill: #6da06f; }
+    .label { font: 700 15px 'Arial', 'Hiragino Sans', 'Yu Gothic', sans-serif; fill: #2e2a26; }
+    .body { font: 500 13px 'Arial', 'Hiragino Sans', 'Yu Gothic', sans-serif; fill: #2e2a26; }
+    .small { font: 500 11px 'Arial', 'Hiragino Sans', 'Yu Gothic', sans-serif; fill: #4a433d; }
+    .title { font: 700 28px 'Arial', 'Hiragino Sans', 'Yu Gothic', sans-serif; fill: #2e2a26; }
+    .subtitle { font: 600 16px 'Arial', 'Hiragino Sans', 'Yu Gothic', sans-serif; fill: #4a433d; }
+    .button { fill: #2e2a26; rx: 18; ry: 18; }
+    .button-text { font: 700 13px 'Arial', 'Hiragino Sans', 'Yu Gothic', sans-serif; fill: #fffaf1; }
+    .divider { stroke: #8e857c; stroke-width: 1.5; stroke-dasharray: 5 5; }
+    .arrow { stroke: #2e2a26; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+  </style>
+
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2e2a26"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1440" height="1280"/>
+
+  <text class="title" x="90" y="80">ホーム画面ワイヤーフレーム</text>
+  <text class="subtitle" x="90" y="112">参加を主導線にしつつ、更新確認と作品回遊を下層に分けた構成</text>
+
+  <rect class="phone" x="90" y="150" width="460" height="1020"/>
+  <text class="label" x="130" y="205">ホーム</text>
+  <circle cx="500" cy="198" r="7" fill="#2e2a26"/>
+  <circle cx="474" cy="198" r="7" fill="none" stroke="#2e2a26" stroke-width="2"/>
+  <line x1="125" y1="225" x2="515" y2="225" class="divider"/>
+
+  <rect class="section-essential" x="120" y="250" width="400" height="215"/>
+  <text class="label" x="145" y="282">1. 参加中のZINE</text>
+  <rect class="chip-essential" x="400" y="262" width="90" height="24" rx="12" ry="12"/>
+  <text class="button-text" x="418" y="279">必須導線</text>
+  <text class="body" x="145" y="320">ZINEタイトル / グループ名 / 6日目</text>
+  <text class="body" x="145" y="350">今日のテーマ: 雨の日の音</text>
+  <text class="small" x="145" y="378">締切 23:59 まで</text>
+  <rect class="button" x="145" y="398" width="130" height="34" rx="17" ry="17"/>
+  <text class="button-text" x="177" y="420">今日の投稿をする</text>
+  <text class="body" x="300" y="420">みんなの投稿を見る</text>
+  <rect class="mini-card" x="145" y="440" width="350" height="18"/>
+  <text class="small" x="155" y="453">ここで「今日何をやるか」が一目で分かる</text>
+
+  <rect class="section-support" x="120" y="485" width="400" height="190"/>
+  <text class="label" x="145" y="517">2. 同じテーマの投稿</text>
+  <rect class="chip-support" x="388" y="497" width="102" height="24" rx="12" ry="12"/>
+  <text class="button-text" x="407" y="514">準必須</text>
+  <rect class="mini-card" x="145" y="535" width="110" height="115"/>
+  <rect class="mini-card" x="267" y="535" width="110" height="115"/>
+  <rect class="mini-card" x="389" y="535" width="106" height="115"/>
+  <text class="small" x="154" y="560">投稿サムネ</text>
+  <text class="small" x="278" y="560">投稿サムネ</text>
+  <text class="small" x="398" y="560">投稿サムネ</text>
+  <text class="small" x="145" y="665">投稿前の参考。見なくても投稿できる位置づけ。</text>
+
+  <rect x="415" y="392" width="60" height="74" fill="#efe6d3" stroke="#2e2a26" stroke-width="1.2" rx="10" ry="10" transform="rotate(-7 445 429)"/>
+  <rect x="408" y="388" width="60" height="74" fill="#f6efde" stroke="#2e2a26" stroke-width="1.2" rx="10" ry="10" transform="rotate(4 438 425)"/>
+  <rect x="402" y="384" width="60" height="74" fill="#fffdf8" stroke="#2e2a26" stroke-width="1.5" rx="10" ry="10"/>
+
+  <rect class="section-essential" x="120" y="715" width="400" height="200"/>
+  <text class="label" x="145" y="747">3. あなたに関係ある更新</text>
+  <rect class="chip-essential" x="400" y="727" width="90" height="24" rx="12" ry="12"/>
+  <text class="button-text" x="418" y="744">必須導線</text>
+  <rect class="mini-card" x="145" y="788" width="350" height="36"/>
+  <rect class="mini-card" x="145" y="832" width="350" height="36"/>
+  <rect class="mini-card" x="145" y="876" width="350" height="36"/>
+  <text class="small" x="157" y="811">フォロー中ユーザーの新規投稿</text>
+  <text class="small" x="157" y="855">フォロー中ユーザーの参加中ZINEの更新</text>
+  <text class="small" x="157" y="899">前回以降に完成したフォローユーザーが参加しているZINE</text>
+
+  <rect class="section-discovery" x="120" y="935" width="400" height="205"/>
+  <text class="label" x="145" y="967">4. 発見と回遊</text>
+  <rect class="chip-discovery" x="390" y="947" width="100" height="24" rx="12" ry="12"/>
+  <text class="button-text" x="410" y="964">回遊導線</text>
+  <rect class="mini-card" x="145" y="1008" width="350" height="38"/>
+  <rect class="mini-card" x="145" y="1056" width="350" height="38"/>
+  <rect class="mini-card" x="145" y="1104" width="350" height="38"/>
+  <text class="small" x="157" y="1031">参加候補ZINE / グループ</text>
+  <text class="small" x="157" y="1079">フォロー中ユーザーの完成ZINE</text>
+  <text class="small" x="157" y="1127">おすすめ完成ZINE</text>
+
+  <rect class="panel" x="620" y="150" width="730" height="470"/>
+  <text class="label" x="655" y="195">セクションごとの役割</text>
+
+  <rect class="chip-essential" x="655" y="225" width="100" height="26" rx="13" ry="13"/>
+  <text class="button-text" x="676" y="243">必須導線</text>
+  <text class="body" x="775" y="244">今日やることを迷わせず、投稿まで最短で到達させる。</text>
+
+  <rect class="chip-support" x="655" y="275" width="100" height="26" rx="13" ry="13"/>
+  <text class="button-text" x="685" y="293">準必須</text>
+  <text class="body" x="775" y="294">参考にはなるが、ここを飛ばしても主目的は達成できる。</text>
+
+  <rect class="chip-discovery" x="655" y="325" width="100" height="26" rx="13" ry="13"/>
+  <text class="button-text" x="675" y="343">回遊導線</text>
+  <text class="body" x="775" y="344">滞在時間と再訪理由を作る。投稿導線の後ろに置く。</text>
+
+  <line x1="655" y1="380" x2="1310" y2="380" class="divider"/>
+
+  <text class="body" x="655" y="420">主導線の流れ</text>
+  <rect class="mini-card" x="655" y="440" width="150" height="50"/>
+  <rect class="mini-card" x="840" y="440" width="150" height="50"/>
+  <rect class="mini-card" x="1025" y="440" width="150" height="50"/>
+  <rect class="mini-card" x="1210" y="440" width="100" height="50"/>
+  <text class="small" x="678" y="470">参加中のZINE</text>
+  <text class="small" x="873" y="470">投稿する</text>
+  <text class="small" x="1046" y="470">関係ある更新</text>
+  <text class="small" x="1229" y="470">回遊へ</text>
+  <path class="arrow" d="M805 465 H835"/>
+  <path class="arrow" d="M990 465 H1020"/>
+  <path class="arrow" d="M1175 465 H1205"/>
+
+  <text class="small" x="655" y="540">ポイント: 「今日のテーマ」と「投稿CTA」を最上段で強く見せる。</text>
+  <text class="small" x="655" y="568">ポイント: 他参加者の投稿は参考扱いにして、見なくても進めるようにする。</text>
+  <text class="small" x="655" y="596">ポイント: 更新の条件分岐は内部ロジックに閉じ込め、表示名は単純にする。</text>
+
+  <rect class="panel" x="620" y="655" width="730" height="515"/>
+  <text class="label" x="655" y="700">カードに入れる最小要素</text>
+
+  <rect class="mini-card" x="655" y="730" width="300" height="145"/>
+  <text class="body" x="675" y="762">参加中のZINE</text>
+  <text class="small" x="675" y="790">- ZINEタイトル</text>
+  <text class="small" x="675" y="814">- グループ名 / 進行日数</text>
+  <text class="small" x="675" y="838">- 今日のテーマ</text>
+  <text class="small" x="675" y="862">- 投稿CTA</text>
+
+  <rect class="mini-card" x="985" y="730" width="300" height="145"/>
+  <text class="body" x="1005" y="762">同じテーマの投稿</text>
+  <text class="small" x="1005" y="790">- サムネイル</text>
+  <text class="small" x="1005" y="814">- ユーザー名</text>
+  <text class="small" x="1005" y="838">- 短い本文プレビュー</text>
+  <text class="small" x="1005" y="862">- もっと見る</text>
+
+  <rect class="mini-card" x="655" y="900" width="300" height="145"/>
+  <text class="body" x="675" y="932">あなたに関係ある更新</text>
+  <text class="small" x="675" y="960">- フォロー中の新規投稿</text>
+  <text class="small" x="675" y="984">- 参加中ZINEの更新</text>
+  <text class="small" x="675" y="1008">- 最近完成した関連ZINE</text>
+  <text class="small" x="675" y="1032">- 更新先への導線</text>
+
+  <rect class="mini-card" x="985" y="900" width="300" height="145"/>
+  <text class="body" x="1005" y="932">発見と回遊</text>
+  <text class="small" x="1005" y="960">- 参加候補ZINE</text>
+  <text class="small" x="1005" y="984">- フォロー中の完成ZINE</text>
+  <text class="small" x="1005" y="1008">- おすすめ完成ZINE</text>
+  <text class="small" x="1005" y="1032">- 参加 / 読む CTA</text>
+
+  <text class="small" x="655" y="1105">このSVGは、ホームの優先順位を揃えるための議論用ワイヤー。</text>
+  <text class="small" x="655" y="1131">次はこれをもとに、各セクションの空状態と表示条件に落とし込める。</text>
+</svg>

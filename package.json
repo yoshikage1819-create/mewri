@@ -1,0 +1,25 @@
+{
+  "name": "mewri",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Mewri MVP v0 - daily themes and 3-day ZINE cycles",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm --workspace apps/web run dev",
+    "dev:host": "npm --workspace apps/web run dev:host",
+    "build": "npm --workspace apps/web run build",
+    "lint": "npm --workspace apps/web run lint",
+    "test": "vitest run",
+    "typecheck": "npm --workspace apps/web run typecheck"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.7"
+  }
+}
+
