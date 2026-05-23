@@ -434,6 +434,31 @@ a {
   margin-top: 4px;
 }
 
+.activeProgressCard {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(46, 42, 38, 0.24);
+  border-radius: var(--radius-md);
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+}
+
+.activeProgressCard p {
+  align-items: baseline;
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+}
+
+.activeProgressCard strong {
+  font-size: 13px;
+}
+
+.activeProgressCard span {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
 .photoStack {
   display: block;
   flex: 0 0 74px;
@@ -574,7 +599,7 @@ a {
 }
 
 .cycleGenerate button {
-  background: var(--accent);
+  background: #f5cb70;
   border: 2px solid var(--ink);
   border-radius: 999px;
   box-shadow: 4px 4px 0 var(--ink);
@@ -644,6 +669,29 @@ a {
   letter-spacing: 0;
   line-height: 1.45;
   text-transform: none;
+}
+
+.postHelperCopy {
+  background: rgba(231, 139, 84, 0.13);
+  border: 1px solid rgba(46, 42, 38, 0.18);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0;
+  padding: 10px 12px;
+}
+
+.postSubmitNotice {
+  background: rgba(109, 160, 111, 0.14);
+  border: 1px solid rgba(46, 42, 38, 0.22);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  margin: 0;
+  padding: 10px 12px;
 }
 
 .editorialForm textarea {
@@ -825,7 +873,7 @@ a {
 }
 
 .zineSubhead h3 {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: clamp(20px, 4vw, 30px);
   letter-spacing: -0.03em;
   line-height: 1.05;
@@ -863,6 +911,32 @@ a {
   font-weight: 650;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.cycleMetrics {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.cycleMetrics p {
+  align-items: baseline;
+  background: rgba(46, 42, 38, 0.04);
+  border: 1px solid rgba(46, 42, 38, 0.18);
+  border-radius: var(--radius-sm);
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  padding: 8px 10px;
+}
+
+.cycleMetrics p strong {
+  font-size: 13px;
+}
+
+.cycleMetrics p span {
+  font-family: var(--font-mono);
+  font-size: 12px;
 }
 
 .postCard p {
@@ -1070,10 +1144,14 @@ a {
   border-radius: var(--radius-md);
   margin: 0;
   overflow: hidden;
+  padding: 10px;
 }
 
 .zinePage img {
   aspect-ratio: 3 / 4;
+  border: 1px solid rgba(46, 42, 38, 0.22);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 18px rgba(22, 18, 14, 0.12);
   display: block;
   object-fit: cover;
   width: 100%;
@@ -1084,6 +1162,13 @@ a {
   gap: 4px;
   line-height: 1.45;
   padding: 10px 12px;
+}
+
+.zineClosingLine {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 2px 0 0;
 }
 
 .zinePage figcaption span {
