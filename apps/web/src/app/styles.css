@@ -125,28 +125,24 @@ a {
 }
 
 .demoNotice {
-  align-items: start;
+  align-items: center;
   background: rgba(255, 253, 248, 0.76);
   border: 1px solid rgba(46, 42, 38, 0.2);
   border-left: 5px solid var(--chip-support);
   border-radius: var(--radius-sm);
-  display: grid;
-  gap: 6px;
+  display: block;
   margin: 14px 0 16px;
-  padding: 10px 12px;
+  padding: 8px 12px;
 }
 
-.demoNotice strong {
-  display: block;
-  font-size: 15px;
+.demoNotice p {
+  margin: 0;
+  font-size: 13px;
   line-height: 1.35;
 }
 
-.demoNotice p:last-child {
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.55;
-  margin: 0;
+.demoNotice strong {
+  margin-right: 8px;
 }
 
 .kicker {
@@ -682,6 +678,27 @@ a {
   padding: 10px 12px;
 }
 
+.inlineToggle {
+  min-height: 42px;
+  text-transform: none;
+}
+
+.localPreview {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(46, 42, 38, 0.2);
+  border-radius: var(--radius-md);
+  padding: 10px;
+}
+
+.localPreview img {
+  aspect-ratio: 4 / 5;
+  border: 1px solid rgba(46, 42, 38, 0.22);
+  border-radius: var(--radius-sm);
+  display: block;
+  object-fit: cover;
+  width: 100%;
+}
+
 .postSubmitNotice {
   background: rgba(109, 160, 111, 0.14);
   border: 1px solid rgba(46, 42, 38, 0.22);
@@ -1105,16 +1122,28 @@ a {
 }
 
 .zineBook {
+  background: linear-gradient(160deg, rgba(46, 42, 38, 0.08), rgba(255, 255, 255, 0.45));
+  border: 1px solid rgba(46, 42, 38, 0.22);
+  border-radius: var(--radius-lg);
   display: grid;
-  gap: 12px;
-  margin-top: 16px;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 14px;
+}
+
+.zinePaperPage {
+  background: #fffefb;
+  border: 1px solid rgba(46, 42, 38, 0.3);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 20px rgba(22, 18, 14, 0.12);
+  position: relative;
 }
 
 .zineCover {
-  background: rgba(46, 42, 38, 0.92);
-  border-radius: var(--radius-lg);
+  background: radial-gradient(circle at 15% 8%, rgba(255, 255, 255, 0.12), transparent 46%), #2e2a26;
   color: var(--paper2);
-  padding: 18px;
+  min-height: 220px;
+  padding: 22px;
 }
 
 .zineCover h3 {
@@ -1134,50 +1163,62 @@ a {
 
 .zinePages {
   display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  grid-template-columns: 1fr;
 }
 
 .zinePage {
-  background: rgba(255, 255, 255, 0.68);
-  border: 1px solid rgba(46, 42, 38, 0.22);
-  border-radius: var(--radius-md);
+  background: #fffefb;
   margin: 0;
-  overflow: hidden;
-  padding: 10px;
+  padding: 12px;
+}
+
+.zinePageHead {
+  align-items: baseline;
+  border-bottom: 1px dashed rgba(46, 42, 38, 0.25);
+  display: flex;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 650;
+  justify-content: space-between;
+  letter-spacing: 0.03em;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  text-transform: uppercase;
 }
 
 .zinePage img {
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 4 / 3;
   border: 1px solid rgba(46, 42, 38, 0.22);
   border-radius: var(--radius-sm);
-  box-shadow: 0 8px 18px rgba(22, 18, 14, 0.12);
+  box-shadow: 0 10px 20px rgba(22, 18, 14, 0.14);
   display: block;
   object-fit: cover;
   width: 100%;
 }
 
-.zinePage figcaption {
-  display: grid;
-  gap: 4px;
-  line-height: 1.45;
-  padding: 10px 12px;
-}
-
 .zineClosingLine {
-  color: var(--muted);
+  color: var(--ink);
   font-size: 14px;
-  line-height: 1.6;
-  margin: 2px 0 0;
+  line-height: 1.7;
+  margin: 0;
+  text-align: center;
 }
 
-.zinePage figcaption span {
+.zinePage p {
+  line-height: 1.7;
+  margin: 10px 4px 2px;
+}
+
+.zineClosingPage {
+  padding: 24px 16px;
+}
+
+.pageNumber {
   color: var(--muted);
   font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 650;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .zineEmpty {
@@ -1300,13 +1341,7 @@ a {
   }
 
   .demoNotice {
-    align-items: center;
-    grid-template-columns: minmax(220px, 0.42fr) minmax(0, 1fr);
-    padding: 12px 14px;
-  }
-
-  .demoNotice .kicker {
-    margin-bottom: 4px;
+    padding: 10px 14px;
   }
 
   .compactOnly {
@@ -1346,7 +1381,7 @@ a {
   }
 
   .zinePages {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .placeholderGrid {
@@ -1401,3 +1436,6 @@ a {
     padding: 24px;
   }
 }
+  .zinePages {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
