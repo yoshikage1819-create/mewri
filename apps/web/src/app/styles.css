@@ -1454,7 +1454,7 @@ a {
     --content-pad-right: max(16px, calc(16px + env(safe-area-inset-right, 0px)));
     margin: 0;
     max-width: none;
-    padding: 16px 0 calc(130px + env(safe-area-inset-bottom, 0px));
+    padding: 16px 0 calc(36px + env(safe-area-inset-bottom, 0px));
     width: 100%;
   }
 
@@ -1538,6 +1538,10 @@ a {
 
   .futureModules {
     margin: 16px var(--content-pad-right) 16px var(--content-pad-left);
+  }
+
+  .bottomNav {
+    display: none;
   }
 }
 
