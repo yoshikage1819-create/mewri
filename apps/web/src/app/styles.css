@@ -39,6 +39,7 @@ body {
   color: var(--ink);
   font-family: var(--font-ui), "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
   margin: 0;
+  overflow-x: hidden;
 }
 
 button,
@@ -194,12 +195,8 @@ a {
   border-radius: var(--radius-lg);
   box-shadow: 0 12px 28px rgba(22, 18, 14, 0.1);
   overflow: hidden;
-  scroll-margin-top: 18px;
-}
-
-.sectionInner {
-  min-width: 0;
   padding: 18px;
+  scroll-margin-top: 18px;
 }
 
 .sectionEssential {
@@ -1408,18 +1405,17 @@ a {
   background: rgba(255, 253, 248, 0.92);
   border: 1px solid rgba(46, 42, 38, 0.24);
   border-radius: 999px;
-  bottom: max(14px, calc(env(safe-area-inset-bottom, 0px) + 10px));
+  bottom: 14px;
   box-shadow: 0 14px 38px rgba(22, 18, 14, 0.16);
   display: grid;
   gap: 2px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  left: max(12px, calc(env(safe-area-inset-left, 0px) + 12px));
-  margin: 0 auto;
+  left: 50%;
   max-width: 560px;
-  padding: 8px 10px;
+  padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
   position: fixed;
-  right: max(12px, calc(env(safe-area-inset-right, 0px) + 12px));
-  width: auto;
+  transform: translateX(-50%);
+  width: calc(100% - 24px);
   z-index: 20;
 }
 
@@ -1450,83 +1446,7 @@ a {
 
 @media (max-width: 759px) {
   .shell {
-    --content-pad-left: max(16px, calc(16px + env(safe-area-inset-left, 0px)));
-    --content-pad-right: max(16px, calc(16px + env(safe-area-inset-right, 0px)));
-    margin: 0;
-    max-width: none;
-    padding: 16px 0 calc(36px + env(safe-area-inset-bottom, 0px));
-    width: 100%;
-  }
-
-  .masthead {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    margin: 0 var(--content-pad-right) 0 var(--content-pad-left);
-  }
-
-  .mastLeft,
-  .mastRight,
-  .brandRow,
-  .sectionHeader,
-  .sectionTitleBlock,
-  .sectionTitleBlock > div,
-  .todayLayout,
-  .heroPrimary,
-  .quickPostForm,
-  .zinePostsBlock,
-  .zineMakeBlock,
-  .cycleCard,
-  .cycleHeader > div,
-  .postGrid,
-  .postCard {
-    max-width: 100%;
-    min-width: 0;
-  }
-
-  .demoNotice {
-    margin-left: var(--content-pad-left);
-    margin-right: var(--content-pad-right);
-  }
-
-  .demoNotice p,
-  .sectionSub,
-  .cycleMeta,
-  .postCard p {
-    overflow-wrap: anywhere;
-  }
-
-  .homeGrid {
-    gap: 0;
-  }
-
-  .sectionPanel {
-    border-left: 0;
-    border-radius: 0;
-    border-right: 0;
-    box-shadow: none;
-    max-width: 100%;
-    width: 100%;
-  }
-
-  .sectionInner {
-    padding: 18px var(--content-pad-right) 18px var(--content-pad-left);
-  }
-
-  .sectionHeader {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .sectionTitleBlock {
-    min-width: 0;
-  }
-
-  .sectionChips {
-    max-width: 100%;
-  }
-
-  .mainCol {
-    gap: 0;
+    padding-bottom: calc(36px + env(safe-area-inset-bottom, 0px));
   }
 
   .primaryCta {
@@ -1534,10 +1454,6 @@ a {
     flex-direction: column;
     gap: 5px;
     justify-content: center;
-  }
-
-  .futureModules {
-    margin: 16px var(--content-pad-right) 16px var(--content-pad-left);
   }
 
   .bottomNav {
@@ -1558,7 +1474,7 @@ a {
     display: inline-flex;
   }
 
-  .sectionInner {
+  .sectionPanel {
     padding: 22px;
   }
 
@@ -1638,7 +1554,7 @@ a {
     max-width: 1180px;
   }
 
-  .sectionInner {
+  .sectionPanel {
     padding: 24px;
   }
 }
