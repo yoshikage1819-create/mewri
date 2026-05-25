@@ -1447,24 +1447,39 @@ a {
 @media (max-width: 759px) {
   html,
   body {
-    overflow-x: clip;
+    overflow-x: hidden;
     width: 100%;
   }
 
   .shell {
     margin: 0;
     max-width: none;
+    overflow-x: hidden;
     padding: 16px 0 100px;
-    width: 100dvw;
+    width: 100%;
   }
 
   .masthead {
     margin: 0 16px;
   }
 
+  .mastLeft,
+  .brandRow,
+  .sectionHeader,
+  .sectionTitleBlock,
+  .sectionTitleBlock > div {
+    max-width: 100%;
+    min-width: 0;
+  }
+
   .demoNotice {
     margin-left: 16px;
     margin-right: 16px;
+  }
+
+  .demoNotice p,
+  .sectionSub {
+    overflow-wrap: anywhere;
   }
 
   .homeGrid {
@@ -1476,8 +1491,9 @@ a {
     border-radius: 0;
     border-right: 0;
     box-shadow: none;
+    max-width: 100%;
     padding: 18px 16px;
-    width: 100dvw;
+    width: 100%;
   }
 
   .mainCol {
