@@ -272,7 +272,7 @@ a {
 
 .chip {
   border-radius: 999px;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--ink);
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
@@ -431,11 +431,9 @@ a {
 }
 
 .activeProgressCard {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(216, 177, 63, 0.13);
   border: 1px solid rgba(46, 42, 38, 0.24);
   border-radius: var(--radius-md);
-  display: grid;
-  gap: 8px;
   padding: 12px 14px;
 }
 
@@ -447,7 +445,7 @@ a {
 }
 
 .activeProgressCard strong {
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .activeProgressCard span {
@@ -631,9 +629,11 @@ a {
 }
 
 .quickPostForm {
-  border-top: 1px dashed var(--rule);
-  margin-top: 14px;
-  padding-top: 14px;
+  background: rgba(255, 255, 255, 0.46);
+  border: 1px solid rgba(46, 42, 38, 0.18);
+  border-radius: var(--radius-md);
+  margin-top: 6px;
+  padding: 14px;
 }
 
 .editorialForm label {
@@ -681,6 +681,58 @@ a {
 .inlineToggle {
   min-height: 42px;
   text-transform: none;
+}
+
+.photoUpload {
+  align-items: center;
+  background: var(--ink);
+  border-radius: var(--radius-md);
+  color: var(--paper2);
+  cursor: pointer;
+  display: grid;
+  gap: 5px;
+  justify-items: center;
+  min-height: 112px;
+  padding: 20px 14px;
+  text-align: center;
+}
+
+.photoUpload span {
+  font-family: var(--font-display), "Hiragino Mincho ProN", serif;
+  font-size: 27px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.photoUpload small {
+  color: rgba(255, 253, 248, 0.76);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.photoUpload:focus-within,
+.photoUpload:hover {
+  background: #201d1a;
+  box-shadow: 0 10px 24px rgba(22, 18, 14, 0.18);
+}
+
+.fileInput {
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.advancedAction {
+  color: var(--muted);
+  justify-self: start;
 }
 
 .localPreview {
@@ -930,30 +982,37 @@ a {
   text-transform: uppercase;
 }
 
-.cycleMetrics {
+.cycleProgressSummary {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   margin-top: 12px;
 }
 
-.cycleMetrics p {
-  align-items: baseline;
-  background: rgba(46, 42, 38, 0.04);
-  border: 1px solid rgba(46, 42, 38, 0.18);
-  border-radius: var(--radius-sm);
-  display: flex;
-  justify-content: space-between;
+.cycleProgressSummary p {
+  font-size: 16px;
+  font-weight: 650;
   margin: 0;
-  padding: 8px 10px;
 }
 
-.cycleMetrics p strong {
-  font-size: 13px;
-}
-
-.cycleMetrics p span {
+.cycleProgressSummary small {
+  color: var(--muted);
   font-family: var(--font-mono);
   font-size: 12px;
+}
+
+.progressTrack {
+  background: rgba(46, 42, 38, 0.12);
+  border-radius: 999px;
+  height: 10px;
+  overflow: hidden;
+}
+
+.progressTrack span {
+  background: var(--chip-essential);
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+  transition: width 240ms ease;
 }
 
 .postCard p {
@@ -1071,7 +1130,7 @@ a {
 
 .status {
   border-radius: 999px;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--ink);
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 750;
@@ -1086,6 +1145,7 @@ a {
 
 .status.closed {
   background: rgba(46, 42, 38, 0.72);
+  color: var(--paper2);
 }
 
 .status.scheduled {
@@ -1128,6 +1188,9 @@ a {
   display: grid;
   gap: 16px;
   margin-top: 20px;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 720px;
   padding: 14px;
 }
 
@@ -1268,6 +1331,43 @@ a {
   margin-top: 16px;
 }
 
+.futureModules {
+  border: 1px dashed rgba(46, 42, 38, 0.34);
+  border-radius: var(--radius-lg);
+  padding: 4px;
+}
+
+.futureModules summary {
+  align-items: center;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  font-size: 14px;
+  font-weight: 650;
+  justify-content: space-between;
+  list-style: none;
+  min-height: 54px;
+  padding: 0 14px;
+}
+
+.futureModules summary::-webkit-details-marker {
+  display: none;
+}
+
+.futureModules summary span {
+  background: rgba(46, 42, 38, 0.1);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 6px 9px;
+}
+
+.futureModulesContent {
+  display: grid;
+  gap: 16px;
+  padding: 4px 0 0;
+}
+
 .followPostGrid {
   display: grid;
   gap: 12px;
@@ -1300,7 +1400,7 @@ a {
   box-shadow: 0 14px 38px rgba(22, 18, 14, 0.16);
   display: grid;
   gap: 2px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   left: 50%;
   max-width: 560px;
   padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
@@ -1380,10 +1480,6 @@ a {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .zinePages {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .placeholderGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -1436,6 +1532,3 @@ a {
     padding: 24px;
   }
 }
-  .zinePages {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }

@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 
 const appService: MewriAppService = createBrowserLocalMewriAppService();
 
-type ActiveSection = "active" | "posts" | "updates" | "discovery";
+type ActiveSection = "active" | "posts";
 type PostListMode = "all" | "theme";
 
 export default function HomePage() {
@@ -39,12 +39,7 @@ export default function HomePage() {
       const y = window.scrollY + 140;
       const active = document.getElementById("active-zine")?.offsetTop ?? 0;
       const posts = document.getElementById("zine-contents")?.offsetTop ?? 0;
-      const updates = document.getElementById("relevant-updates")?.offsetTop ?? 0;
-      const discovery = document.getElementById("discovery-circulation")?.offsetTop ?? 0;
-
-      if (y >= discovery) setActiveSection("discovery");
-      else if (y >= updates) setActiveSection("updates");
-      else if (y >= posts) setActiveSection("posts");
+      if (y >= posts) setActiveSection("posts");
       else if (y >= active) setActiveSection("active");
     }
 
@@ -66,8 +61,6 @@ export default function HomePage() {
     () => cycleThemes.filter((theme) => theme.status === "active" || theme.status === "closed"),
     [cycleThemes]
   );
-  const scheduledThemes = useMemo(() => cycleThemes.filter((theme) => theme.status === "scheduled"), [cycleThemes]);
-
   const cyclePosts = useMemo(() => {
     const themeIds = new Set(cycleThemes.map((theme) => theme.id));
     return (state?.posts ?? []).filter((post) => themeIds.has(post.themeId));
@@ -269,36 +262,20 @@ export default function HomePage() {
                 <h3 className="heroTitle">{activeTheme?.title ?? "今日のテーマ"}</h3>
                 <p className="heroBody">{activeTheme?.description ?? "このテーマで1投稿"}</p>
 
-                {scheduledThemes.length > 0 && (
-                  <div className="lockedTheme">
-                    <strong>次のテーマ</strong>
-                    <em>{scheduledThemes.map((theme) => theme.title).join(" / ")}</em>
-                  </div>
-                )}
-
                 <a className="primaryCta strongAction" href="#post-form">
                   投稿する
                   <span className="ctaMeta">{formatRemainingToday()}</span>
                 </a>
 
-                <ActiveZineProgressCard
-                  postCount={cyclePosts.length}
-                  targetPostCount={targetPostCount}
-                  remainingLabel={formatRemainingInCycle(activeCycle.endDate)}
-                  readinessPercent={calcReadinessPercent(cyclePosts.length, targetPostCount)}
-                />
+                {cyclePosts.length > 0 && (
+                  <ActiveZineProgressCard postCount={cyclePosts.length} targetPostCount={targetPostCount} />
+                )}
 
                 <form id="post-form" className="postForm editorialForm quickPostForm" onSubmit={handleSubmitPost}>
-                  <label>
-                    投稿先テーマ
-                    <select value={activeTheme?.id ?? ""} disabled aria-disabled="true">
-                      <option value={activeTheme?.id ?? ""}>{activeTheme?.title ?? "今日のテーマ"}</option>
-                    </select>
-                  </label>
-
-                  <label>
-                    画像を選択
-                    <input type="file" accept="image/*" onChange={handleSelectFile} />
+                  <label className="photoUpload">
+                    <span>写真を選ぶ</span>
+                    <small>スマホやPCから、今日の1枚を選択</small>
+                    <input className="fileInput" type="file" accept="image/*" onChange={handleSelectFile} />
                   </label>
 
                   {imageUrl && (
@@ -309,7 +286,7 @@ export default function HomePage() {
                     </div>
                   )}
 
-                  <button className="ghostButton inlineToggle" type="button" onClick={() => setShowUrlFallback((current) => !current)}>
+                  <button className="ghostButton inlineToggle advancedAction" type="button" onClick={() => setShowUrlFallback((current) => !current)}>
                     {showUrlFallback ? "URL入力を閉じる" : "URL入力（上級）"}
                   </button>
 
@@ -409,7 +386,6 @@ export default function HomePage() {
               <CycleProgressCard
                 cycleTitle={activeCycle.title}
                 dateRange={`${activeCycle.startDate} - ${activeCycle.endDate}`}
-                cycleEndDate={activeCycle.endDate}
                 themes={visibleZineThemes}
                 posts={state.posts}
                 totalPostCount={cyclePosts.length}
@@ -464,37 +440,45 @@ export default function HomePage() {
             )}
           </HomeSection>
 
-          <HomeSection
-            id="relevant-updates"
-            number="3"
-            title="フォロー中ユーザーの投稿"
-            subtitle="未実装プレースホルダー"
-            chipClass="chipSupport"
-            chipLabel="未実装"
-            toneClass="sectionSupport"
-          >
-            <div className="followPostGrid">
-              <PlaceholderModule label="未実装" title="フォロー中ユーザーの新着投稿" note="フォロー機能はMVP範囲外です" />
-              <PlaceholderModule label="未実装" title="このZINEに関連する話題" note="コメント・リアクションはMVP範囲外です" />
-              <PlaceholderModule label="未実装" title="参加したZINEへの導線" note="実ユーザー連携はMVP範囲外です" />
-            </div>
-          </HomeSection>
+          <details className="futureModules">
+            <summary>
+              今後追加予定の機能
+              <span>未実装</span>
+            </summary>
+            <div className="futureModulesContent">
+              <HomeSection
+                id="relevant-updates"
+                number="3"
+                title="フォロー中ユーザーの投稿"
+                subtitle="未実装プレースホルダー"
+                chipClass="chipSupport"
+                chipLabel="未実装"
+                toneClass="sectionSupport"
+              >
+                <div className="followPostGrid">
+                  <PlaceholderModule label="未実装" title="フォロー中ユーザーの新着投稿" note="フォロー機能はMVP範囲外です" />
+                  <PlaceholderModule label="未実装" title="このZINEに関連する話題" note="コメント・リアクションはMVP範囲外です" />
+                  <PlaceholderModule label="未実装" title="参加したZINEへの導線" note="実ユーザー連携はMVP範囲外です" />
+                </div>
+              </HomeSection>
 
-          <HomeSection
-            id="discovery-circulation"
-            number="4"
-            title="発見と回遊"
-            subtitle="未実装プレースホルダー"
-            chipClass="chipDiscovery"
-            chipLabel="検討中"
-            toneClass="sectionDiscovery"
-          >
-            <div className="placeholderGrid" aria-label="プレースホルダーモジュール">
-              <PlaceholderModule label="未実装" title="話題のZINE" note="公開ディスカバリーはMVP範囲外です" />
-              <PlaceholderModule label="未実装" title="フォロー中のおすすめ" note="フォロー関係はMVP範囲外です" />
-              <PlaceholderModule label="未実装" title="おすすめ参加先" note="レコメンドはMVP範囲外です" />
+              <HomeSection
+                id="discovery-circulation"
+                number="4"
+                title="発見と回遊"
+                subtitle="未実装プレースホルダー"
+                chipClass="chipDiscovery"
+                chipLabel="検討中"
+                toneClass="sectionDiscovery"
+              >
+                <div className="placeholderGrid" aria-label="プレースホルダーモジュール">
+                  <PlaceholderModule label="未実装" title="話題のZINE" note="公開ディスカバリーはMVP範囲外です" />
+                  <PlaceholderModule label="未実装" title="フォロー中のおすすめ" note="フォロー関係はMVP範囲外です" />
+                  <PlaceholderModule label="未実装" title="おすすめ参加先" note="レコメンドはMVP範囲外です" />
+                </div>
+              </HomeSection>
             </div>
-          </HomeSection>
+          </details>
         </div>
       </section>
 
@@ -504,12 +488,6 @@ export default function HomePage() {
         </a>
         <a className={activeSection === "posts" ? "active" : ""} href="#zine-contents">
           中身
-        </a>
-        <a className={activeSection === "updates" ? "active" : ""} href="#relevant-updates">
-          フォロー
-        </a>
-        <a className={activeSection === "discovery" ? "active" : ""} href="#discovery-circulation">
-          発見
         </a>
       </nav>
     </main>
@@ -566,30 +544,18 @@ function PlaceholderModule({ label, title, note }: { label: string; title: strin
 
 function ActiveZineProgressCard({
   postCount,
-  targetPostCount,
-  remainingLabel,
-  readinessPercent
+  targetPostCount
 }: {
   postCount: number;
   targetPostCount: number;
-  remainingLabel: string;
-  readinessPercent: number;
 }) {
+  const remainingPosts = Math.max(0, targetPostCount - postCount);
+
   return (
     <section className="activeProgressCard" aria-label="参加中ZINEの進行">
       <p>
-        <strong>投稿数</strong>
-        <span>
-          {postCount}/{targetPostCount}
-        </span>
-      </p>
-      <p>
-        <strong>残り時間</strong>
-        <span>{remainingLabel}</span>
-      </p>
-      <p>
-        <strong>進捗</strong>
-        <span>{readinessPercent}%</span>
+        <strong>{remainingPosts === 0 ? "ZINEを作れます" : `あと${remainingPosts}枚でZINEを作れます`}</strong>
+        <span>{postCount}/{targetPostCount}</span>
       </p>
     </section>
   );
@@ -598,7 +564,6 @@ function ActiveZineProgressCard({
 function CycleProgressCard({
   cycleTitle,
   dateRange,
-  cycleEndDate,
   themes,
   posts,
   totalPostCount,
@@ -608,7 +573,6 @@ function CycleProgressCard({
 }: {
   cycleTitle: string;
   dateRange: string;
-  cycleEndDate: string;
   themes: Theme[];
   posts: Post[];
   totalPostCount: number;
@@ -644,26 +608,16 @@ function CycleProgressCard({
           );
         })}
       </div>
-      <div className="cycleMetrics">
-        <p>
-          <strong>投稿数</strong>
-          <span>
-            {totalPostCount}/{targetPostCount}
-          </span>
-        </p>
-        <p>
-          <strong>残り時間</strong>
-          <span>{formatRemainingInCycle(cycleEndDate)}</span>
-        </p>
-        <p>
-          <strong>進捗</strong>
-          <span>{readinessPercent}%</span>
-        </p>
+      <div className="cycleProgressSummary">
+        <p>{zineReady ? "ZINEを作れる枚数が集まりました" : `あと${remainingPosts}枚でZINEを作れます`}</p>
+        <div className="progressTrack" role="progressbar" aria-label="ZINEの完成進捗" aria-valuemin={0} aria-valuemax={100} aria-valuenow={readinessPercent}>
+          <span style={{ width: `${readinessPercent}%` }} />
+        </div>
+        <small>{totalPostCount}/{targetPostCount}枚</small>
       </div>
       <div className="cycleGenerate">
-        <p className="cycleFoot">{zineReady ? "このサイクルは生成可能です" : `生成まであと ${remainingPosts} 投稿`}</p>
         <button type="button" disabled={!zineReady} onClick={onGenerateZine}>
-          ZINE生成
+          ZINEを作る
         </button>
       </div>
     </section>
@@ -726,19 +680,6 @@ function formatRemainingToday(now: Date = new Date()): string {
   const minutes = Math.floor((ms % 3600000) / 60000);
   if (hours <= 0) return `残り${minutes}分`;
   return `残り${hours}時間${minutes}分`;
-}
-
-function formatRemainingInCycle(endDate: string, now: Date = new Date()): string {
-  const end = new Date(`${endDate}T23:59:59`);
-  if (Number.isNaN(end.getTime())) return "日付不明";
-  const ms = end.getTime() - now.getTime();
-  if (ms <= 0) return "このサイクルは終了";
-  const hours = Math.floor(ms / 3600000);
-  const days = Math.floor(hours / 24);
-  const remainHours = hours % 24;
-  if (days > 0) return `あと${days}日${remainHours}時間`;
-  const minutes = Math.floor((ms % 3600000) / 60000);
-  return `あと${Math.max(0, remainHours)}時間${Math.max(0, minutes)}分`;
 }
 
 function calcReadinessPercent(current: number, target: number): number {
