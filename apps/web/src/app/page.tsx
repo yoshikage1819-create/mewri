@@ -529,19 +529,21 @@ function HomeSection({
 }) {
   return (
     <section id={id} className={`sectionPanel ${toneClass}`}>
-      <div className="sectionHeader">
-        <div className="sectionTitleBlock">
-          <p className="sectionNum">{number}</p>
-          <div>
-            <h2>{title}</h2>
-            <p className="sectionSub">{subtitle}</p>
+      <div className="sectionInner">
+        <div className="sectionHeader">
+          <div className="sectionTitleBlock">
+            <p className="sectionNum">{number}</p>
+            <div>
+              <h2>{title}</h2>
+              <p className="sectionSub">{subtitle}</p>
+            </div>
+          </div>
+          <div className="sectionChips" aria-label="セクションタグ">
+            <span className={`chip ${chipClass}`}>{chipLabel}</span>
           </div>
         </div>
-        <div className="sectionChips" aria-label="セクションタグ">
-          <span className={`chip ${chipClass}`}>{chipLabel}</span>
-        </div>
+        {children}
       </div>
-      {children}
     </section>
   );
 }
