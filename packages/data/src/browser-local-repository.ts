@@ -31,16 +31,17 @@ export function createBrowserLocalRepository(): MewriRepository {
 
   return createStateRepository({
     load() {
+      if (memoryState) {
+        return memoryState;
+      }
       const stored = readStoredState();
       if (stored) {
         memoryState = stored;
         return stored;
       }
-      if (!memoryState) {
-        const seed = createSeedState();
-        writeStoredState(seed);
-        memoryState = seed;
-      }
+      const seed = createSeedState();
+      writeStoredState(seed);
+      memoryState = seed;
       return memoryState;
     },
     save(state: MewriState) {

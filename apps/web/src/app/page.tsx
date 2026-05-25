@@ -16,6 +16,7 @@ export default function HomePage() {
   const [caption, setCaption] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [selectedFileName, setSelectedFileName] = useState("");
+  const [imageNotice, setImageNotice] = useState("");
   const [showUrlFallback, setShowUrlFallback] = useState(false);
   const [postSubmitNotice, setPostSubmitNotice] = useState("");
   const [loadNotice, setLoadNotice] = useState("");
@@ -87,22 +88,31 @@ export default function HomePage() {
     setState(appService.demo.replaceState(nextState));
   }
 
-  function handleSelectFile(event: React.ChangeEvent<HTMLInputElement>) {
+  async function handleSelectFile(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) {
       setSelectedFileName("");
+      setImageNotice("");
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : "";
-      if (!result) return;
-      setImageUrl(result);
+    if (!file.type.startsWith("image/")) {
+      setImageNotice("画像ファイルを選んでください。");
+      return;
+    }
+
+    setImageNotice("写真を準備しています...");
+    try {
+      const optimizedImage = await optimizeLocalImage(file);
+      setImageUrl(optimizedImage);
       setSelectedFileName(file.name);
       setPostSubmitNotice("");
-    };
-    reader.readAsDataURL(file);
+      setImageNotice("この写真を投稿できます。");
+    } catch {
+      setImageUrl("");
+      setSelectedFileName("");
+      setImageNotice("写真を読み込めませんでした。別の画像を試してください。");
+    }
   }
 
   function handleSubmitPost(event: React.FormEvent<HTMLFormElement>) {
@@ -131,6 +141,7 @@ export default function HomePage() {
     setCaption("");
     setImageUrl("");
     setSelectedFileName("");
+    setImageNotice("");
     setSelectedThemeId(todayThemeId);
     setPostListMode("all");
     setPostSubmitNotice(`投稿しました。進行 ${nextCyclePostCount}/${targetPostCount}`);
@@ -162,6 +173,7 @@ export default function HomePage() {
     setCaption("");
     setImageUrl("");
     setSelectedFileName("");
+    setImageNotice("");
     setPostSubmitNotice("");
   }
 
@@ -203,6 +215,7 @@ export default function HomePage() {
     if (!activeTheme) return;
     setImageUrl(createSampleImage(activeTheme.title, Math.max(0, cycleThemes.indexOf(activeTheme)), 0));
     setSelectedFileName("サンプル画像");
+    setImageNotice("サンプル画像を選択しました。");
     setCaption((current) => current || `${activeTheme.title} のサンプル`);
   }
 
@@ -263,7 +276,7 @@ export default function HomePage() {
                 <p className="heroBody">{activeTheme?.description ?? "このテーマで1投稿"}</p>
 
                 <a className="primaryCta strongAction" href="#post-form">
-                  投稿する
+                  今日の写真を投稿する
                   <span className="ctaMeta">{formatRemainingToday()}</span>
                 </a>
 
@@ -277,6 +290,7 @@ export default function HomePage() {
                     <small>スマホやPCから、今日の1枚を選択</small>
                     <input className="fileInput" type="file" accept="image/*" onChange={handleSelectFile} />
                   </label>
+                  {imageNotice && <p className="imageNotice">{imageNotice}</p>}
 
                   {imageUrl && (
                     <div className="localPreview">
@@ -429,7 +443,7 @@ export default function HomePage() {
                 </div>
                 <article className="zinePaperPage zineClosingPage">
                   <p className="kicker">END</p>
-                  <p className="zineClosingLine">このZINEはここで終了です。次のテーマへ。</p>
+                  <p className="zineClosingLine">このZINEはここで終了です。</p>
                 </article>
               </section>
             ) : (
@@ -666,6 +680,39 @@ function createSampleImage(title: string, themeIndex: number, itemIndex: number)
 
 function escapeSvgText(value: string): string {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&apos;");
+}
+
+function optimizeLocalImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const sourceUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      try {
+        const maxEdge = 1280;
+        const scale = Math.min(1, maxEdge / Math.max(image.naturalWidth, image.naturalHeight));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+        const context = canvas.getContext("2d");
+        if (!context) throw new Error("Canvas is unavailable.");
+        context.fillStyle = "#fffdf8";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.76));
+      } catch {
+        reject(new Error("Unable to prepare image."));
+      } finally {
+        URL.revokeObjectURL(sourceUrl);
+      }
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(sourceUrl);
+      reject(new Error("Unable to read image."));
+    };
+    image.src = sourceUrl;
+  });
 }
 
 function formatFullDate(date: Date): string {

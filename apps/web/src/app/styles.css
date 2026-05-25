@@ -336,29 +336,28 @@ a {
 }
 
 .strongAction {
-  min-height: 60px;
+  min-height: 82px;
   outline: 2px solid rgba(255, 255, 255, 0.2);
   outline-offset: -2px;
 }
 
 .primaryCta {
-  align-items: baseline;
+  align-items: center;
   background: var(--ink);
   border: 0;
   border-radius: var(--radius-md);
   box-shadow: 0 16px 30px rgba(46, 42, 38, 0.16);
   color: var(--paper2);
   display: inline-flex;
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-family: var(--font-display), "Hiragino Mincho ProN", serif;
+  font-size: clamp(19px, 4vw, 24px);
   font-weight: 750;
   gap: 12px;
   justify-content: space-between;
-  letter-spacing: 0.08em;
-  min-height: 54px;
-  padding: 0 16px;
+  letter-spacing: -0.02em;
+  min-height: 82px;
+  padding: 0 20px;
   text-decoration: none;
-  text-transform: uppercase;
   width: 100%;
 }
 
@@ -368,6 +367,8 @@ a {
 
 .ctaMeta {
   color: rgba(255, 255, 255, 0.74);
+  font-family: var(--font-mono);
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: none;
@@ -749,6 +750,14 @@ a {
   display: block;
   object-fit: cover;
   width: 100%;
+}
+
+.imageNotice {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  margin: -4px 0 0;
 }
 
 .postSubmitNotice {
@@ -1433,6 +1442,58 @@ a {
 .bottomNav a.active {
   background: rgba(46, 42, 38, 0.88);
   color: var(--paper2);
+}
+
+@media (max-width: 759px) {
+  html,
+  body {
+    overflow-x: clip;
+    width: 100%;
+  }
+
+  .shell {
+    margin: 0;
+    max-width: none;
+    padding: 16px 0 100px;
+    width: 100dvw;
+  }
+
+  .masthead {
+    margin: 0 16px;
+  }
+
+  .demoNotice {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+
+  .homeGrid {
+    gap: 0;
+  }
+
+  .sectionPanel {
+    border-left: 0;
+    border-radius: 0;
+    border-right: 0;
+    box-shadow: none;
+    padding: 18px 16px;
+    width: 100dvw;
+  }
+
+  .mainCol {
+    gap: 0;
+  }
+
+  .primaryCta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+    justify-content: center;
+  }
+
+  .futureModules {
+    margin: 16px;
+  }
 }
 
 @media (min-width: 760px) {
