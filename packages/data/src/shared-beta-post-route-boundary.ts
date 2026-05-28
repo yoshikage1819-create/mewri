@@ -5,8 +5,7 @@ import {
   assertSharedBetaPostSubmissionAllowed,
   SharedBetaPostAuthorizationError,
   type SharedBetaPostAuthorizationFailure,
-  type SharedBetaPostAuthorizationOptions,
-  type SharedBetaPostCommandService
+  type SharedBetaPostAuthorizationOptions
 } from "./shared-beta-post-authorization";
 
 export interface SharedBetaPostRouteActor {
@@ -42,12 +41,14 @@ export type SharedBetaPostRouteResult =
     };
 
 export interface SharedBetaPostRouteBoundary {
-  submitPost(input: SharedBetaPostRouteInput): SharedBetaPostRouteResult;
+  submitPost(input: SharedBetaPostRouteInput): SharedBetaPostRouteResult | Promise<SharedBetaPostRouteResult>;
 }
 
 export interface SharedBetaPostRouteBoundaryDependencies {
   repository: MewriRepository;
-  postCommandService: Pick<SharedBetaPostCommandService, "submitPost">;
+  postCommandService: {
+    submitPost(command: SubmitPostCommand): Post | Promise<Post>;
+  };
   authorization: SharedBetaPostAuthorizationOptions;
 }
 
@@ -102,12 +103,18 @@ export function createSharedBetaPostRouteBoundary(
         throw error;
       }
 
-      return {
-        ok: true,
-        post: dependencies.postCommandService.submitPost(command)
-      };
+      const submittedPost = dependencies.postCommandService.submitPost(command);
+      if (isPromiseLike(submittedPost)) {
+        return submittedPost.then((post) => ({ ok: true, post }));
+      }
+
+      return { ok: true, post: submittedPost };
     }
   };
+}
+
+function isPromiseLike(value: Post | Promise<Post>): value is Promise<Post> {
+  return typeof (value as Promise<Post>).then === "function";
 }
 
 function statusForAuthorizationFailure(code: SharedBetaPostAuthorizationFailure): number {

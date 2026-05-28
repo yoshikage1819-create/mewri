@@ -216,3 +216,15 @@ supabase       将来適用する migration 草案
 - 共有ベータ機能はまだ稼働していません。現在動くのは browser-local v0.9 デモです。
 - v0.10 の Supabase 関連差分は安全な準備段階であり、live project 接続済みと扱わないでください。
 - 新規提案では、Mewri の核である `今日のテーマ -> 投稿 -> ZINEへの貢献 -> 生成ZINE` を優先してください。
+
+## 2026-05-28 server-only shared-beta integration slice
+
+- Added fake-client-only server boundaries for Supabase auth session resolution, private post image upload/verification, and an atomic shared-beta post+event gateway interface. No live Supabase connection was added.
+- `POST /api/shared-beta/posts` now uses a server dependency factory, but it remains `503 shared_beta_route_unavailable` unless shared-beta env is complete and explicit server clients/repository/image resolver are injected.
+- Browser request bodies still reject `validatedImagePath` and `imageUrl`. Successful HTTP responses remain `{ ok: true, post }` only.
+- Image upload now requires authenticated membership and an active theme before reading or uploading the image; unauthorized attempts do not create objects.
+- The post gateway models one atomic post+event operation. A real Supabase implementation still needs a narrow RPC or equivalent transaction before staging/shared mode can be enabled.
+- No service role key was requested or used, no real env values were added, no migrations were applied, no deployment happened, and shared mode remains off.
+- Validation: `npm.cmd run typecheck` passed; `npm.cmd test` passed with 95 tests; `npm.cmd run build` passed.
+- Independent review: first `codex.cmd review --uncommitted` was blocked by nested Windows sandbox spawn failure; rerun with `codex.cmd -s danger-full-access review --uncommitted -c model='"gpt-5.5"' -c model_reasoning_effort='"high"'` found P1 upload-before-authorization and P2 malformed-cookie findings; both were fixed and covered by tests. Final rerun reported no actionable correctness issues.
+- Next gate: implement the real staging-only Supabase RPC/client adapter for the atomic post+event gateway and real image-file extraction only after human approval for staging env wiring. Production remains untouched.

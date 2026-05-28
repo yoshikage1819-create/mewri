@@ -112,7 +112,7 @@ export function createSharedBetaPostRouteHandler(
       );
     }
 
-    const result = boundary.submitPost({
+    const result = await boundary.submitPost({
       actor: { authenticatedUserId },
       post: parsedBody.value,
       serverValidatedImagePath: validatedImagePath
