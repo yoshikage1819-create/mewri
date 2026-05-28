@@ -14,6 +14,7 @@
 | repository 契約 | `mewri_repository_contract_v0_4.md` | `packages/data` の契約変更前に読む |
 | closed shared beta | `mewri_v0_10_closed_shared_beta_foundation.md` | Auth / RLS / Storage / Supabase 境界の正本 |
 | staging refusal verification | `mewri_supabase_staging_refusal_verification_plan_v0_10.md` | Supabase staging migration 適用前の拒否検証計画 |
+| Storage RLS local check | `mewri_storage_rls_local_read_check_instructions.md` | staging Storage read 境界を実ログインで確認する local-only 手順 |
 | AI 開発運用 | `mewri_ai_workbench_setup.md` | Codex CLI / Cline / モデル選択の正本 |
 
 ## 根拠・参考資料

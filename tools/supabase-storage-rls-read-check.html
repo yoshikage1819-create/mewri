@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mewri Storage RLS Read Check</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+
+      body {
+        margin: 0;
+        background: #faf7f1;
+        color: #1f2933;
+      }
+
+      main {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      section {
+        margin: 18px 0;
+        padding: 18px;
+        border: 1px solid #e4d8c7;
+        border-radius: 14px;
+        background: #fffdf8;
+      }
+
+      h1,
+      h2 {
+        margin-top: 0;
+      }
+
+      label {
+        display: block;
+        margin: 12px 0;
+        font-weight: 700;
+      }
+
+      input,
+      select {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        margin-top: 6px;
+        padding: 10px;
+        border: 1px solid #cdbfae;
+        border-radius: 10px;
+        font-size: 16px;
+      }
+
+      button {
+        margin: 8px 8px 8px 0;
+        padding: 10px 14px;
+        border: 0;
+        border-radius: 999px;
+        background: #2f5d50;
+        color: white;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #6b7280;
+      }
+
+      button.danger {
+        background: #9f1239;
+      }
+
+      .warning {
+        border-color: #f59e0b;
+        background: #fffbeb;
+      }
+
+      .ok {
+        color: #166534;
+        font-weight: 800;
+      }
+
+      .ng {
+        color: #b91c1c;
+        font-weight: 800;
+      }
+
+      .muted {
+        color: #667085;
+      }
+
+      .result {
+        padding: 10px;
+        border-bottom: 1px solid #ece1d2;
+      }
+
+      code {
+        padding: 2px 5px;
+        border-radius: 6px;
+        background: #f3eee7;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Mewri Storage RLS Read Check</h1>
+      <p>
+        staging Supabase の <code>post-images</code> bucket を、実際のログインユーザーとして読めるかだけ確認します。
+        upload、delete、policy 変更、shared mode 有効化は行いません。
+      </p>
+
+      <section class="warning">
+        <h2>貼ってよいもの / 貼ってはいけないもの</h2>
+        <p>
+          貼ってよいのは staging project の <strong>Project URL</strong> と
+          <strong>public anon key</strong> だけです。
+        </p>
+        <p class="ng">
+          service_role key は絶対に貼らないでください。このページにも、チャットにも、docs にも貼りません。
+        </p>
+      </section>
+
+      <section>
+        <h2>1. staging 設定</h2>
+        <label>
+          Staging Project URL
+          <input id="projectUrl" autocomplete="off" placeholder="https://xxxxx.supabase.co" />
+        </label>
+        <label>
+          Public anon key
+          <input id="anonKey" autocomplete="off" placeholder="Supabase dashboard の anon public key" />
+        </label>
+        <label>
+          Bucket
+          <input id="bucket" value="post-images" />
+        </label>
+        <label>
+          group_staging_a の確認 object path
+          <input id="groupAPath" placeholder="例: group_staging_a/<member-a-uuid>/alpha.webp" />
+        </label>
+        <label>
+          group_staging_b の確認 object path
+          <input id="groupBPath" placeholder="例: group_staging_b/<member-b-uuid>/beta.webp" />
+        </label>
+        <button id="saveConfigButton">このブラウザだけに設定</button>
+        <button id="clearConfigButton" class="danger">このブラウザの設定を消す</button>
+        <p id="configStatus" class="muted">未設定</p>
+      </section>
+
+      <section>
+        <h2>2. ログイン</h2>
+        <p class="muted">
+          まず member-a のメールでログインして member-a check を実行します。終わったら sign out して、
+          member-b のメールで同じことをします。
+        </p>
+        <label>
+          Staging test user email
+          <input id="email" autocomplete="email" placeholder="member-a または member-b の staging email" />
+        </label>
+        <label>
+          Staging test user password
+          <input id="password" type="password" autocomplete="current-password" placeholder="Supabase Auth で設定した staging password" />
+        </label>
+        <button id="passwordLoginButton">password でログイン</button>
+        <button id="sendOtpButton">ログインメールを送る</button>
+        <label>
+          メールに 6 桁コードがある場合だけ入力
+          <input id="otp" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" />
+        </label>
+        <button id="verifyOtpButton">6 桁コードでログイン</button>
+        <button id="refreshSessionButton" class="secondary">ログイン状態を確認</button>
+        <button id="signOutButton" class="secondary">Sign out</button>
+        <p id="sessionStatus" class="muted">未ログイン</p>
+      </section>
+
+      <section>
+        <h2>3. 読み取りチェック</h2>
+        <p class="muted">
+          ここでは Storage の list だけを使います。ファイル本体ではなく object metadata が見えるかで、見えるべき object と見えてはいけない object を判定します。
+        </p>
+        <button id="anonCheckButton">anon check</button>
+        <button id="memberACheckButton">member-a check</button>
+        <button id="memberBCheckButton">member-b check</button>
+        <div id="results"></div>
+      </section>
+    </main>
+
+    <script>
+      const storageKey = "mewri-storage-rls-read-check-config";
+      let client;
+
+      const elements = {
+        projectUrl: document.getElementById("projectUrl"),
+        anonKey: document.getElementById("anonKey"),
+        bucket: document.getElementById("bucket"),
+        groupAPath: document.getElementById("groupAPath"),
+        groupBPath: document.getElementById("groupBPath"),
+        email: document.getElementById("email"),
+        password: document.getElementById("password"),
+        otp: document.getElementById("otp"),
+        configStatus: document.getElementById("configStatus"),
+        sessionStatus: document.getElementById("sessionStatus"),
+        results: document.getElementById("results")
+      };
+
+      function readConfig() {
+        return {
+          projectUrl: elements.projectUrl.value.trim(),
+          anonKey: elements.anonKey.value.trim(),
+          bucket: elements.bucket.value.trim() || "post-images",
+          groupAPath: elements.groupAPath.value.trim(),
+          groupBPath: elements.groupBPath.value.trim()
+        };
+      }
+
+      function validateConfig(config) {
+        const missing = [];
+        if (!config.projectUrl) missing.push("Project URL");
+        if (!config.anonKey) missing.push("public anon key");
+        if (!config.bucket) missing.push("bucket");
+        if (!config.groupAPath) missing.push("group_staging_a object path");
+        if (!config.groupBPath) missing.push("group_staging_b object path");
+        return missing;
+      }
+
+      function createClientFromConfig() {
+        const config = readConfig();
+        const missing = validateConfig(config);
+        if (missing.length > 0) {
+          throw new Error(`未入力: ${missing.join(", ")}`);
+        }
+        client = window.supabase.createClient(config.projectUrl, config.anonKey, {
+          auth: {
+            detectSessionInUrl: true,
+            persistSession: true,
+            autoRefreshToken: true
+          }
+        });
+        return { config, client };
+      }
+
+      function saveConfig() {
+        const config = readConfig();
+        const missing = validateConfig(config);
+        if (missing.length > 0) {
+          elements.configStatus.textContent = `未入力があります: ${missing.join(", ")}`;
+          elements.configStatus.className = "ng";
+          return;
+        }
+        sessionStorage.setItem(storageKey, JSON.stringify(config));
+        createClientFromConfig();
+        elements.configStatus.textContent = "設定済み。このブラウザの sessionStorage にだけ保存しました。";
+        elements.configStatus.className = "ok";
+        refreshSession();
+      }
+
+      function loadConfig() {
+        const raw = sessionStorage.getItem(storageKey);
+        if (!raw) return;
+        try {
+          const config = JSON.parse(raw);
+          elements.projectUrl.value = config.projectUrl || "";
+          elements.anonKey.value = config.anonKey || "";
+          elements.bucket.value = config.bucket || "post-images";
+          elements.groupAPath.value = config.groupAPath || "";
+          elements.groupBPath.value = config.groupBPath || "";
+          createClientFromConfig();
+          elements.configStatus.textContent = "保存済み設定を読み込みました。";
+          elements.configStatus.className = "ok";
+        } catch {
+          sessionStorage.removeItem(storageKey);
+        }
+      }
+
+      function clearConfig() {
+        sessionStorage.removeItem(storageKey);
+        elements.projectUrl.value = "";
+        elements.anonKey.value = "";
+        elements.bucket.value = "post-images";
+        elements.groupAPath.value = "";
+        elements.groupBPath.value = "";
+        client = undefined;
+        elements.configStatus.textContent = "設定を消しました。";
+        elements.configStatus.className = "muted";
+      }
+
+      async function requireClient() {
+        if (!client) {
+          createClientFromConfig();
+        }
+        return client;
+      }
+
+      async function signInWithPassword() {
+        const supabase = await requireClient();
+        const email = elements.email.value.trim();
+        const password = elements.password.value;
+        if (!email || !password) throw new Error("email と password を入力してください。");
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+        elements.password.value = "";
+        if (error) throw error;
+        await refreshSession();
+      }
+
+      async function sendOtp() {
+        const supabase = await requireClient();
+        const email = elements.email.value.trim();
+        if (!email) throw new Error("email を入力してください。");
+        const { error } = await supabase.auth.signInWithOtp({
+          email,
+          options: {
+            shouldCreateUser: false,
+            emailRedirectTo: window.location.href.split("#")[0]
+          }
+        });
+        if (error) throw error;
+        elements.sessionStatus.textContent = "ログインメールを送りました。メールの 6 桁コードまたはリンクを確認してください。";
+        elements.sessionStatus.className = "ok";
+      }
+
+      async function verifyOtp() {
+        const supabase = await requireClient();
+        const email = elements.email.value.trim();
+        const token = elements.otp.value.trim();
+        if (!email || !token) throw new Error("email と 6 桁コードを入力してください。");
+        const { error } = await supabase.auth.verifyOtp({
+          email,
+          token,
+          type: "email"
+        });
+        if (error) throw error;
+        await refreshSession();
+      }
+
+      async function refreshSession() {
+        const supabase = await requireClient();
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        const user = data.session?.user;
+        if (!user) {
+          elements.sessionStatus.textContent = "未ログイン";
+          elements.sessionStatus.className = "muted";
+          return;
+        }
+        elements.sessionStatus.textContent = `ログイン中: ${user.email || user.id}`;
+        elements.sessionStatus.className = "ok";
+      }
+
+      async function signOut() {
+        const supabase = await requireClient();
+        await supabase.auth.signOut();
+        await refreshSession();
+      }
+
+      function splitObjectPath(path) {
+        const normalizedPath = path.replace(/^\/+|\/+$/g, "");
+        const segments = normalizedPath.split("/");
+        const name = segments.pop();
+        if (!name) {
+          throw new Error(`object path が正しくありません: ${path}`);
+        }
+        return {
+          folder: segments.join("/"),
+          name
+        };
+      }
+
+      async function listObjectMetadata(path) {
+        const supabase = await requireClient();
+        const config = readConfig();
+        const { folder, name } = splitObjectPath(path);
+        const { data, error } = await supabase.storage.from(config.bucket).list(folder, {
+          limit: 100,
+          offset: 0,
+          search: name
+        });
+        const visible = Array.isArray(data) && data.some((item) => item.name === name);
+        return {
+          allowed: visible && !error,
+          error: error ? `${error.message || "error"}` : ""
+        };
+      }
+
+      async function runCase(label, path, shouldAllow) {
+        const result = await listObjectMetadata(path);
+        const passed = result.allowed === shouldAllow;
+        return {
+          label,
+          passed,
+          detail: result.allowed
+            ? "metadata visible"
+            : `metadata denied or hidden${result.error ? ` (${result.error})` : ""}`
+        };
+      }
+
+      function renderResults(title, cases) {
+        const container = document.createElement("section");
+        const heading = document.createElement("h2");
+        heading.textContent = title;
+        container.appendChild(heading);
+
+        for (const item of cases) {
+          const row = document.createElement("div");
+          row.className = "result";
+          row.innerHTML = `<span class="${item.passed ? "ok" : "ng"}">${item.passed ? "OK" : "NG"}</span> ${item.label}<br><span class="muted">${item.detail}</span>`;
+          container.appendChild(row);
+        }
+
+        elements.results.prepend(container);
+      }
+
+      async function runAnonCheck() {
+        const supabase = await requireClient();
+        await supabase.auth.signOut();
+        const config = readConfig();
+        const cases = [
+          await runCase("anon cannot see group_staging_a object", config.groupAPath, false),
+          await runCase("anon cannot see group_staging_b object", config.groupBPath, false)
+        ];
+        renderResults("anon check", cases);
+        await refreshSession();
+      }
+
+      async function runMemberCheck(memberLabel) {
+        await refreshSession();
+        const config = readConfig();
+        const expectations =
+          memberLabel === "member-a"
+            ? [
+                ["member-a can see group_staging_a object", config.groupAPath, true],
+                ["member-a cannot see group_staging_b object", config.groupBPath, false]
+              ]
+            : [
+                ["member-b can see group_staging_b object", config.groupBPath, true],
+                ["member-b cannot see group_staging_a object", config.groupAPath, false]
+              ];
+        const cases = [];
+        for (const [label, path, shouldAllow] of expectations) {
+          cases.push(await runCase(label, path, shouldAllow));
+        }
+        renderResults(`${memberLabel} check`, cases);
+      }
+
+      async function runSafely(action) {
+        try {
+          await action();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          renderResults("操作エラー", [
+            {
+              label: "操作を完了できませんでした",
+              passed: false,
+              detail: message
+            }
+          ]);
+        }
+      }
+
+      document.getElementById("saveConfigButton").addEventListener("click", () => runSafely(saveConfig));
+      document.getElementById("clearConfigButton").addEventListener("click", clearConfig);
+      document.getElementById("passwordLoginButton").addEventListener("click", () => runSafely(signInWithPassword));
+      document.getElementById("sendOtpButton").addEventListener("click", () => runSafely(sendOtp));
+      document.getElementById("verifyOtpButton").addEventListener("click", () => runSafely(verifyOtp));
+      document.getElementById("refreshSessionButton").addEventListener("click", () => runSafely(refreshSession));
+      document.getElementById("signOutButton").addEventListener("click", () => runSafely(signOut));
+      document.getElementById("anonCheckButton").addEventListener("click", () => runSafely(runAnonCheck));
+      document.getElementById("memberACheckButton").addEventListener("click", () => runSafely(() => runMemberCheck("member-a")));
+      document.getElementById("memberBCheckButton").addEventListener("click", () => runSafely(() => runMemberCheck("member-b")));
+
+      loadConfig();
+      if (client) {
+        refreshSession();
+      }
+    </script>
+  </body>
+</html>

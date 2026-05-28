@@ -2,7 +2,7 @@
 
 更新日: 2026-05-28
 
-状態: migration 適用前の検証計画。まだ staging project 作成、migration 適用、shared mode 有効化は行わない。
+状態: 2026-05-28 に `mewri-staging` で refusal verification 完了。shared mode はまだ有効化しない。
 
 ## 目的
 
@@ -268,6 +268,53 @@ Expected:
 
 - `member_a` and `member_b`: allowed for `group_alpha`.
 - `member_other`, `non_member`, `anon`: denied.
+
+For the current staging verification, do not use SQL Editor role switching as
+proof of Storage RLS behavior. Use the local-only authenticated browser check
+documented in `docs/mewri_storage_rls_local_read_check_instructions.md`. That
+check uses only the staging Project URL and public anon key, then verifies
+Storage object metadata visibility with `list` as real member-a / member-b
+sessions. It does not use `download`, upload, delete, or service_role.
+
+## Completed Staging Verification Results
+
+Date: 2026-05-28
+
+Project: `mewri-staging`
+
+Safety constraints observed:
+
+- Production resources were not touched.
+- `service_role` key was not used for the local read-boundary check.
+- `MEWRI_RUNTIME_MODE=shared_beta` remains disabled.
+- No upload/delete/modify operation was performed by the local checker.
+
+Passed checks:
+
+| Check | Result |
+| --- | --- |
+| Migration applied to staging | Passed |
+| Shared beta tables exist | Passed |
+| `post-images` bucket exists | Passed |
+| `post-images.public` | `false` |
+| `posts` policies | `SELECT` only |
+| Authenticated direct `posts INSERT` | Denied |
+| `storage.objects` policies | `SELECT` only |
+| Authenticated direct `storage.objects INSERT` | Denied |
+| `anon` public table privileges | None |
+| `private` schema `USAGE` for `authenticated` | `true` |
+| `private` schema `USAGE` for `anon` | `false` |
+| helper function `EXECUTE` grants | Matched expectation |
+| member-a table reads | Only `group_staging_a` visible |
+| member-b table reads | Only `group_staging_b` visible |
+| anon Storage metadata read for A object | Not visible |
+| anon Storage metadata read for B object | Not visible |
+| member-a Storage metadata read for A object | Visible |
+| member-a Storage metadata read for B object | Not visible |
+| member-b Storage metadata read for B object | Visible |
+| member-b Storage metadata read for A object | Not visible |
+
+Conclusion: the foundation migration passed the staging refusal and read-boundary checks required before implementing the real server auth, upload verification, and Supabase adapter gate. Passing this does not enable closed beta by itself.
 
 ## Cross-Group Integrity Checks
 

@@ -184,18 +184,32 @@ supabase       将来適用する migration 草案
   migration 適用、project 作成、shared mode 有効化はまだ行っていない。
   Owner が staging project と migration 対象を確認し、明示承認してから
   `supabase link --project-ref <staging-project-ref>` に進む。
+- 2026-05-28 に staging Storage RLS read 境界を SQL Editor の管理者文脈ではなく
+  実 authenticated session で確認する local-only page / script を追加した。
+  `tools/supabase-storage-rls-read-check.html` と
+  `tools/serve-storage-rls-check.mjs` は public anon key だけを使い、
+  Storage の metadata list 読み取り確認だけを行う。手順は
+  `docs/mewri_storage_rls_local_read_check_instructions.md` に記録した。
+  service_role key、shared mode、production resources は使わない。
+- 2026-05-28 に `mewri-staging` で Supabase staging refusal verification を完了した。
+  migration は正常適用され、tables と private `post-images` bucket (`public=false`) を確認済み。
+  `posts` は `SELECT` policy のみで、authenticated direct `INSERT` は拒否された。
+  `storage.objects` も `SELECT` policy のみで、authenticated direct `INSERT` は拒否された。
+  `anon` には public table privileges がなく、`private` schema `USAGE` は
+  `authenticated=true` / `anon=false`、helper function `EXECUTE` grants は期待通り。
+  member-a は `group_staging_a` のみ、member-b は `group_staging_b` のみ見える。
+  local Storage RLS checker では、anon は A/B どちらの object metadata も見えず、
+  member-a は A のみ、member-b は B のみ見えることを確認した。
+  service_role key は使わず、production は触らず、shared mode は disabled のまま。
 
 ## 次に行うべきこと
 
 1. route/upload remediation を含む現在の未コミット差分について
    commit / push するか判断する。
-2. `docs/mewri_supabase_staging_refusal_verification_plan_v0_10.md` に沿って、
-   Owner 承認後に Supabase staging project を作成・link する。
-3. SQL 草案を適用し、匿名・非メンバーのアクセス拒否と、server write / upload
-   実装前には authenticated member の post insert と画像 upload も拒否されることを検証する。
-4. 追加した route/application 境界へ、実 Supabase adapter・実認証セッション・
+2. staging verification の証跡を commit するか判断する。
+3. 追加した route/application 境界へ、実 Supabase adapter・実認証セッション・
    検証済み Storage upload 経路を接続し、staging で統合検証する。
-5. 実際の招待ユーザー間で同じ ZINE が共有されることを確認してから closed beta を開始する。
+4. 実際の招待ユーザー間で同じ ZINE が共有されることを確認してから closed beta を開始する。
 
 ## ChatGPT への注意
 
