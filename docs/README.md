@@ -13,6 +13,7 @@
 | 恒久的な判断 | `mewri_decision_log.md` | 方針を変える場合のみ追記する |
 | repository 契約 | `mewri_repository_contract_v0_4.md` | `packages/data` の契約変更前に読む |
 | closed shared beta | `mewri_v0_10_closed_shared_beta_foundation.md` | Auth / RLS / Storage / Supabase 境界の正本 |
+| staging refusal verification | `mewri_supabase_staging_refusal_verification_plan_v0_10.md` | Supabase staging migration 適用前の拒否検証計画 |
 | AI 開発運用 | `mewri_ai_workbench_setup.md` | Codex CLI / Cline / モデル選択の正本 |
 
 ## 根拠・参考資料

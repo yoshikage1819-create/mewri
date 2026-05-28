@@ -179,12 +179,18 @@ supabase       将来適用する migration 草案
   `npm.cmd test` (`75` tests passed)、`npm.cmd run build` が成功した。
   build 生成物は git status に出ておらず、現在の差分は closed shared beta
   foundation と agent/docs 運用整理の commit 単位として扱える。
+- 2026-05-28 に Supabase staging migration 適用前の拒否検証計画
+  `docs/mewri_supabase_staging_refusal_verification_plan_v0_10.md` を追加した。
+  migration 適用、project 作成、shared mode 有効化はまだ行っていない。
+  Owner が staging project と migration 対象を確認し、明示承認してから
+  `supabase link --project-ref <staging-project-ref>` に進む。
 
 ## 次に行うべきこと
 
 1. route/upload remediation を含む現在の未コミット差分について
    commit / push するか判断する。
-2. Supabase staging project を作成する。
+2. `docs/mewri_supabase_staging_refusal_verification_plan_v0_10.md` に沿って、
+   Owner 承認後に Supabase staging project を作成・link する。
 3. SQL 草案を適用し、匿名・非メンバーのアクセス拒否と、server write / upload
    実装前には authenticated member の post insert と画像 upload も拒否されることを検証する。
 4. 追加した route/application 境界へ、実 Supabase adapter・実認証セッション・
