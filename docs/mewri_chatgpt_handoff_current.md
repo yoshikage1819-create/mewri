@@ -228,3 +228,13 @@ supabase       将来適用する migration 草案
 - Validation: `npm.cmd run typecheck` passed; `npm.cmd test` passed with 95 tests; `npm.cmd run build` passed.
 - Independent review: first `codex.cmd review --uncommitted` was blocked by nested Windows sandbox spawn failure; rerun with `codex.cmd -s danger-full-access review --uncommitted -c model='"gpt-5.5"' -c model_reasoning_effort='"high"'` found P1 upload-before-authorization and P2 malformed-cookie findings; both were fixed and covered by tests. Final rerun reported no actionable correctness issues.
 - Next gate: implement the real staging-only Supabase RPC/client adapter for the atomic post+event gateway and real image-file extraction only after human approval for staging env wiring. Production remains untouched.
+
+## 2026-05-29 shared-beta post RPC draft slice
+
+- Added draft migration `supabase/migrations/202605290001_shared_beta_create_post_rpc.sql` for `private.create_shared_beta_post` plus authenticated-only `create_shared_beta_post` RPC wrapper. The draft validates `auth.uid()`, membership, active same-group theme, private `post-images/<group>/<user>/<filename>` path, and matching `storage.objects` metadata before atomically inserting one `posts` row and one `post_created` event. No migration was applied.
+- Updated `packages/data/src/supabase-shared-beta-post-gateway.ts` to use a narrow mocked Supabase `rpc("create_shared_beta_post", ...)` client shape and fail closed on RPC error, zero rows, multiple rows, or returned-row mismatch. It maps only through `postFromDbRow()` and returns `Post` only.
+- Updated mocked tests in `packages/data/src/supabase-shared-beta-post-gateway.test.ts` and `apps/web/src/app/api/shared-beta/posts/server-dependencies.test.ts`.
+- No real Supabase connection, no service role key, no env wiring, no shared mode, no deploy, and no production touch.
+- Validation: `npm.cmd run typecheck`, `npm.cmd test` (102 tests), and `npm.cmd run build` passed. `git diff --check` had only CRLF warnings.
+- Independent review: `codex.cmd -s danger-full-access review --uncommitted -c model='"gpt-5.5"' -c model_reasoning_effort='"high"'` reported no discrete correctness, security, or maintainability issues.
+- Remaining risk/next gate: human owner review is required before applying the migration to staging. Staging verification must confirm grants, no anon execute, no client insert policies, positive member post creation, negative anon/non-member/inactive-theme/forged-path/missing-storage checks, and direct client insert refusal remains intact.

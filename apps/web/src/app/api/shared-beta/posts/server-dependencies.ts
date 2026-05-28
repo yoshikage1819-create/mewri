@@ -18,7 +18,7 @@ import {
 } from "@mewri/data/src/supabase-post-image-storage";
 import {
   createSupabaseSharedBetaPostGateway,
-  type SupabaseSharedBetaPostGatewayClient
+  type SupabaseSharedBetaPostRpcClient
 } from "@mewri/data/src/supabase-shared-beta-post-gateway";
 import {
   defaultSharedBetaPostRouteDependencies,
@@ -28,7 +28,7 @@ import {
 export interface SharedBetaPostServerDependencyFactoryOptions {
   authClient?: SupabaseAuthSessionClient;
   imageStorageClient?: SharedBetaPostImageStorageClient;
-  postGatewayClient?: SupabaseSharedBetaPostGatewayClient;
+  postGatewayClient?: SupabaseSharedBetaPostRpcClient;
   repository?: MewriRepository;
   resolveImageFile?: (input: {
     request: Request;

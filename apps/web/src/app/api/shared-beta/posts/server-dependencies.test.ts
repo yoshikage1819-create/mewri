@@ -5,7 +5,6 @@ import type {
   SharedBetaPostImageFile,
   SharedBetaPostImageStorageClient
 } from "@mewri/data/src/supabase-post-image-storage";
-import type { SupabaseSharedBetaPostGatewayClient } from "@mewri/data/src/supabase-shared-beta-post-gateway";
 import { describe, expect, it, vi } from "vitest";
 import { createSharedBetaPostRouteHandler } from "./route-boundary";
 import {
@@ -52,13 +51,13 @@ describe("shared beta post server dependency factory", () => {
 
   it("rejects missing or invalid sessions before image upload and post creation", async () => {
     const uploadObject = vi.fn();
-    const createPostWithEvent = vi.fn();
+    const rpc = vi.fn();
     const handler = createSharedBetaPostRouteHandler(
       createSharedBetaPostServerDependenciesFromEnvironment(SHARED_ENVIRONMENT, {
         ...makeCompleteOptions({
           authClient: { getUser: vi.fn(async () => ({ error: new Error("invalid token") })) },
           imageStorageClient: { uploadObject },
-          postGatewayClient: { createPostWithEvent }
+          postGatewayClient: { rpc }
         })
       })
     );
@@ -69,15 +68,15 @@ describe("shared beta post server dependency factory", () => {
     expect(response.status).toBe(401);
     expect(body).toMatchObject({ ok: false, error: { code: "authentication_required" } });
     expect(uploadObject).not.toHaveBeenCalled();
-    expect(createPostWithEvent).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
   });
 
   it("rejects bad image MIME types before post creation", async () => {
-    const createPostWithEvent = vi.fn();
+    const rpc = vi.fn();
     const handler = createSharedBetaPostRouteHandler(
       createSharedBetaPostServerDependenciesFromEnvironment(SHARED_ENVIRONMENT, {
         ...makeCompleteOptions({
-          postGatewayClient: { createPostWithEvent },
+          postGatewayClient: { rpc },
           resolveImageFile: async () => makeFile({ name: "photo.gif", type: "image/gif", size: 12 })
         })
       })
@@ -88,12 +87,12 @@ describe("shared beta post server dependency factory", () => {
 
     expect(response.status).toBe(403);
     expect(body).toMatchObject({ ok: false, error: { code: "validated_image_required" } });
-    expect(createPostWithEvent).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
   });
 
   it("does not upload before membership and active-theme authorization passes", async () => {
     const uploadObject = vi.fn();
-    const createPostWithEvent = vi.fn();
+    const rpc = vi.fn();
     const resolveImageFile = vi.fn(async () => makeFile({ name: "photo.webp", type: "image/webp", size: 12 }));
     const otherGroup = makeOtherGroup();
     const otherTheme = makeOtherTheme(otherGroup);
@@ -107,7 +106,7 @@ describe("shared beta post server dependency factory", () => {
             themes: [...seedState.themes, otherTheme]
           }),
           imageStorageClient: { uploadObject },
-          postGatewayClient: { createPostWithEvent },
+          postGatewayClient: { rpc },
           resolveImageFile
         })
       })
@@ -130,15 +129,15 @@ describe("shared beta post server dependency factory", () => {
     expect(body).toMatchObject({ ok: false, error: { code: "validated_image_required" } });
     expect(resolveImageFile).not.toHaveBeenCalled();
     expect(uploadObject).not.toHaveBeenCalled();
-    expect(createPostWithEvent).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
   });
 
   it("wires auth, server image upload, authorization, and the atomic post gateway", async () => {
     const uploadObject = vi.fn(async () => ({ ok: true as const }));
-    const createPostWithEvent = vi.fn(async () => ({
-      ok: true as const,
-      eventCreated: true as const,
-      post: {
+    const rpc = vi.fn(async () => ({
+      error: null,
+      data: [
+        {
         id: "post_shared_beta_created",
         user_id: "user_demo",
         group_id: "group_first",
@@ -148,13 +147,14 @@ describe("shared beta post server dependency factory", () => {
         visibility: "group_only" as const,
         created_at: "2026-05-20T09:00:00.000Z",
         updated_at: "2026-05-20T09:00:00.000Z"
-      }
+        }
+      ]
     }));
     const handler = createSharedBetaPostRouteHandler(
       createSharedBetaPostServerDependenciesFromEnvironment(SHARED_ENVIRONMENT, {
         ...makeCompleteOptions({
           imageStorageClient: { uploadObject },
-          postGatewayClient: { createPostWithEvent }
+          postGatewayClient: { rpc }
         })
       })
     );
@@ -185,12 +185,12 @@ describe("shared beta post server dependency factory", () => {
         contentType: "image/webp"
       })
     );
-    expect(createPostWithEvent).toHaveBeenCalledWith({
-      userId: "user_demo",
-      groupId: "group_first",
-      themeId: "theme_cycle_group_first_2026-05-20_1",
-      imagePath: "post-images/group_first/user_demo/photo.webp",
-      caption: "shared beta post"
+    expect(rpc).toHaveBeenCalledWith("create_shared_beta_post", {
+      p_user_id: "user_demo",
+      p_group_id: "group_first",
+      p_theme_id: "theme_cycle_group_first_2026-05-20_1",
+      p_image_path: "post-images/group_first/user_demo/photo.webp",
+      p_caption: "shared beta post"
     });
   });
 });
@@ -206,7 +206,7 @@ function makeCompleteOptions(
       uploadObject: vi.fn(async () => ({ ok: true }))
     },
     postGatewayClient: {
-      createPostWithEvent: vi.fn()
+      rpc: vi.fn()
     },
     repository: createMemoryRepository(createSeedState(new Date("2026-05-20T09:00:00.000Z"))),
     resolveImageFile: async () => makeFile({ name: "photo.webp", type: "image/webp", size: 12 }),
