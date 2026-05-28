@@ -87,9 +87,10 @@ describe("database row mappers", () => {
       createdAt: "2026-05-23T00:00:00.000Z"
     };
 
-    const row = zinePageToDbRow(page);
+    const row = zinePageToDbRow(page, "group_first");
 
     expect(row).toMatchObject({
+      group_id: "group_first",
       zine_id: "zine_1",
       post_id: "post_1",
       page_number: 1,
@@ -98,6 +99,49 @@ describe("database row mappers", () => {
       editor_note: null
     });
     expect(zinePageFromDbRow(row)).toEqual(page);
+  });
+
+  it("derives ZINE page group rows from the parent ZINE without exposing persistence fields to the domain page", () => {
+    const state = createSeedState(new Date("2026-05-20T09:00:00.000Z"));
+    const zine: Zine = {
+      id: "zine_1",
+      zineCycleId: state.zineCycles[0]!.id,
+      groupId: state.groups[0]!.id,
+      title: "ZINE 1",
+      intro: "Intro",
+      status: "published",
+      createdAt: "2026-05-23T00:00:00.000Z",
+      publishedAt: "2026-05-23T00:00:00.000Z"
+    };
+    const page: ZinePage = {
+      id: "page_1",
+      zineId: zine.id,
+      postId: "post_1",
+      pageNumber: 1,
+      layoutType: "cover",
+      createdAt: "2026-05-23T00:00:00.000Z"
+    };
+
+    const rows = mewriStateToDbRows({ ...state, zines: [zine], zinePages: [page] });
+
+    expect(rows.zine_pages[0]).toMatchObject({ group_id: "group_first", zine_id: "zine_1" });
+    expect(mewriStateFromDbRows(rows).zinePages[0]).toEqual(page);
+  });
+
+  it("rejects orphan ZINE pages instead of producing rows without a security group boundary", () => {
+    const state = createSeedState(new Date("2026-05-20T09:00:00.000Z"));
+    const page: ZinePage = {
+      id: "page_orphan",
+      zineId: "missing_zine",
+      postId: "post_1",
+      pageNumber: 1,
+      layoutType: "cover",
+      createdAt: "2026-05-23T00:00:00.000Z"
+    };
+
+    expect(() => mewriStateToDbRows({ ...state, zinePages: [page] })).toThrowError(
+      "Cannot persist ZINE page page_orphan without its parent ZINE group."
+    );
   });
 
   it("maps EventLog metadata undefined values to database null and back", () => {

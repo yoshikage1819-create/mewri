@@ -150,7 +150,7 @@ Use these docs as source of truth:
 - docs/mewri_self_beta_qa_v0_8.md
 - docs/mewri_nearby_beta_handoff_v0_8.md
 - docs/mewri_url_sharing_beta_plan_v0_9.md
-- docs/mewri_codex_model_policy.md
+- docs/mewri_ai_workbench_setup.md
 
 Do not implement shared database, authentication, real follows, notifications, host-created themes, 自分の投稿, post-first posting, multi-group posting, or real image upload storage.
 
@@ -175,4 +175,3 @@ Tasks:
 
 If any issue requires shared persistence, auth, or image upload, document it instead of implementing it.
 ```
-

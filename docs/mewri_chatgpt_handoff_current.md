@@ -1,0 +1,198 @@
+# Mewri 現在のプロジェクト概要 - ChatGPT 引き継ぎ用
+
+更新日: 2026-05-28
+
+## プロダクト概要
+
+Mewri は一般的な写真フィードではなく、数人で写真を持ち寄り、数日分の投稿から ZINE を完成させるサービスです。
+
+```text
+今日のテーマを見る
+-> 写真を軽く投稿する
+-> 進行中の ZINE に投稿が蓄積する
+-> 生成された ZINE を読む
+```
+
+## 現在動いているもの: v0.9 ローカルデモ
+
+- Next.js の Web アプリとして実装済み。
+- UI は日本語で、モバイルと desktop の表示を確認済み。
+- 「参加中のZINE」で今日の active theme に写真を投稿できる。
+- 「このZINEの中身」で投稿一覧と生成 ZINE を閲覧できる。
+- 画像ファイル選択、ローカルプレビュー、ZINE 生成が動く。
+- データ保存はブラウザの `localStorage` のみ。
+- 他端末・他ユーザーとのデータ共有、ログイン、実画像アップロードはまだない。
+
+公開デモ対象は `mewri-b` です。
+
+## 次に進めているもの: v0.10 Closed Shared Beta Foundation
+
+目的は、招待された少人数が同じ active ZINE に投稿できる将来の共有ベータ基盤を安全に準備することです。
+
+現在の作業ツリーには、まだ commit / push / deploy していない次の準備実装があります。
+
+- Supabase を推奨バックエンドとする方針文書。
+- `packages/data` に閉じた共有モード用の設定判定境界。
+- Supabase Postgres の schema / RLS / Storage policy の SQL 草案。
+- SQL 草案はレビューを経て、cycle/theme/post/ZINE/page の group 整合性を
+  複合外部キーで保護し、検証済み server write / upload 経路ができるまで
+  post insert と画像 upload policy を開かない安全側の状態に更新済み。
+- 設定不足時にローカルデモへ戻ること、未完成の共有モードを起動しないことのテスト。
+- 文字化けしていた初期の意思決定ログと要件定義の復旧。
+- Codex CLI を主実装・検証、Cline を計画と低リスク補助に使う
+  `AGENTS.md`、Skill、Cline rules/workflows、運用文書。
+- Cursor Pro は現時点では導入せず、Codex/Cline の token・利用上限による
+  中断が実装速度の継続的な阻害要因になった場合に試験導入を再検討する。
+
+## 重要な設計判断
+
+- 既存の `localStorage` デモは壊さず、既定動作として維持する。
+- Supabase 資格情報がなくても既存デモは build / 表示できる。
+- UI コンポーネントから Supabase へ直接問い合わせず、`packages/data` の repository/service 境界を使う。
+- 共有モードの投稿画像は Data URL ではなく private Storage に保存する。
+- 共有書き込みは招待済み認証ユーザーだけに許可し、匿名書き込みは許可しない。
+- group member だけが同じ group の Theme、Post、ZINE、画像を読める RLS を前提にする。
+- `service_role` はブラウザに公開しない。
+
+## 現在の主要データモデル
+
+```text
+User / Profile
+Group
+GroupMember
+Theme
+Post
+ZineCycle
+Zine
+ZinePage
+EventLog
+```
+
+共有ベータ準備では、招待管理用に `beta_invites` を運用テーブルとして追加する想定です。
+
+## 明示的にまだ実装しないもの
+
+- 公開 signup と匿名投稿
+- public discovery
+- follow、いいね、コメント、通知
+- host-created themes
+- 個人受け取りテーマや post-first 投稿
+- 複数 ZINE / 複数 group への同時投稿
+- 実際の Supabase 接続、ログイン画面、Storage upload、DB adapter
+
+これらを後回しにする理由は、まず「複数人が同じ ZINE に参加することが価値になるか」を安全に検証するためです。
+
+## 技術構成
+
+```text
+apps/web       Next.js Web UI
+packages/core  ドメインモデルとビジネスロジック
+packages/data  localStorage / 将来の共有永続化境界
+docs           要件・判断・運用文書
+supabase       将来適用する migration 草案
+```
+
+主要ファイル:
+
+- `docs/README.md`
+- `apps/web/src/app/page.tsx`
+- `apps/web/src/app/api/shared-beta/posts/route.ts`
+- `apps/web/src/app/styles.css`
+- `packages/data/src/shared-beta-runtime.ts`
+- `packages/data/src/shared-beta-post-authorization.ts`
+- `packages/data/src/shared-beta-post-route-boundary.ts`
+- `packages/data/src/db-mappers.ts`
+- `packages/data/src/db-row-types.ts`
+- `supabase/migrations/202605260001_closed_shared_beta_foundation.sql`
+- `docs/mewri_v0_10_closed_shared_beta_foundation.md`
+- `docs/mewri_ai_workbench_setup.md`
+- `AGENTS.md`
+
+## 直近の検証結果
+
+- `npm.cmd run typecheck`: 成功
+- `npm.cmd test`: 成功 (`69` tests passed)
+- `npm.cmd run build`: 成功。Supabase 環境変数なしで build 可能
+- `375px`, `390px`, `1280px` 表示で横 overflow がないことを確認済み
+- Codex/Cline `mewri-ship-beta` Skill の形式検証: 成功
+- SQL の `zine_pages.group_id` 制約に合わせ、DB row mapper が親 ZINE
+  から group を導出し、孤立ページを拒否する境界を追加。
+- `packages/data/src/shared-beta-post-authorization.ts` に、shared beta の
+  server 投稿専用 command service を追加。未認証、なりすまし、非メンバー、
+  他 group / inactive theme、不正な private image path を投稿前に拒否し、
+  demo 操作や未認可 publish command は公開しない。
+- `packages/data/src/shared-beta-post-route-boundary.ts` を追加し、認証結果と
+  server 側で検証済みの image path を受け取る route/application 境界を実装。
+  未認証・なりすまし・非メンバー・他 group / inactive theme・不正 path・
+  server 未検証 path の場合は shared-beta post command を実行しないテストを追加。
+- `apps/web/src/app/api/shared-beta/posts/route.ts` を追加。実 adapter/実 auth
+  の接続前は `503 shared_beta_route_unavailable` で閉じたままにし、
+  localStorage デモの投稿フローは変更しない。
+- shared-beta 投稿の成功 response は `MewriState` 全体ではなく、作成した
+  `Post` 一件だけを返す契約へ狭めた。HTTP response に `state` を含めない
+  回帰テストを追加し、将来の server-backed adapter 接続時に他 group の
+  state を誤って返さない境界を設けた。
+- `docs/README.md` を現行文書の入口として追加し、AI 運用とモデル選択は
+  `docs/mewri_ai_workbench_setup.md` に統合。復旧済み正本に吸収された
+  文字化け旧計画と重複する旧モデルメモは削除した。
+- Codex 活用調査を運用へ反映し、CLI スライスを
+  `Goal / Context / Constraints / Done when` で定義すること、shared-data
+  セキュリティ差分は validators 後に別の Codex review pass を必須にする
+  ことを `AGENTS.md`、Skill、AI workbench に追加した。
+- 2026-05-28 に公式モデル案内と CLI 設定を再確認し、今後の実装・独立
+  review の推奨モデルを `gpt-5.5` / reasoning `high` に更新した。
+- 2026-05-28 に post route 成功 response の P1 remediation slice を実装。
+  `packages/data` の guarded post command と route boundary、および
+  `apps/web` の HTTP handler は、成功時に作成済み `Post` 一件のみを
+  返し、全 `MewriState` を外部 response に含めない。
+- 2026-05-28 に DB/RLS/storage 契約の remediation slice を実装。
+  migration 草案では `profiles.id` と user 参照を Supabase Auth 対応の
+  `uuid` に維持しつつ、group/cycle/theme/post/ZINE/page/event の
+  domain-owned ID と関係キーを prefixed string を保持できる `text` に
+  統一した。複合 foreign key による group 整合性保護は維持する。
+- `private` RLS helper について、`authenticated` に schema `USAGE` と
+  read policy が使う helper の `EXECUTE` だけを付与した。`anon` には
+  policy も helper 権限も追加しない。
+- shared beta の Storage bucket は `post-images` 固定契約とし、
+  `SUPABASE_POST_IMAGE_BUCKET` に異なる値が指定された場合は shared
+  runtime を選択せず local mode へ閉じるテストを追加した。
+- 上記変更後、`npm.cmd run typecheck`、`npm.cmd test` (`69` tests
+  passed)、`npm.cmd run build` が成功した。
+- 2026-05-28 に `codex.cmd review --uncommitted -c model='"gpt-5.5"' -c model_reasoning_effort='"high"'`
+  を再実行し、SQL/RLS/storage および bucket contract の今回の修正には
+  finding が出なかった。未解決の P1 は、`validatedImagePath` が request
+  JSON 由来で server-side upload または lookup の証明になっていない点である。
+  これを修正し再 review が通るまで、staging migration、実 adapter
+  接続、shared mode 有効化へ進まない。
+- 2026-05-28 に上記 route/upload 信頼境界の remediation を実装した。
+  HTTP request body から `validatedImagePath` / `imageUrl` を拒否し、
+  server-only の image verification 依存関係が path を返さない限り投稿を
+  実行しない。さらに投稿 command service は、形式が正しい private path
+  であっても server-side upload / Storage lookup の検証結果なしでは拒否する。
+- この remediation 後、`npm.cmd run typecheck`、`npm.cmd test`
+  (`75` tests passed)、`npm.cmd run build` が成功した。
+- 完成差分に対して `codex.cmd review --uncommitted -c model='"gpt-5.5"' -c model_reasoning_effort='"high"'`
+  を外側実行環境から再実行し、追加 finding はなかった。
+  shared mode は未有効のまま維持し、staging migration / adapter 接続は
+  owner による次ゲート判断後にのみ進める。
+- 2026-05-28 の commit 準備確認で、`npm.cmd run typecheck`、
+  `npm.cmd test` (`75` tests passed)、`npm.cmd run build` が成功した。
+  build 生成物は git status に出ておらず、現在の差分は closed shared beta
+  foundation と agent/docs 運用整理の commit 単位として扱える。
+
+## 次に行うべきこと
+
+1. route/upload remediation を含む現在の未コミット差分について
+   commit / push するか判断する。
+2. Supabase staging project を作成する。
+3. SQL 草案を適用し、匿名・非メンバーのアクセス拒否と、server write / upload
+   実装前には authenticated member の post insert と画像 upload も拒否されることを検証する。
+4. 追加した route/application 境界へ、実 Supabase adapter・実認証セッション・
+   検証済み Storage upload 経路を接続し、staging で統合検証する。
+5. 実際の招待ユーザー間で同じ ZINE が共有されることを確認してから closed beta を開始する。
+
+## ChatGPT への注意
+
+- 共有ベータ機能はまだ稼働していません。現在動くのは browser-local v0.9 デモです。
+- v0.10 の Supabase 関連差分は安全な準備段階であり、live project 接続済みと扱わないでください。
+- 新規提案では、Mewri の核である `今日のテーマ -> 投稿 -> ZINEへの貢献 -> 生成ZINE` を優先してください。

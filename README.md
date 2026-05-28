@@ -1,14 +1,16 @@
 # Mewri
 
-Mewri is a social product where daily photo themes become a collaborative digital ZINE every 3 days in MVP v0.
+Mewri is a group-first photo product where daily themes become a collaborative
+digital ZINE.
 
-## MVP v0 Direction
+## Current Status
 
-- Daily `Theme`
-- Lightweight `Post`
-- 3-day `ZineCycle` Option A
-- AI-assisted, human-meaning ZINE creation
-- Group-first, SNS expansion later
+- Working product: browser-local v0.9 demo using `localStorage`.
+- In progress: v0.10 closed shared beta foundation for invited small groups.
+- Not live: Supabase shared mode, authenticated uploads, and shared database.
+
+Start with [`docs/README.md`](docs/README.md) for the current source-of-truth
+documents and implementation status.
 
 ## Project Shape
 
@@ -27,5 +29,7 @@ The first implementation intentionally keeps infrastructure light while preservi
 npm install
 npm run dev
 npm run typecheck
+npm test
+npm run build
 ```
 

@@ -88,6 +88,7 @@ export interface DbZineRow {
 
 export interface DbZinePageRow {
   id: string;
+  group_id: string;
   zine_id: string;
   post_id: string;
   page_number: number;

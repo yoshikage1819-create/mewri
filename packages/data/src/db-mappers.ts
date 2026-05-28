@@ -202,9 +202,10 @@ export function zineFromDbRow(row: DbZineRow): Zine {
   };
 }
 
-export function zinePageToDbRow(page: ZinePage): DbZinePageRow {
+export function zinePageToDbRow(page: ZinePage, groupId: string): DbZinePageRow {
   return {
     id: page.id,
+    group_id: groupId,
     zine_id: page.zineId,
     post_id: page.postId,
     page_number: page.pageNumber,
@@ -255,6 +256,8 @@ export function eventLogFromDbRow(row: DbEventLogRow): EventLog {
 }
 
 export function mewriStateToDbRows(state: MewriState): DbMewriRows {
+  const zineGroupIds = new Map(state.zines.map((zine) => [zine.id, zine.groupId]));
+
   return {
     users: state.users.map(userToDbRow),
     groups: state.groups.map(groupToDbRow),
@@ -263,7 +266,14 @@ export function mewriStateToDbRows(state: MewriState): DbMewriRows {
     posts: state.posts.map(postToDbRow),
     zine_cycles: state.zineCycles.map(zineCycleToDbRow),
     zines: state.zines.map(zineToDbRow),
-    zine_pages: state.zinePages.map(zinePageToDbRow),
+    zine_pages: state.zinePages.map((page) => {
+      const groupId = zineGroupIds.get(page.zineId);
+      if (!groupId) {
+        throw new Error(`Cannot persist ZINE page ${page.id} without its parent ZINE group.`);
+      }
+
+      return zinePageToDbRow(page, groupId);
+    }),
     event_logs: state.eventLogs.map(eventLogToDbRow)
   };
 }

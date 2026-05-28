@@ -121,6 +121,7 @@ export const mewriDataSchemaV03: DataTableSchema[] = [
     primaryKey: "id",
     columns: [
       { name: "id", type: "text" },
+      { name: "group_id", type: "text", references: "groups.id" },
       { name: "zine_id", type: "text", references: "zines.id" },
       { name: "post_id", type: "text", references: "posts.id" },
       { name: "page_number", type: "integer" },
@@ -129,7 +130,7 @@ export const mewriDataSchemaV03: DataTableSchema[] = [
       { name: "editor_note", type: "text", nullable: true },
       { name: "created_at", type: "timestamp" }
     ],
-    indexes: ["unique(zine_id, page_number)", "post_id"]
+    indexes: ["unique(zine_id, page_number)", "group_id", "post_id"]
   },
   {
     tableName: "event_logs",

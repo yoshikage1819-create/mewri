@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mewri Ship Beta"
+  short_description: "Ship Mewri beta slices with product and safety constraints"
+  default_prompt: "Use $mewri-ship-beta to plan and implement the next safe Mewri beta slice."
