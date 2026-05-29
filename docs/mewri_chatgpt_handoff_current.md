@@ -1,6 +1,6 @@
 # Mewri 現在のプロジェクト概要 - ChatGPT 引き継ぎ用
 
-更新日: 2026-05-28
+更新日: 2026-05-29
 
 ## プロダクト概要
 
@@ -204,17 +204,16 @@ supabase       将来適用する migration 草案
 
 ## 次に行うべきこと
 
-1. route/upload remediation を含む現在の未コミット差分について
-   commit / push するか判断する。
-2. staging verification の証跡を commit するか判断する。
-3. 追加した route/application 境界へ、実 Supabase adapter・実認証セッション・
-   検証済み Storage upload 経路を接続し、staging で統合検証する。
-4. 実際の招待ユーザー間で同じ ZINE が共有されることを確認してから closed beta を開始する。
+1. 追加した route/application 境界へ、実 Supabase adapter・実認証セッション・
+   検証済み Storage upload 経路を接続し、staging で統合検証する（明示承認後）。
+2. 未 commit の docs / checklist / `.cursor/rules` を必要なら commit する。
+3. 実際の招待ユーザー間で同じ ZINE が共有されることを確認してから closed beta を開始する。
 
 ## ChatGPT への注意
 
 - 共有ベータ機能はまだ稼働していません。現在動くのは browser-local v0.9 デモです。
-- v0.10 の Supabase 関連差分は安全な準備段階であり、live project 接続済みと扱わないでください。
+- v0.10 は staging（`mewri-staging`）に foundation + RPC migration 適用済みだが、
+  アプリは未接続・shared mode 無効のまま。production 接続済みと扱わないでください。
 - 新規提案では、Mewri の核である `今日のテーマ -> 投稿 -> ZINEへの貢献 -> 生成ZINE` を優先してください。
 
 ## 2026-05-28 server-only shared-beta integration slice
@@ -237,4 +236,39 @@ supabase       将来適用する migration 草案
 - No real Supabase connection, no service role key, no env wiring, no shared mode, no deploy, and no production touch.
 - Validation: `npm.cmd run typecheck`, `npm.cmd test` (102 tests), and `npm.cmd run build` passed. `git diff --check` had only CRLF warnings.
 - Independent review: `codex.cmd -s danger-full-access review --uncommitted -c model='"gpt-5.5"' -c model_reasoning_effort='"high"'` reported no discrete correctness, security, or maintainability issues.
-- Remaining risk/next gate: human owner review is required before applying the migration to staging. Staging verification must confirm grants, no anon execute, no client insert policies, positive member post creation, negative anon/non-member/inactive-theme/forged-path/missing-storage checks, and direct client insert refusal remains intact.
+- Migration apply and staging RPC verification completed on 2026-05-29; see section below.
+- Remaining risk/next gate: connect real Supabase adapter/auth/upload path to
+  `POST /api/shared-beta/posts` on staging only after explicit env-wiring approval.
+  Do not enable shared mode or touch production until that integration passes review.
+
+## 2026-05-29 mewri-staging RPC migration apply and verification
+
+- Owner approved applying `supabase/migrations/202605290001_shared_beta_create_post_rpc.sql`
+  to `mewri-staging` only. Production was not touched. `MEWRI_RUNTIME_MODE=shared_beta`
+  remains disabled. No service role key was used in chat or docs.
+- Repo migration hardened in commit `4ab93e4`: public-only authenticated EXECUTE on
+  `create_shared_beta_post`, `security definer` wrapper, explicit `revoke ... from anon`
+  on both RPC functions (staging required a follow-up `revoke from anon` after apply
+  when `public` still showed `anon_execute`).
+- Post-apply structural checks (SQL Editor): public/private RPC exist; `anon` has no
+  EXECUTE; `authenticated` has public RPC only; `posts` and `storage.objects` remain
+  SELECT-only with no client INSERT policies.
+- Authenticated client verification via `tools/supabase-storage-rls-read-check.html`
+  (extended in commit `98a0b4c`; local-only, public anon key + member-a/b login only):
+
+| Check | Result |
+| --- | --- |
+| C3 member RPC success (`read-check.webp`) | Pass |
+| C4.1 identity mismatch | Pass (`identity_mismatch`) |
+| C4.2 other-group theme | Pass (`active_group_theme_required`) |
+| C4.3 inactive theme | Skipped (no non-active theme row in staging seed) |
+| C4.4 forged image path | Pass (`private_image_path_required`) |
+| C4.5 missing storage object | Pass (`storage_object_not_found`) |
+| C5.1 direct `posts` insert | Pass (`permission denied for table posts`) |
+| C5.2 direct Storage upload | Pass (denied; message `Bucket not found` — upload did not succeed) |
+
+- C3 created post example id `post_ddb242c9618e415b9ddf8f5692cfbe93` with matching
+  `post_created` event (verified via RPC return row).
+- Passing this verification does not enable closed beta or shared mode by itself.
+- Next gate: staging-only real adapter for `create_shared_beta_post` RPC, server-side
+  image upload verification, and guarded `POST /api/shared-beta/posts` integration test.
