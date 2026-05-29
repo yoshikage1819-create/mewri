@@ -144,15 +144,23 @@
         </label>
         <label>
           group_staging_a の確認 object path
-          <input id="groupAPath" placeholder="例: group_staging_a/<member-a-uuid>/alpha.webp" />
+          <input
+            id="groupAPath"
+            placeholder="例: group_staging_a/any/alpha.webp（真ん中のUUIDはC3ではログイン中のUIDに置き換え）"
+          />
         </label>
         <label>
           group_staging_b の確認 object path
           <input id="groupBPath" placeholder="例: group_staging_b/<member-b-uuid>/beta.webp" />
         </label>
         <button id="saveConfigButton">このブラウザだけに設定</button>
+        <button id="validateConfigButton" class="secondary">URL / anon key を検証</button>
         <button id="clearConfigButton" class="danger">このブラウザの設定を消す</button>
         <p id="configStatus" class="muted">未設定</p>
+        <p class="ng">
+          <strong>Console（F12）に URL や key を書かないでください。</strong>
+          下の欄とボタンだけを使います。
+        </p>
       </section>
 
       <section>
@@ -189,6 +197,47 @@
         <button id="anonCheckButton">anon check</button>
         <button id="memberACheckButton">member-a check</button>
         <button id="memberBCheckButton">member-b check</button>
+      </section>
+
+      <section>
+        <h2>4. C3 RPC チェック（投稿 1 件）</h2>
+        <p class="muted">
+          member-a でログインしたあとに押してください。Console に URL を書く必要はありません。
+          上の「group_staging_a の確認 object path」と同じファイル名を使います。
+        </p>
+        <label>
+          Active theme id（Table Editor → themes → status=active の id）
+          <input id="themeIdActive" autocomplete="off" placeholder="例: theme_staging_a_active" />
+        </label>
+        <button id="c3RpcButton">C3: create_shared_beta_post を試す</button>
+        <p id="c3PathPreview" class="muted">C3 で使うファイル名: （path 欄の最後の / 以降）</p>
+        <p class="muted">成功すると posts と event_logs に 1 件ずつ増えます。同じテストは何度も押さないでください。</p>
+        <h3>5. 拒否チェック（C4）</h3>
+        <p class="muted">member-a ログインのまま押してください。NG が出れば Pass です。</p>
+        <button id="c41RpcButton" class="secondary">C4.1 他人 UID（拒否されるべき）</button>
+        <label>
+          別グループの active theme id（C4.2 用・group_staging_b 側）
+          <input id="themeIdOtherGroup" autocomplete="off" placeholder="themes 表で group_staging_b の active id" />
+        </label>
+        <button id="c42RpcButton" class="secondary">C4.2 別グループの theme（拒否されるべき）</button>
+        <label>
+          終了した theme id（C4.3 用・group_staging_a 側で status が active 以外）
+          <input id="themeIdClosed" autocomplete="off" placeholder="themes 表で closed などの id" />
+        </label>
+        <button id="c43RpcButton" class="secondary">C4.3 終了した theme（拒否されるべき）</button>
+        <button id="c44RpcButton" class="secondary">C4.4 偽の画像パス（拒否されるべき）</button>
+        <button id="c45RpcButton" class="secondary">C4.5 無い画像ファイル名（拒否されるべき）</button>
+      </section>
+
+      <section>
+        <h2>6. 直接書き込みチェック（C5）</h2>
+        <p class="muted">member-a ログインのまま。NG が出れば Pass です。</p>
+        <button id="c51InsertButton" class="secondary">C5.1 posts へ直接 insert（拒否されるべき）</button>
+        <button id="c52UploadButton" class="secondary">C5.2 Storage upload（拒否されるべき）</button>
+      </section>
+
+      <section>
+        <h2>結果</h2>
         <div id="results"></div>
       </section>
     </main>
@@ -208,16 +257,124 @@
         otp: document.getElementById("otp"),
         configStatus: document.getElementById("configStatus"),
         sessionStatus: document.getElementById("sessionStatus"),
+        themeIdActive: document.getElementById("themeIdActive"),
+        themeIdOtherGroup: document.getElementById("themeIdOtherGroup"),
+        themeIdClosed: document.getElementById("themeIdClosed"),
+        c3PathPreview: document.getElementById("c3PathPreview"),
         results: document.getElementById("results")
       };
 
+      function updateC3PathPreview() {
+        try {
+          const { groupId, fileName } = parseGroupAPath(elements.groupAPath.value);
+          elements.c3PathPreview.textContent = `C3 で使うファイル名: ${fileName}（group: ${groupId} + ログイン中 UID）`;
+          elements.c3PathPreview.className = "ok";
+        } catch {
+          elements.c3PathPreview.textContent =
+            "C3 で使うファイル名: path 欄を group_staging_a/何か/read-check.webp の形にしてください";
+          elements.c3PathPreview.className = "ng";
+        }
+      }
+
+      function normalizeField(value) {
+        return value
+          .trim()
+          .replace(/^[\u201C\u201D\u2018\u2019"']+|[\u201C\u201D\u2018\u2019"']+$/g, "")
+          .replace(/\s+/g, "");
+      }
+
+      function assertValidProjectUrl(projectUrl) {
+        if (projectUrl.startsWith("eyJ")) {
+          throw new Error(
+            "「Staging Project URL」欄に anon key が入っています。URL 欄には https://xxxx.supabase.co だけを入れ、anon key は下の「Public anon key」欄へ入れてください。"
+          );
+        }
+        if (projectUrl.startsWith("postgresql://")) {
+          throw new Error(
+            "Database の接続文字列が URL 欄に入っています。Settings → API の Project URL（https://....supabase.co）だけを使ってください。"
+          );
+        }
+        let parsed;
+        try {
+          parsed = new URL(projectUrl);
+        } catch {
+          throw new Error(
+            "Project URL が壊れています。Dashboard → Settings → API の Project URL を手入力し直してください（全角スペース・改行・日本語の説明文が混ざっていないか確認）。"
+          );
+        }
+        if (parsed.protocol !== "https:" || !parsed.hostname.endsWith(".supabase.co")) {
+          throw new Error(
+            "Project URL は https://xxxx.supabase.co の形である必要があります。"
+          );
+        }
+      }
+
+      function assertValidAnonKey(anonKey) {
+        if (anonKey.startsWith("https://")) {
+          throw new Error(
+            "「Public anon key」欄に Project URL が入っています。入れ替えてください。"
+          );
+        }
+        if (!anonKey.startsWith("eyJ")) {
+          throw new Error(
+            "public anon key が正しくありません。Dashboard → Settings → API の anon / public key（eyJ で始まる）を入れ直してください。service_role key は使いません。"
+          );
+        }
+      }
+
+      function validateConfigFields() {
+        const projectUrl = normalizeField(elements.projectUrl.value);
+        const anonKey = normalizeField(elements.anonKey.value);
+        elements.projectUrl.value = projectUrl;
+        elements.anonKey.value = anonKey;
+        assertValidProjectUrl(projectUrl);
+        assertValidAnonKey(anonKey);
+        return { projectUrl, anonKey };
+      }
+
+      function parseGroupAPath(groupPath) {
+        const segments = groupPath.replace(/^\/+/, "").split("/");
+        if (segments.length < 3) {
+          throw new Error(
+            "group_staging_a の path は group_id/（何か）/filename.webp の形にしてください。例: group_staging_a/placeholder/alpha.webp"
+          );
+        }
+        return {
+          groupId: segments[0],
+          fileName: segments[segments.length - 1]
+        };
+      }
+
+      function postImagePathForUser(groupId, userId, fileName) {
+        return `post-images/${groupId}/${userId}/${fileName}`;
+      }
+
+      function readThemeIds() {
+        return {
+          themeIdActive: elements.themeIdActive.value.trim(),
+          themeIdOtherGroup: elements.themeIdOtherGroup.value.trim(),
+          themeIdClosed: elements.themeIdClosed.value.trim()
+        };
+      }
+
+      function requireThemeIdActive() {
+        const themeId = elements.themeIdActive.value.trim();
+        if (!themeId) {
+          throw new Error(
+            "「4. C3 RPC チェック」の Active theme id が空です。C3 で使った themes 表の active な id を入れてください（F5 後に消えていることがあります）。"
+          );
+        }
+        return themeId;
+      }
+
       function readConfig() {
         return {
-          projectUrl: elements.projectUrl.value.trim(),
-          anonKey: elements.anonKey.value.trim(),
+          projectUrl: normalizeField(elements.projectUrl.value),
+          anonKey: normalizeField(elements.anonKey.value),
           bucket: elements.bucket.value.trim() || "post-images",
           groupAPath: elements.groupAPath.value.trim(),
-          groupBPath: elements.groupBPath.value.trim()
+          groupBPath: elements.groupBPath.value.trim(),
+          ...readThemeIds()
         };
       }
 
@@ -237,6 +394,8 @@
         if (missing.length > 0) {
           throw new Error(`未入力: ${missing.join(", ")}`);
         }
+        assertValidProjectUrl(config.projectUrl);
+        assertValidAnonKey(config.anonKey);
         client = window.supabase.createClient(config.projectUrl, config.anonKey, {
           auth: {
             detectSessionInUrl: true,
@@ -248,6 +407,14 @@
       }
 
       function saveConfig() {
+        try {
+          validateConfigFields();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          elements.configStatus.textContent = message;
+          elements.configStatus.className = "ng";
+          return;
+        }
         const config = readConfig();
         const missing = validateConfig(config);
         if (missing.length > 0) {
@@ -272,7 +439,11 @@
           elements.bucket.value = config.bucket || "post-images";
           elements.groupAPath.value = config.groupAPath || "";
           elements.groupBPath.value = config.groupBPath || "";
+          elements.themeIdActive.value = config.themeIdActive || "";
+          elements.themeIdOtherGroup.value = config.themeIdOtherGroup || "";
+          elements.themeIdClosed.value = config.themeIdClosed || "";
           createClientFromConfig();
+          updateC3PathPreview();
           elements.configStatus.textContent = "保存済み設定を読み込みました。";
           elements.configStatus.className = "ok";
         } catch {
@@ -287,6 +458,9 @@
         elements.bucket.value = "post-images";
         elements.groupAPath.value = "";
         elements.groupBPath.value = "";
+        elements.themeIdActive.value = "";
+        elements.themeIdOtherGroup.value = "";
+        elements.themeIdClosed.value = "";
         client = undefined;
         elements.configStatus.textContent = "設定を消しました。";
         elements.configStatus.className = "muted";
@@ -452,6 +626,239 @@
         renderResults(`${memberLabel} check`, cases);
       }
 
+      async function runRpcCheck({ title, expectSuccess, buildParams }) {
+        const supabase = await requireClient();
+        const config = readConfig();
+        const themeId = requireThemeIdActive();
+
+        const {
+          data: { session }
+        } = await supabase.auth.getSession();
+        if (!session?.user?.id) {
+          throw new Error("未ログインです。member-a でログインしてから実行してください。");
+        }
+
+        const uid = session.user.id;
+        const { groupId, fileName } = parseGroupAPath(config.groupAPath);
+        const params = buildParams({ uid, groupId, fileName, themeId, config });
+
+        const { data, error } = await supabase.rpc("create_shared_beta_post", params);
+
+        if (expectSuccess) {
+          if (error) {
+            renderResults(title, [
+              {
+                label: "RPC は成功すべきでした",
+                passed: false,
+                detail: error.message || String(error)
+              }
+            ]);
+            return;
+          }
+          if (!Array.isArray(data) || data.length !== 1) {
+            renderResults(title, [
+              {
+                label: "RPC の返却件数が想定外です",
+                passed: false,
+                detail: `rows=${Array.isArray(data) ? data.length : "not-array"}`
+              }
+            ]);
+            return;
+          }
+          const row = data[0];
+          const matches =
+            row.user_id === params.p_user_id &&
+            row.group_id === params.p_group_id &&
+            row.theme_id === params.p_theme_id &&
+            row.image_url === params.p_image_path;
+          renderResults(title, [
+            {
+              label: "RPC が 1 件の post を返した",
+              passed: true,
+              detail: `post id=${row.id}`
+            },
+            {
+              label: "返却内容が入力と一致した",
+              passed: matches,
+              detail: matches ? "user/group/theme/image_url OK" : "返却 row が入力と一致しません"
+            }
+          ]);
+          return;
+        }
+
+        const passed = Boolean(error) && (!data || data.length === 0);
+        renderResults(title, [
+          {
+            label: "RPC は拒否されるべき",
+            passed,
+            detail: passed
+              ? `拒否 OK: ${error.message || String(error)}`
+              : `想定外の成功またはエラーなし data=${JSON.stringify(data)}`
+          },
+          {
+            label: "試した image_path",
+            passed: true,
+            detail: params.p_image_path
+          }
+        ]);
+      }
+
+      async function runC3RpcCheck() {
+        const config = readConfig();
+        const {
+          data: { session }
+        } = await (await requireClient()).auth.getSession();
+        if (!session?.user?.id) {
+          throw new Error("未ログインです。member-a で password ログインしてから C3 を押してください。");
+        }
+        const uid = session.user.id;
+        const { groupId, fileName } = parseGroupAPath(config.groupAPath);
+        const imagePath = postImagePathForUser(groupId, uid, fileName);
+
+        await runRpcCheck({
+          title: "C3 RPC check",
+          expectSuccess: true,
+          buildParams: ({ uid, groupId, themeId }) => ({
+            p_user_id: uid,
+            p_group_id: groupId,
+            p_theme_id: themeId,
+            p_image_path: imagePath,
+            p_caption: "C3 staging rpc test"
+          })
+        });
+      }
+
+      async function runC41RpcCheck() {
+        const fakeUid = "00000000-0000-0000-0000-000000000099";
+        await runRpcCheck({
+          title: "C4.1 identity mismatch",
+          expectSuccess: false,
+          buildParams: ({ groupId, fileName, themeId }) => ({
+            p_user_id: fakeUid,
+            p_group_id: groupId,
+            p_theme_id: themeId,
+            p_image_path: postImagePathForUser(groupId, fakeUid, fileName),
+            p_caption: "C4.1 should be denied"
+          })
+        });
+      }
+
+      async function runC42RpcCheck() {
+        const otherThemeId = elements.themeIdOtherGroup.value.trim();
+        if (!otherThemeId) {
+          throw new Error("別グループの active theme id を入力してください（group_staging_b 側）。");
+        }
+        await runRpcCheck({
+          title: "C4.2 other group theme",
+          expectSuccess: false,
+          buildParams: ({ uid, groupId, fileName }) => ({
+            p_user_id: uid,
+            p_group_id: groupId,
+            p_theme_id: otherThemeId,
+            p_image_path: postImagePathForUser(groupId, uid, fileName),
+            p_caption: "C4.2 should be denied"
+          })
+        });
+      }
+
+      async function runC43RpcCheck() {
+        const closedThemeId = elements.themeIdClosed.value.trim();
+        if (!closedThemeId) {
+          throw new Error("終了した theme id を入力してください（status が active 以外）。");
+        }
+        await runRpcCheck({
+          title: "C4.3 inactive theme",
+          expectSuccess: false,
+          buildParams: ({ uid, groupId, fileName }) => ({
+            p_user_id: uid,
+            p_group_id: groupId,
+            p_theme_id: closedThemeId,
+            p_image_path: postImagePathForUser(groupId, uid, fileName),
+            p_caption: "C4.3 should be denied"
+          })
+        });
+      }
+
+      async function runC44RpcCheck() {
+        await runRpcCheck({
+          title: "C4.4 forged image path",
+          expectSuccess: false,
+          buildParams: ({ uid, themeId }) => ({
+            p_user_id: uid,
+            p_group_id: "group_staging_a",
+            p_theme_id: themeId,
+            p_image_path: `post-images/wrong_group/${uid}/read-check.webp`,
+            p_caption: "C4.4 should be denied"
+          })
+        });
+      }
+
+      async function runC45RpcCheck() {
+        await runRpcCheck({
+          title: "C4.5 missing storage object",
+          expectSuccess: false,
+          buildParams: ({ uid, groupId, themeId }) => ({
+            p_user_id: uid,
+            p_group_id: groupId,
+            p_theme_id: themeId,
+            p_image_path: postImagePathForUser(groupId, uid, "definitely-missing-999.webp"),
+            p_caption: "C4.5 should be denied"
+          })
+        });
+      }
+
+      async function runC51InsertCheck() {
+        const supabase = await requireClient();
+        const config = readConfig();
+        const themeId = requireThemeIdActive();
+        const {
+          data: { session }
+        } = await supabase.auth.getSession();
+        if (!session?.user?.id) throw new Error("未ログインです。");
+        const uid = session.user.id;
+        const { groupId, fileName } = parseGroupAPath(config.groupAPath);
+        const { data, error } = await supabase.from("posts").insert({
+          id: "post_should_be_denied",
+          user_id: uid,
+          group_id: groupId,
+          theme_id: themeId,
+          image_url: postImagePathForUser(groupId, uid, fileName),
+          caption: "C5.1 should be denied",
+          visibility: "group_only"
+        });
+        const passed = Boolean(error) && !data;
+        renderResults("C5.1 direct posts insert", [
+          {
+            label: "直接 insert は拒否されるべき",
+            passed,
+            detail: passed ? `拒否 OK: ${error.message || String(error)}` : "想定外に成功した可能性"
+          }
+        ]);
+      }
+
+      async function runC52UploadCheck() {
+        const supabase = await requireClient();
+        const config = readConfig();
+        const {
+          data: { session }
+        } = await supabase.auth.getSession();
+        if (!session?.user?.id) throw new Error("未ログインです。");
+        const uid = session.user.id;
+        const { groupId } = parseGroupAPath(config.groupAPath);
+        const tiny = new Blob([new Uint8Array([137, 80, 78, 71])], { type: "image/png" });
+        const { data, error } = await supabase.storage
+          .from(config.bucket || "post-images")
+          .upload(`${groupId}/${uid}/c5-denied.png`, tiny, { upsert: false });
+        const passed = Boolean(error) && !data;
+        renderResults("C5.2 direct storage upload", [
+          {
+            label: "直接 upload は拒否されるべき",
+            passed,
+            detail: passed ? `拒否 OK: ${error.message || String(error)}` : "想定外に成功した可能性"
+          }
+        ]);
+      }
+
       async function runSafely(action) {
         try {
           await action();
@@ -467,7 +874,20 @@
         }
       }
 
+      function validateConfigOnly() {
+        try {
+          const { projectUrl } = validateConfigFields();
+          elements.configStatus.textContent = `URL OK: ${projectUrl}`;
+          elements.configStatus.className = "ok";
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          elements.configStatus.textContent = message;
+          elements.configStatus.className = "ng";
+        }
+      }
+
       document.getElementById("saveConfigButton").addEventListener("click", () => runSafely(saveConfig));
+      document.getElementById("validateConfigButton").addEventListener("click", validateConfigOnly);
       document.getElementById("clearConfigButton").addEventListener("click", clearConfig);
       document.getElementById("passwordLoginButton").addEventListener("click", () => runSafely(signInWithPassword));
       document.getElementById("sendOtpButton").addEventListener("click", () => runSafely(sendOtp));
@@ -477,8 +897,18 @@
       document.getElementById("anonCheckButton").addEventListener("click", () => runSafely(runAnonCheck));
       document.getElementById("memberACheckButton").addEventListener("click", () => runSafely(() => runMemberCheck("member-a")));
       document.getElementById("memberBCheckButton").addEventListener("click", () => runSafely(() => runMemberCheck("member-b")));
+      document.getElementById("c3RpcButton").addEventListener("click", () => runSafely(runC3RpcCheck));
+      document.getElementById("c41RpcButton").addEventListener("click", () => runSafely(runC41RpcCheck));
+      document.getElementById("c42RpcButton").addEventListener("click", () => runSafely(runC42RpcCheck));
+      document.getElementById("c43RpcButton").addEventListener("click", () => runSafely(runC43RpcCheck));
+      document.getElementById("c44RpcButton").addEventListener("click", () => runSafely(runC44RpcCheck));
+      document.getElementById("c45RpcButton").addEventListener("click", () => runSafely(runC45RpcCheck));
+      document.getElementById("c51InsertButton").addEventListener("click", () => runSafely(runC51InsertCheck));
+      document.getElementById("c52UploadButton").addEventListener("click", () => runSafely(runC52UploadCheck));
+      elements.groupAPath.addEventListener("input", updateC3PathPreview);
 
       loadConfig();
+      updateC3PathPreview();
       if (client) {
         refreshSession();
       }
