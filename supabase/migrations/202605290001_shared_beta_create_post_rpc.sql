@@ -1,8 +1,8 @@
 -- Mewri v0.10 shared-beta post creation RPC draft.
 -- Draft only: do not apply until owner approval and staging review.
 --
--- This keeps direct client INSERT policies closed. The exposed RPC is granted
--- only to authenticated users and delegates to private server-validated logic.
+-- This keeps direct client INSERT policies closed. Authenticated users call only
+-- public.create_shared_beta_post; the definer wrapper delegates to private logic.
 
 create or replace function private.create_shared_beta_post(
   p_user_id uuid,
@@ -164,7 +164,7 @@ returns table (
   updated_at timestamptz
 )
 language sql
-security invoker
+security definer
 set search_path = ''
 as $$
   select *
@@ -179,7 +179,8 @@ $$;
 
 revoke all on function private.create_shared_beta_post(uuid, text, text, text, text) from public;
 revoke all on function public.create_shared_beta_post(uuid, text, text, text, text) from public;
-grant execute on function private.create_shared_beta_post(uuid, text, text, text, text) to authenticated;
+revoke all on function private.create_shared_beta_post(uuid, text, text, text, text) from anon;
+revoke all on function public.create_shared_beta_post(uuid, text, text, text, text) from anon;
 grant execute on function public.create_shared_beta_post(uuid, text, text, text, text) to authenticated;
 
 -- Intentionally no posts, event_logs, or storage.objects INSERT policies.
