@@ -14,6 +14,7 @@ export * from "./server-repository-factory";
 export * from "./shared-beta-post-authorization";
 export * from "./shared-beta-post-route-boundary";
 export * from "./shared-beta-runtime";
+export * from "./supabase-auth-session-client";
 export * from "./supabase-shared-beta-post-rpc-client";
 export * from "./state-repository";
 
