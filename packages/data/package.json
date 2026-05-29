@@ -5,7 +5,8 @@
   "type": "module",
   "main": "./src/index.ts",
   "dependencies": {
-    "@mewri/core": "0.1.0"
+    "@mewri/core": "0.1.0",
+    "@supabase/supabase-js": "^2.49.8"
   }
 }
 
