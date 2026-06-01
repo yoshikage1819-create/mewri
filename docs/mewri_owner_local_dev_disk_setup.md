@@ -85,6 +85,10 @@ cd C:\dev\mewri\ph-cursor
 powershell -NoProfile -ExecutionPolicy Bypass -File tools\resume-local-dev-migration.ps1
 ```
 
+スクリプトは OneDrive 上の古い `ph-cursor` を **Windows が知っている「ドキュメント」フォルダ**
+から自動で探します（日本語パスをファイルに直接書かないので文字化けしません）。
+見つからなくても **C:\dev だけの処理は続行** されます。
+
 `npm install` だけ別に実行する場合:
 
 ```powershell
