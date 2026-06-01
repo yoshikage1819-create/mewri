@@ -9,7 +9,10 @@ import {
   calcReadinessPercent,
   escapeSvgText,
   formatFullDate,
+  formatPostSubmitSuccessMessage,
   formatRemainingToday,
+  formatZineGenerateBlockedHint,
+  formatZineRemainingHeadline,
   LOCAL_DEMO_RESET_CONFIRM_MESSAGE,
   scrollToElementById
 } from "./local-demo-ui";
@@ -156,7 +159,7 @@ export default function HomePage() {
     setSelectedThemeId(todayThemeId);
     setPostListMode("all");
     setZineGenerateNotice("");
-    setPostSubmitNotice(`投稿しました。進行 ${nextCyclePostCount}/${targetPostCount}`);
+    setPostSubmitNotice(formatPostSubmitSuccessMessage(nextCyclePostCount, targetPostCount));
   }
 
   function handleGenerateZine() {
@@ -310,9 +313,7 @@ export default function HomePage() {
                   <span className="ctaMeta">{formatRemainingToday()}</span>
                 </a>
 
-                {cyclePosts.length > 0 && (
-                  <ActiveZineProgressCard postCount={cyclePosts.length} targetPostCount={targetPostCount} />
-                )}
+                <ActiveZineProgressCard postCount={cyclePosts.length} targetPostCount={targetPostCount} />
 
                 <form id="post-form" className="postForm editorialForm quickPostForm" onSubmit={handleSubmitPost}>
                   <label className="photoUpload">
@@ -615,11 +616,13 @@ function ActiveZineProgressCard({
   targetPostCount: number;
 }) {
   const remainingPosts = Math.max(0, targetPostCount - postCount);
+  const headline =
+    postCount === 0 ? "最初の写真を投稿して、このZINEを始めましょう" : formatZineRemainingHeadline(remainingPosts);
 
   return (
     <section className="activeProgressCard" aria-label="参加中ZINEの進行">
       <p>
-        <strong>{remainingPosts === 0 ? "ZINEを作れます" : `あと${remainingPosts}枚でZINEを作れます`}</strong>
+        <strong>{headline}</strong>
         <span>{postCount}/{targetPostCount}</span>
       </p>
     </section>
@@ -648,6 +651,7 @@ function CycleProgressCard({
   const postedThemeCount = themes.filter((theme) => posts.some((post) => post.themeId === theme.id)).length;
   const remainingPosts = Math.max(0, targetPostCount - totalPostCount);
   const readinessPercent = calcReadinessPercent(totalPostCount, targetPostCount);
+  const generateBlockedHint = formatZineGenerateBlockedHint(remainingPosts, zineReady);
 
   return (
     <section className="cycleCard">
@@ -674,16 +678,26 @@ function CycleProgressCard({
         })}
       </div>
       <div className="cycleProgressSummary">
-        <p>{zineReady ? "ZINEを作れる枚数が集まりました" : `あと${remainingPosts}枚でZINEを作れます`}</p>
+        <p>{zineReady ? "ZINEを作れる枚数が集まりました" : formatZineRemainingHeadline(remainingPosts)}</p>
         <div className="progressTrack" role="progressbar" aria-label="ZINEの完成進捗" aria-valuemin={0} aria-valuemax={100} aria-valuenow={readinessPercent}>
           <span style={{ width: `${readinessPercent}%` }} />
         </div>
         <small>{totalPostCount}/{targetPostCount}枚</small>
       </div>
       <div className="cycleGenerate">
-        <button type="button" disabled={!zineReady} onClick={onGenerateZine}>
+        <button
+          type="button"
+          disabled={!zineReady}
+          aria-describedby={generateBlockedHint ? "zine-generate-hint" : undefined}
+          onClick={onGenerateZine}
+        >
           ZINEを作る
         </button>
+        {generateBlockedHint && (
+          <p className="hintText" id="zine-generate-hint">
+            {generateBlockedHint}
+          </p>
+        )}
       </div>
     </section>
   );

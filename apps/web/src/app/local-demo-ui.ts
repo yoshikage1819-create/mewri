@@ -26,6 +26,19 @@ export function calcReadinessPercent(current: number, target: number): number {
   return Math.min(100, Math.round((current / target) * 100));
 }
 
+export function formatZineRemainingHeadline(remainingPosts: number): string {
+  return remainingPosts === 0 ? "ZINEを作れます" : `あと${remainingPosts}枚でZINEを作れます`;
+}
+
+export function formatZineGenerateBlockedHint(remainingPosts: number, zineReady: boolean): string | null {
+  if (zineReady || remainingPosts <= 0) return null;
+  return `あと${remainingPosts}枚投稿すると「ZINEを作る」が使えるようになります。`;
+}
+
+export function formatPostSubmitSuccessMessage(postCount: number, targetPostCount: number): string {
+  return `投稿しました。進行 ${postCount}/${targetPostCount}`;
+}
+
 export function formatRemainingToday(now: Date = new Date()): string {
   const end = new Date(now);
   end.setHours(23, 59, 59, 999);

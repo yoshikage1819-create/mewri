@@ -5,7 +5,10 @@ import {
   calcReadinessPercent,
   escapeSvgText,
   formatFullDate,
+  formatPostSubmitSuccessMessage,
   formatRemainingToday,
+  formatZineGenerateBlockedHint,
+  formatZineRemainingHeadline,
   resolveScrollBehavior
 } from "./local-demo-ui";
 
@@ -37,6 +40,29 @@ describe("buildGenerateZineConfirmMessage", () => {
 describe("formatFullDate", () => {
   it("formats a date in Japanese locale with the year visible", () => {
     expect(formatFullDate(new Date(2026, 5, 1))).toContain("2026");
+  });
+});
+
+describe("formatZineRemainingHeadline", () => {
+  it("switches to ready copy when no posts remain", () => {
+    expect(formatZineRemainingHeadline(0)).toBe("ZINEを作れます");
+    expect(formatZineRemainingHeadline(2)).toBe("あと2枚でZINEを作れます");
+  });
+});
+
+describe("formatZineGenerateBlockedHint", () => {
+  it("returns null when ZINE can be generated", () => {
+    expect(formatZineGenerateBlockedHint(0, true)).toBeNull();
+  });
+
+  it("explains how many posts are still needed", () => {
+    expect(formatZineGenerateBlockedHint(3, false)).toContain("あと3枚");
+  });
+});
+
+describe("formatPostSubmitSuccessMessage", () => {
+  it("includes progress counts", () => {
+    expect(formatPostSubmitSuccessMessage(2, 6)).toBe("投稿しました。進行 2/6");
   });
 });
 

@@ -376,4 +376,12 @@ supabase       将来適用する migration 草案
 ### Owner next (no Codex required)
 
 - Keep using `C:\dev\mewri\ph-cursor` in Cursor; do not reopen deleted OneDrive `ph-cursor`.
-- Wait for Codex review before merging PR #1.
+- Wait for Codex review before merging PR #1 (merge deferred while Codex usage resets).
+
+## 2026-06-01 local demo progress copy slice (Cursor fallback, pre-merge)
+
+- Shared ZINE progress copy helpers in `local-demo-ui.ts`
+  (`formatZineRemainingHeadline`, `formatZineGenerateBlockedHint`, `formatPostSubmitSuccessMessage`).
+- Show the progress card even before the first post, with a first-post encouragement line.
+- Disabled「ZINEを作る」button now has an owner-facing hint via `aria-describedby`.
+- No auth, persistence, shared-beta, migration, or env changes.
