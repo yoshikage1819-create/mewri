@@ -77,10 +77,19 @@ OneDrive が「クラウドから大量削除」と聞いてきた場合:
 
 ### 再開用スクリプト（推奨）
 
-リポジトリルートで:
+**Windows の PowerShell を Cursor の外で開き**、次を実行してください
+（Cursor 内のエージェントは 3〜5 分で長い処理が打ち切られるため）:
 
 ```powershell
+cd C:\dev\mewri\ph-cursor
 powershell -NoProfile -ExecutionPolicy Bypass -File tools\resume-local-dev-migration.ps1
+```
+
+`npm install` だけ別に実行する場合:
+
+```powershell
+cd C:\dev\mewri\ph-cursor
+npm.cmd install
 ```
 
 ## 採用しないこと（セキュリティ低下）
