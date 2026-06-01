@@ -339,3 +339,9 @@ supabase       将来適用する migration 草案
 - 生成後はステータス表示と `#generated-zine` へのスムーズスクロール。
 - モバイル幅（759px以下）の余白を投稿フォーム・ZINE生成ブロックで調整。
 - No auth, persistence, shared-beta, migration, or env changes.
+
+## 2026-06-01 local demo navigation slice (Cursor fallback)
+
+- Skip link to main content, clearer header button labels, sample-post bulk-add confirmation.
+- Scroll-to-ZINE respects `prefers-reduced-motion`; page metadata title/description in Japanese.
+- No auth, persistence, shared-beta, migration, or env changes.

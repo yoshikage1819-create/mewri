@@ -4,11 +4,14 @@ import { canGenerateZine, type MewriState, type Post, type Theme } from "@mewri/
 import { createBrowserLocalMewriAppService, createEvent, createPost, type MewriAppService } from "@mewri/data";
 import { useEffect, useMemo, useState } from "react";
 import {
+  buildAddSamplePostsConfirmMessage,
   buildGenerateZineConfirmMessage,
   calcReadinessPercent,
   escapeSvgText,
   formatFullDate,
-  formatRemainingToday
+  formatRemainingToday,
+  LOCAL_DEMO_RESET_CONFIRM_MESSAGE,
+  scrollToElementById
 } from "./local-demo-ui";
 
 const appService: MewriAppService = createBrowserLocalMewriAppService();
@@ -152,6 +155,7 @@ export default function HomePage() {
     setImageNotice("");
     setSelectedThemeId(todayThemeId);
     setPostListMode("all");
+    setZineGenerateNotice("");
     setPostSubmitNotice(`投稿しました。進行 ${nextCyclePostCount}/${targetPostCount}`);
   }
 
@@ -173,13 +177,11 @@ export default function HomePage() {
       })
     );
     setZineGenerateNotice("ZINEを生成しました。下のプレビューをご覧ください。");
-    window.requestAnimationFrame(() => {
-      document.getElementById("generated-zine")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
+    window.requestAnimationFrame(() => scrollToElementById("generated-zine"));
   }
 
   function handleReset() {
-    if (!window.confirm("デモデータを初期状態に戻します。よろしいですか？")) return;
+    if (!window.confirm(LOCAL_DEMO_RESET_CONFIRM_MESSAGE)) return;
 
     const nextState = appService.demo.reset();
     setState(nextState);
@@ -195,6 +197,8 @@ export default function HomePage() {
 
   function addSamplePosts() {
     if (!state || !activeGroup || !activeUser) return;
+    if (!window.confirm(buildAddSamplePostsConfirmMessage(visibleZineThemes.length))) return;
+
     const now = new Date();
     const samples = visibleZineThemes.flatMap((theme, themeIndex) =>
       [0, 1].map((itemIndex) =>
@@ -251,6 +255,9 @@ export default function HomePage() {
 
   return (
     <main className="shell">
+      <a className="skipLink" href="#active-zine">
+        メインコンテンツへスキップ
+      </a>
       <header className="masthead" role="banner">
         <div className="mastLeft">
           <p className="kicker">{activeGroup.name}</p>
@@ -260,10 +267,15 @@ export default function HomePage() {
           </div>
         </div>
         <div className="mastRight">
-          <button className="ghostButton compactOnly" type="button" onClick={addSamplePosts}>
+          <button
+            className="ghostButton compactOnly"
+            type="button"
+            aria-label="各テーマにサンプル投稿を追加"
+            onClick={addSamplePosts}
+          >
             サンプル投入
           </button>
-          <button className="ghostButton" type="button" onClick={handleReset}>
+          <button className="ghostButton" type="button" aria-label="デモを初期状態に戻す" onClick={handleReset}>
             リセット
           </button>
         </div>

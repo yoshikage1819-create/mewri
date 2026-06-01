@@ -1,3 +1,10 @@
+export const LOCAL_DEMO_RESET_CONFIRM_MESSAGE = "デモデータを初期状態に戻します。よろしいですか？";
+
+export function buildAddSamplePostsConfirmMessage(themeCount: number): string {
+  const postCount = Math.max(0, themeCount) * 2;
+  return `各テーマにサンプル投稿を2件ずつ追加します（合計${postCount}件）。よろしいですか？`;
+}
+
 export function buildGenerateZineConfirmMessage(cycleTitle: string, replacesExisting = false): string {
   if (replacesExisting) {
     return `「${cycleTitle}」のZINEを作り直します。いま表示中のZINEは置き換わります。よろしいですか？`;
@@ -27,6 +34,24 @@ export function formatRemainingToday(now: Date = new Date()): string {
   const minutes = Math.floor((ms % 3600000) / 60000);
   if (hours <= 0) return `残り${minutes}分`;
   return `残り${hours}時間${minutes}分`;
+}
+
+export function resolveScrollBehavior(prefersReducedMotion: boolean): ScrollBehavior {
+  return prefersReducedMotion ? "auto" : "smooth";
+}
+
+export function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+export function scrollToElementById(elementId: string): void {
+  const target = document.getElementById(elementId);
+  if (!target) return;
+  target.scrollIntoView({
+    behavior: resolveScrollBehavior(prefersReducedMotion()),
+    block: "start"
+  });
 }
 
 export function escapeSvgText(value: string): string {

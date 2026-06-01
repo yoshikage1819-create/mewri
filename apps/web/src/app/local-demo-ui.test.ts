@@ -1,11 +1,26 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildAddSamplePostsConfirmMessage,
   buildGenerateZineConfirmMessage,
   calcReadinessPercent,
   escapeSvgText,
   formatFullDate,
-  formatRemainingToday
+  formatRemainingToday,
+  resolveScrollBehavior
 } from "./local-demo-ui";
+
+describe("buildAddSamplePostsConfirmMessage", () => {
+  it("includes the total sample post count", () => {
+    expect(buildAddSamplePostsConfirmMessage(3)).toContain("合計6件");
+  });
+});
+
+describe("resolveScrollBehavior", () => {
+  it("uses instant scroll when reduced motion is preferred", () => {
+    expect(resolveScrollBehavior(true)).toBe("auto");
+    expect(resolveScrollBehavior(false)).toBe("smooth");
+  });
+});
 
 describe("buildGenerateZineConfirmMessage", () => {
   it("asks before first-time generation", () => {
