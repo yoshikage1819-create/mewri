@@ -1,6 +1,6 @@
 # Mewri 現在のプロジェクト概要 - ChatGPT 引き継ぎ用
 
-更新日: 2026-05-29
+更新日: 2026-06-01
 
 ## プロダクト概要
 
@@ -315,3 +315,13 @@ supabase       将来適用する migration 草案
 - Cursor must stop and queue work for Codex review if the task involves auth, RLS,
   Storage policy, server route security, migrations, secrets, shared mode, production,
   deploy, real user communication, merge to `main`, or push to `main`.
+
+## 2026-06-01 local demo UI polish slice (Cursor fallback)
+
+- Extracted local-demo pure helpers to `apps/web/src/app/local-demo-ui.ts`
+  (`calcReadinessPercent`, `formatRemainingToday`, `escapeSvgText`) with unit tests.
+- Local demo home: owner-facing demo notice copy (no `localStorage` jargon), `aria-live`
+  on photo/post status messages, `aria-current` on bottom section nav links.
+- No auth, persistence, shared-beta route, migration, env, or shared mode changes.
+- Codex should review this slice only for accidental coupling to shared-beta paths;
+  no security-sensitive code was touched.

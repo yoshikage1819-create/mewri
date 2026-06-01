@@ -3,6 +3,7 @@
 import { canGenerateZine, type MewriState, type Post, type Theme } from "@mewri/core";
 import { createBrowserLocalMewriAppService, createEvent, createPost, type MewriAppService } from "@mewri/data";
 import { useEffect, useMemo, useState } from "react";
+import { calcReadinessPercent, escapeSvgText, formatRemainingToday } from "./local-demo-ui";
 
 const appService: MewriAppService = createBrowserLocalMewriAppService();
 
@@ -251,10 +252,10 @@ export default function HomePage() {
         </div>
       </header>
 
-      <aside className="demoNotice" aria-label="beta notice">
+      <aside className="demoNotice" aria-label="デモの説明">
         <p>
-          <strong>β / 端末内のみ</strong>
-          保存先: このブラウザのlocalStorage
+          <strong>デモ（この端末だけ）</strong>
+          写真と投稿はこのブラウザにだけ保存されます。別の端末や他の人とは共有されません。
         </p>
       </aside>
 
@@ -290,7 +291,11 @@ export default function HomePage() {
                     <small>スマホやPCから、今日の1枚を選択</small>
                     <input className="fileInput" type="file" accept="image/*" onChange={handleSelectFile} />
                   </label>
-                  {imageNotice && <p className="imageNotice">{imageNotice}</p>}
+                  {imageNotice && (
+                    <p className="imageNotice" role="status" aria-live="polite">
+                      {imageNotice}
+                    </p>
+                  )}
 
                   {imageUrl && (
                     <div className="localPreview">
@@ -317,7 +322,11 @@ export default function HomePage() {
                     <textarea value={caption} onChange={(event) => setCaption(event.target.value)} placeholder="ひとこと" />
                   </label>
 
-                  {postSubmitNotice && <p className="postSubmitNotice">{postSubmitNotice}</p>}
+                  {postSubmitNotice && (
+                    <p className="postSubmitNotice" role="status" aria-live="polite">
+                      {postSubmitNotice}
+                    </p>
+                  )}
 
                   <div className="formActions editorialActions">
                     <button className="submitButton" type="submit" disabled={!imageUrl || !activeTheme?.id}>
@@ -497,10 +506,18 @@ export default function HomePage() {
       </section>
 
       <nav className="bottomNav" aria-label="セクションナビ">
-        <a className={activeSection === "active" ? "active" : ""} href="#active-zine">
+        <a
+          className={activeSection === "active" ? "active" : ""}
+          href="#active-zine"
+          aria-current={activeSection === "active" ? "location" : undefined}
+        >
           参加中
         </a>
-        <a className={activeSection === "posts" ? "active" : ""} href="#zine-contents">
+        <a
+          className={activeSection === "posts" ? "active" : ""}
+          href="#zine-contents"
+          aria-current={activeSection === "posts" ? "location" : undefined}
+        >
           中身
         </a>
       </nav>
@@ -678,10 +695,6 @@ function createSampleImage(title: string, themeIndex: number, itemIndex: number)
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
-function escapeSvgText(value: string): string {
-  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&apos;");
-}
-
 function optimizeLocalImage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const sourceUrl = URL.createObjectURL(file);
@@ -717,19 +730,4 @@ function optimizeLocalImage(file: File): Promise<string> {
 
 function formatFullDate(date: Date): string {
   return date.toLocaleDateString("ja-JP", { weekday: "short", month: "short", day: "2-digit", year: "numeric" });
-}
-
-function formatRemainingToday(now: Date = new Date()): string {
-  const end = new Date(now);
-  end.setHours(23, 59, 59, 999);
-  const ms = Math.max(0, end.getTime() - now.getTime());
-  const hours = Math.floor(ms / 3600000);
-  const minutes = Math.floor((ms % 3600000) / 60000);
-  if (hours <= 0) return `残り${minutes}分`;
-  return `残り${hours}時間${minutes}分`;
-}
-
-function calcReadinessPercent(current: number, target: number): number {
-  if (target <= 0) return 0;
-  return Math.min(100, Math.round((current / target) * 100));
 }
