@@ -325,3 +325,10 @@ supabase       将来適用する migration 草案
 - No auth, persistence, shared-beta route, migration, env, or shared mode changes.
 - Codex should review this slice only for accidental coupling to shared-beta paths;
   no security-sensitive code was touched.
+
+## 2026-06-01 local demo safety and focus slice (Cursor fallback)
+
+- Commit `1d3889f`: local demo notice, `aria-live` / `aria-current`, helper extraction.
+- Added `formatFullDate` to `local-demo-ui.ts`, reset confirmation dialog, load-error
+  `role="alert"`, and global `:focus-visible` outlines for keyboard navigation.
+- No auth, persistence, shared-beta, migration, or env changes.

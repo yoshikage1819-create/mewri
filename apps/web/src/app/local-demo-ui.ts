@@ -1,3 +1,12 @@
+export function formatFullDate(date: Date): string {
+  return date.toLocaleDateString("ja-JP", {
+    weekday: "short",
+    month: "short",
+    day: "2-digit",
+    year: "numeric"
+  });
+}
+
 export function calcReadinessPercent(current: number, target: number): number {
   if (target <= 0) return 0;
   return Math.min(100, Math.round((current / target) * 100));

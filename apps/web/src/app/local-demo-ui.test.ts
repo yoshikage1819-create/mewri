@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { calcReadinessPercent, escapeSvgText, formatRemainingToday } from "./local-demo-ui";
+import { calcReadinessPercent, escapeSvgText, formatFullDate, formatRemainingToday } from "./local-demo-ui";
+
+describe("formatFullDate", () => {
+  it("formats a date in Japanese locale with the year visible", () => {
+    expect(formatFullDate(new Date(2026, 5, 1))).toContain("2026");
+  });
+});
 
 describe("calcReadinessPercent", () => {
   it("returns 0 when target is zero or negative", () => {

@@ -3,7 +3,7 @@
 import { canGenerateZine, type MewriState, type Post, type Theme } from "@mewri/core";
 import { createBrowserLocalMewriAppService, createEvent, createPost, type MewriAppService } from "@mewri/data";
 import { useEffect, useMemo, useState } from "react";
-import { calcReadinessPercent, escapeSvgText, formatRemainingToday } from "./local-demo-ui";
+import { calcReadinessPercent, escapeSvgText, formatFullDate, formatRemainingToday } from "./local-demo-ui";
 
 const appService: MewriAppService = createBrowserLocalMewriAppService();
 
@@ -167,6 +167,8 @@ export default function HomePage() {
   }
 
   function handleReset() {
+    if (!window.confirm("デモデータを初期状態に戻します。よろしいですか？")) return;
+
     const nextState = appService.demo.reset();
     setState(nextState);
     setSelectedThemeId(nextState.themes.find((theme) => theme.status === "active")?.id ?? nextState.themes[0]?.id ?? "");
@@ -226,7 +228,9 @@ export default function HomePage() {
         <section className="loadPanel">
           <p className="kicker">Mewri MVP</p>
           <h1>読み込み中</h1>
-          <p>{loadNotice || "ローカル状態を読み込んでいます。"}</p>
+          <p role={loadNotice ? "alert" : "status"} aria-live={loadNotice ? "assertive" : "polite"}>
+            {loadNotice || "ローカル状態を読み込んでいます。"}
+          </p>
         </section>
       </main>
     );
@@ -726,8 +730,4 @@ function optimizeLocalImage(file: File): Promise<string> {
     };
     image.src = sourceUrl;
   });
-}
-
-function formatFullDate(date: Date): string {
-  return date.toLocaleDateString("ja-JP", { weekday: "short", month: "short", day: "2-digit", year: "numeric" });
 }
