@@ -52,12 +52,16 @@ describe("shared beta post server dependency factory", () => {
   it("rejects missing or invalid sessions before image upload and post creation", async () => {
     const uploadObject = vi.fn();
     const rpc = vi.fn();
+    const imageStorageClientFactory = vi.fn(() => ({ uploadObject }));
+    const postGatewayClientFactory = vi.fn(() => ({ rpc }));
     const handler = createSharedBetaPostRouteHandler(
       createSharedBetaPostServerDependenciesFromEnvironment(SHARED_ENVIRONMENT, {
         ...makeCompleteOptions({
           authClient: { getUser: vi.fn(async () => ({ error: new Error("invalid token") })) },
-          imageStorageClient: { uploadObject },
-          postGatewayClient: { rpc }
+          imageStorageClient: undefined,
+          imageStorageClientFactory,
+          postGatewayClient: undefined,
+          postGatewayClientFactory
         })
       })
     );
@@ -67,6 +71,8 @@ describe("shared beta post server dependency factory", () => {
 
     expect(response.status).toBe(401);
     expect(body).toMatchObject({ ok: false, error: { code: "authentication_required" } });
+    expect(imageStorageClientFactory).not.toHaveBeenCalled();
+    expect(postGatewayClientFactory).not.toHaveBeenCalled();
     expect(uploadObject).not.toHaveBeenCalled();
     expect(rpc).not.toHaveBeenCalled();
   });
@@ -93,6 +99,8 @@ describe("shared beta post server dependency factory", () => {
   it("does not upload before membership and active-theme authorization passes", async () => {
     const uploadObject = vi.fn();
     const rpc = vi.fn();
+    const imageStorageClientFactory = vi.fn(() => ({ uploadObject }));
+    const postGatewayClientFactory = vi.fn(() => ({ rpc }));
     const resolveImageFile = vi.fn(async () => makeFile({ name: "photo.webp", type: "image/webp", size: 12 }));
     const otherGroup = makeOtherGroup();
     const otherTheme = makeOtherTheme(otherGroup);
@@ -105,8 +113,10 @@ describe("shared beta post server dependency factory", () => {
             groups: [...seedState.groups, otherGroup],
             themes: [...seedState.themes, otherTheme]
           }),
-          imageStorageClient: { uploadObject },
-          postGatewayClient: { rpc },
+          imageStorageClient: undefined,
+          imageStorageClientFactory,
+          postGatewayClient: undefined,
+          postGatewayClientFactory,
           resolveImageFile
         })
       })
@@ -128,6 +138,8 @@ describe("shared beta post server dependency factory", () => {
     expect(response.status).toBe(403);
     expect(body).toMatchObject({ ok: false, error: { code: "validated_image_required" } });
     expect(resolveImageFile).not.toHaveBeenCalled();
+    expect(imageStorageClientFactory).not.toHaveBeenCalled();
+    expect(postGatewayClientFactory).not.toHaveBeenCalled();
     expect(uploadObject).not.toHaveBeenCalled();
     expect(rpc).not.toHaveBeenCalled();
   });
@@ -192,6 +204,48 @@ describe("shared beta post server dependency factory", () => {
       p_image_path: "post-images/group_first/user_demo/photo.webp",
       p_caption: "shared beta post"
     });
+  });
+
+  it("creates member-scoped storage and RPC clients from the request access token", async () => {
+    const uploadObject = vi.fn(async () => ({ ok: true as const }));
+    const rpc = vi.fn(async () => ({
+      error: null,
+      data: [
+        {
+          id: "post_shared_beta_created",
+          user_id: "user_demo",
+          group_id: "group_first",
+          theme_id: "theme_cycle_group_first_2026-05-20_1",
+          image_url: "post-images/group_first/user_demo/photo.webp",
+          caption: "shared beta post",
+          visibility: "group_only" as const,
+          created_at: "2026-05-20T09:00:00.000Z",
+          updated_at: "2026-05-20T09:00:00.000Z"
+        }
+      ]
+    }));
+    const imageStorageClientFactory = vi.fn(() => ({ uploadObject }));
+    const postGatewayClientFactory = vi.fn(() => ({ rpc }));
+    const handler = createSharedBetaPostRouteHandler(
+      createSharedBetaPostServerDependenciesFromEnvironment(SHARED_ENVIRONMENT, {
+        ...makeCompleteOptions({
+          imageStorageClient: undefined,
+          imageStorageClientFactory,
+          postGatewayClient: undefined,
+          postGatewayClientFactory
+        })
+      })
+    );
+
+    const response = await handler(makeJsonRequest({ authorization: "Bearer member_request_token" }));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({ ok: true, post: { id: "post_shared_beta_created" } });
+    expect(imageStorageClientFactory).toHaveBeenCalledWith({ accessToken: "member_request_token" });
+    expect(postGatewayClientFactory).toHaveBeenCalledWith({ accessToken: "member_request_token" });
+    expect(uploadObject).toHaveBeenCalledOnce();
+    expect(rpc).toHaveBeenCalledOnce();
   });
 });
 

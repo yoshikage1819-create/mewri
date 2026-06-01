@@ -2,6 +2,7 @@ import type { ID } from "@mewri/core";
 import type { SharedBetaPostRouteBoundary } from "@mewri/data";
 
 export interface SharedBetaPostRouteDependencies {
+  isRouteAvailable?(): boolean;
   resolveAuthenticatedUserId(request: Request): Promise<ID | undefined>;
   resolveValidatedImagePath(input: {
     request: Request;
@@ -13,7 +14,16 @@ export interface SharedBetaPostRouteDependencies {
       caption?: string;
     };
   }): Promise<string | undefined>;
-  resolveBoundary(): SharedBetaPostRouteBoundary | undefined;
+  resolveBoundary(input?: {
+    request: Request;
+    authenticatedUserId: ID;
+    post: {
+      userId: ID;
+      groupId: ID;
+      themeId: ID;
+      caption?: string;
+    };
+  }): SharedBetaPostRouteBoundary | undefined;
 }
 
 /**
@@ -21,6 +31,9 @@ export interface SharedBetaPostRouteDependencies {
  * wiring is implemented. This keeps local demo behavior untouched.
  */
 export const defaultSharedBetaPostRouteDependencies: SharedBetaPostRouteDependencies = {
+  isRouteAvailable() {
+    return false;
+  },
   async resolveAuthenticatedUserId() {
     return undefined;
   },
@@ -36,8 +49,8 @@ export function createSharedBetaPostRouteHandler(
   dependencies: SharedBetaPostRouteDependencies = defaultSharedBetaPostRouteDependencies
 ): (request: Request) => Promise<Response> {
   return async function POST(request: Request): Promise<Response> {
-    const boundary = dependencies.resolveBoundary();
-    if (!boundary) {
+    const routeAvailable = dependencies.isRouteAvailable?.() ?? Boolean(dependencies.resolveBoundary());
+    if (!routeAvailable) {
       return Response.json(
         {
           ok: false,
@@ -109,6 +122,25 @@ export function createSharedBetaPostRouteHandler(
           }
         },
         { status: 403 }
+      );
+    }
+
+    const boundary = dependencies.resolveBoundary({
+      request,
+      authenticatedUserId,
+      post: parsedBody.value
+    });
+    if (!boundary) {
+      return Response.json(
+        {
+          ok: false,
+          error: {
+            code: "shared_beta_route_unavailable",
+            message:
+              "Shared beta post route is not enabled. Authenticated server adapter wiring is required before rollout."
+          }
+        },
+        { status: 503 }
       );
     }
 

@@ -292,5 +292,16 @@ supabase       将来適用する migration 草案
   production, deploys, or real user communication.
 - Validation: `npm.cmd run typecheck` passed; `npm.cmd test` passed with 128 tests;
   `npm.cmd run build` passed.
-- Next gate (C-3): wire auth + RPC + image storage + repository into
-  `createSharedBetaPostServerDependenciesFromEnvironment` after explicit env-wiring approval.
+- Follow-up C-3 preparation updated the server route dependency shape so the post boundary
+  can be resolved per request. `createSharedBetaPostServerDependenciesFromEnvironment`
+  now supports request-scoped Storage and RPC client factories that receive the member
+  access token from the same request after auth/identity checks. This avoids reusing fixed
+  member clients across requests.
+- No real env values, migration, shared mode, production deploy, or live Supabase connection
+  were added. The default route still fails closed unless complete explicit wiring is
+  injected.
+- Validation after C-3 preparation: `npm.cmd run typecheck` passed; `npm.cmd test` passed
+  with 129 tests; `npm.cmd run build` passed.
+- Next gate (C-3 continued): create the real server-only environment wiring for auth,
+  request-scoped RPC, request-scoped image storage, repository, and image extraction only
+  after explicit staging env-wiring approval.

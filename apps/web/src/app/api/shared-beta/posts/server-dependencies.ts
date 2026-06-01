@@ -7,6 +7,7 @@ import {
   type MewriRuntimeEnvironment
 } from "@mewri/data";
 import {
+  resolveAccessTokenFromRequest,
   resolveSupabaseAuthenticatedUserIdFromRequest,
   type SupabaseAuthSessionClient
 } from "@mewri/data/src/supabase-auth-session";
@@ -28,7 +29,9 @@ import {
 export interface SharedBetaPostServerDependencyFactoryOptions {
   authClient?: SupabaseAuthSessionClient;
   imageStorageClient?: SharedBetaPostImageStorageClient;
+  imageStorageClientFactory?: (input: { accessToken: string }) => SharedBetaPostImageStorageClient;
   postGatewayClient?: SupabaseSharedBetaPostRpcClient;
+  postGatewayClientFactory?: (input: { accessToken: string }) => SupabaseSharedBetaPostRpcClient;
   repository?: MewriRepository;
   resolveImageFile?: (input: {
     request: Request;
@@ -54,8 +57,8 @@ export function createSharedBetaPostServerDependenciesFromEnvironment(
 
   if (
     !options.authClient ||
-    !options.imageStorageClient ||
-    !options.postGatewayClient ||
+    (!options.imageStorageClient && !options.imageStorageClientFactory) ||
+    (!options.postGatewayClient && !options.postGatewayClientFactory) ||
     !options.repository ||
     !options.resolveImageFile
   ) {
@@ -64,9 +67,11 @@ export function createSharedBetaPostServerDependenciesFromEnvironment(
 
   const postImageBucket = decision.config.postImageBucket || DEFAULT_POST_IMAGE_BUCKET;
   const validatedImagePaths = new Set<string>();
-  const postGateway = createSupabaseSharedBetaPostGateway(options.postGatewayClient);
 
   return {
+    isRouteAvailable() {
+      return true;
+    },
     async resolveAuthenticatedUserId(request) {
       return resolveSupabaseAuthenticatedUserIdFromRequest(request, options.authClient!);
     },
@@ -76,8 +81,14 @@ export function createSharedBetaPostServerDependenciesFromEnvironment(
       }
 
       const file = await options.resolveImageFile!(input);
+      const accessToken = resolveAccessTokenFromRequest(input.request);
+      const storage = resolveImageStorageClient(options, accessToken);
+      if (!storage) {
+        return undefined;
+      }
+
       const upload = await uploadSharedBetaPostImage({
-        storage: options.imageStorageClient!,
+        storage,
         bucket: postImageBucket,
         groupId: input.post.groupId,
         userId: input.authenticatedUserId,
@@ -92,7 +103,14 @@ export function createSharedBetaPostServerDependenciesFromEnvironment(
       validatedImagePaths.add(validatedImageKey(upload.imagePath, input.post.groupId, input.authenticatedUserId));
       return upload.imagePath;
     },
-    resolveBoundary() {
+    resolveBoundary(input) {
+      const accessToken = input ? resolveAccessTokenFromRequest(input.request) : undefined;
+      const postGatewayClient = resolvePostGatewayClient(options, accessToken);
+      if (!postGatewayClient) {
+        return undefined;
+      }
+
+      const postGateway = createSupabaseSharedBetaPostGateway(postGatewayClient);
       return createSharedBetaPostRouteBoundary({
         repository: options.repository!,
         postCommandService: postGateway,
@@ -112,6 +130,28 @@ export function createSharedBetaPostServerDependenciesFromEnvironment(
       });
     }
   };
+}
+
+function resolveImageStorageClient(
+  options: SharedBetaPostServerDependencyFactoryOptions,
+  accessToken: string | undefined
+): SharedBetaPostImageStorageClient | undefined {
+  if (options.imageStorageClient) {
+    return options.imageStorageClient;
+  }
+
+  return accessToken ? options.imageStorageClientFactory?.({ accessToken }) : undefined;
+}
+
+function resolvePostGatewayClient(
+  options: SharedBetaPostServerDependencyFactoryOptions,
+  accessToken: string | undefined
+): SupabaseSharedBetaPostRpcClient | undefined {
+  if (options.postGatewayClient) {
+    return options.postGatewayClient;
+  }
+
+  return accessToken ? options.postGatewayClientFactory?.({ accessToken }) : undefined;
 }
 
 function validatedImageKey(imagePath: string, groupId: ID, userId: ID): string {
