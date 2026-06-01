@@ -350,7 +350,30 @@ supabase       将来適用する migration 草案
 
 - Added `.onedriveignore` for `node_modules`, `.next`, and other regenerable artifacts.
 - Added `docs/mewri_owner_local_dev_disk_setup.md`.
-- Copied the repository to `C:\dev\mewri\ph-cursor` (without heavy folders).
-- Removed `node_modules` and `apps/web/.next` from the OneDrive copy to reduce sync load.
-- Next owner step: open `C:\dev\mewri\ph-cursor` in Cursor and run `npm.cmd install` there.
-- After confirming Git push, the OneDrive `ph-cursor` folder may be deleted.
+- Day-to-day Cursor worktree: `C:\dev\mewri\ph-cursor` (git worktree; main repo remains
+  `OneDrive\ドキュメント\ph` for Codex).
+- Added `tools/resume-local-dev-migration.ps1` (stops before `git restore` when the
+  worktree is dirty; see owner doc).
+- OneDrive `ドキュメント\ph-cursor` removed after C:\dev worktree registration was fixed.
+- Owner: open `C:\dev\mewri\ph-cursor` in Cursor; run `npm.cmd install` there if
+  `node_modules` is missing.
+
+## 2026-06-01 Cursor branch opened for review (PR #1)
+
+- Branch: `cursor/parallel-local-ui-docs` (pushed).
+- PR: https://github.com/yoshikage1819-create/mewri/pull/1
+- Scope on branch: local dev migration docs/script, local demo UI polish slices (no auth,
+  RLS, Storage policy, migrations, shared mode, deploy, or secrets).
+- Validation on branch tip: `npm.cmd run typecheck`, `npm.cmd test` (139 tests),
+  `npm.cmd run build`, `git diff --check`.
+
+### Codex next (when available)
+
+1. Review PR #1 diff; confirm no accidental shared-beta or security coupling.
+2. Merge to `main` only after approval (Cursor must not merge or push to `main`).
+3. Continue v0.10 foundation work from the `ph` worktree on `main` after merge.
+
+### Owner next (no Codex required)
+
+- Keep using `C:\dev\mewri\ph-cursor` in Cursor; do not reopen deleted OneDrive `ph-cursor`.
+- Wait for Codex review before merging PR #1.
