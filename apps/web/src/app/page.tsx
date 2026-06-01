@@ -3,7 +3,13 @@
 import { canGenerateZine, type MewriState, type Post, type Theme } from "@mewri/core";
 import { createBrowserLocalMewriAppService, createEvent, createPost, type MewriAppService } from "@mewri/data";
 import { useEffect, useMemo, useState } from "react";
-import { calcReadinessPercent, escapeSvgText, formatFullDate, formatRemainingToday } from "./local-demo-ui";
+import {
+  buildGenerateZineConfirmMessage,
+  calcReadinessPercent,
+  escapeSvgText,
+  formatFullDate,
+  formatRemainingToday
+} from "./local-demo-ui";
 
 const appService: MewriAppService = createBrowserLocalMewriAppService();
 
@@ -21,6 +27,7 @@ export default function HomePage() {
   const [showUrlFallback, setShowUrlFallback] = useState(false);
   const [postSubmitNotice, setPostSubmitNotice] = useState("");
   const [loadNotice, setLoadNotice] = useState("");
+  const [zineGenerateNotice, setZineGenerateNotice] = useState("");
   const [activeSection, setActiveSection] = useState<ActiveSection>("active");
 
   useEffect(() => {
@@ -150,6 +157,7 @@ export default function HomePage() {
 
   function handleGenerateZine() {
     if (!activeCycle || !activeGroup || !zineReady) return;
+    if (!window.confirm(buildGenerateZineConfirmMessage(activeCycle.title, Boolean(publishedZine)))) return;
 
     setState(
       appService.commands.publishZineForCycle({
@@ -164,6 +172,10 @@ export default function HomePage() {
         }
       })
     );
+    setZineGenerateNotice("ZINEを生成しました。下のプレビューをご覧ください。");
+    window.requestAnimationFrame(() => {
+      document.getElementById("generated-zine")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   }
 
   function handleReset() {
@@ -178,6 +190,7 @@ export default function HomePage() {
     setSelectedFileName("");
     setImageNotice("");
     setPostSubmitNotice("");
+    setZineGenerateNotice("");
   }
 
   function addSamplePosts() {
@@ -420,10 +433,15 @@ export default function HomePage() {
                 zineReady={zineReady}
                 onGenerateZine={handleGenerateZine}
               />
+              {zineGenerateNotice && (
+                <p className="zineGenerateNotice" role="status" aria-live="polite">
+                  {zineGenerateNotice}
+                </p>
+              )}
             </div>
 
             {publishedZine ? (
-              <section className="zineBook" aria-label="生成済みZINE">
+              <section className="zineBook" id="generated-zine" aria-label="生成済みZINE">
                 <article className="zineCover zinePaperPage coverPage">
                   <p className="kicker">COVER</p>
                   <h3>{publishedZine.title}</h3>

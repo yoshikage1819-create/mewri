@@ -950,6 +950,13 @@ a {
   padding: clamp(18px, 4vw, 28px);
 }
 
+.zineGenerateNotice {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
 .zineSubhead {
   display: grid;
   gap: 4px;
@@ -1451,7 +1458,24 @@ a {
 
 @media (max-width: 759px) {
   .shell {
-    padding-bottom: calc(36px + env(safe-area-inset-bottom, 0px));
+    padding: 18px 12px calc(28px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .demoNotice {
+    margin-top: 4px;
+  }
+
+  .quickPostForm {
+    padding: 12px;
+  }
+
+  .zineMakeBlock {
+    margin-top: 24px;
+    padding: 16px;
+  }
+
+  .zineGenerateNotice {
+    margin: 0;
   }
 
   .primaryCta {

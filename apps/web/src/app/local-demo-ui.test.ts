@@ -1,5 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { calcReadinessPercent, escapeSvgText, formatFullDate, formatRemainingToday } from "./local-demo-ui";
+import {
+  buildGenerateZineConfirmMessage,
+  calcReadinessPercent,
+  escapeSvgText,
+  formatFullDate,
+  formatRemainingToday
+} from "./local-demo-ui";
+
+describe("buildGenerateZineConfirmMessage", () => {
+  it("asks before first-time generation", () => {
+    expect(buildGenerateZineConfirmMessage("Issue 01")).toContain("Issue 01");
+    expect(buildGenerateZineConfirmMessage("Issue 01")).toContain("生成します");
+  });
+
+  it("warns when replacing an existing ZINE", () => {
+    expect(buildGenerateZineConfirmMessage("Issue 01", true)).toContain("作り直します");
+    expect(buildGenerateZineConfirmMessage("Issue 01", true)).toContain("置き換わります");
+  });
+});
 
 describe("formatFullDate", () => {
   it("formats a date in Japanese locale with the year visible", () => {

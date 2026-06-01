@@ -1,3 +1,10 @@
+export function buildGenerateZineConfirmMessage(cycleTitle: string, replacesExisting = false): string {
+  if (replacesExisting) {
+    return `「${cycleTitle}」のZINEを作り直します。いま表示中のZINEは置き換わります。よろしいですか？`;
+  }
+  return `「${cycleTitle}」のZINEを生成します。投稿から1冊にまとめます。よろしいですか？`;
+}
+
 export function formatFullDate(date: Date): string {
   return date.toLocaleDateString("ja-JP", {
     weekday: "short",

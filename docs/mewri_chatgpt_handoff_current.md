@@ -332,3 +332,10 @@ supabase       将来適用する migration 草案
 - Added `formatFullDate` to `local-demo-ui.ts`, reset confirmation dialog, load-error
   `role="alert"`, and global `:focus-visible` outlines for keyboard navigation.
 - No auth, persistence, shared-beta, migration, or env changes.
+
+## 2026-06-01 local demo ZINE generate slice (Cursor fallback)
+
+- ZINE生成前に確認ダイアログ（初回生成 / 作り直しで文言を切り替え）。
+- 生成後はステータス表示と `#generated-zine` へのスムーズスクロール。
+- モバイル幅（759px以下）の余白を投稿フォーム・ZINE生成ブロックで調整。
+- No auth, persistence, shared-beta, migration, or env changes.
