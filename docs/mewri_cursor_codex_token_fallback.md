@@ -13,10 +13,16 @@ to reset. It follows the research report's split:
 
 ## Safe Starting Point
 
-Use the dedicated Cursor worktree named:
+Use the dedicated Cursor worktree on a **local disk outside OneDrive**:
 
 ```text
-ph-cursor
+C:\dev\mewri\ph-cursor
+```
+
+Legacy path (do not use for new work; lighten or remove after migration):
+
+```text
+OneDrive\ドキュメント\ph-cursor
 ```
 
 Expected branch:
@@ -28,8 +34,10 @@ cursor/parallel-local-ui-docs
 Do not work in the Codex worktree at the same time:
 
 ```text
-ph
+C:\dev\mewri\ph
 ```
+
+(or legacy `OneDrive\ドキュメント\ph` if not migrated yet)
 
 ## What Cursor May Do During Codex Downtime
 

@@ -345,3 +345,12 @@ supabase       将来適用する migration 草案
 - Skip link to main content, clearer header button labels, sample-post bulk-add confirmation.
 - Scroll-to-ZINE respects `prefers-reduced-motion`; page metadata title/description in Japanese.
 - No auth, persistence, shared-beta, migration, or env changes.
+
+## 2026-06-01 local dev disk migration (owner PC performance)
+
+- Added `.onedriveignore` for `node_modules`, `.next`, and other regenerable artifacts.
+- Added `docs/mewri_owner_local_dev_disk_setup.md`.
+- Copied the repository to `C:\dev\mewri\ph-cursor` (without heavy folders).
+- Removed `node_modules` and `apps/web/.next` from the OneDrive copy to reduce sync load.
+- Next owner step: open `C:\dev\mewri\ph-cursor` in Cursor and run `npm.cmd install` there.
+- After confirming Git push, the OneDrive `ph-cursor` folder may be deleted.
