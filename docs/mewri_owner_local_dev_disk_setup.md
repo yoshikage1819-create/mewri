@@ -89,6 +89,20 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools\resume-local-dev-migra
 から自動で探します（日本語パスをファイルに直接書かないので文字化けしません）。
 見つからなくても **C:\dev だけの処理は続行** されます。
 
+#### 安全停止（未コミットの変更があるとき）
+
+`git restore .` の前に `git status --porcelain` で作業ツリーを確認します。
+**未コミットの変更や未追跡ファイルが 1 つでもある場合、スクリプトは停止します**
+（自動では元に戻しません）。Cursor で編集中の内容が消えるのを防ぐためです。
+
+表示される案内に従い、次のいずれかを済ませてから再実行してください:
+
+- コミットする（`git add` → `git commit`）
+- 一時退避する（`git stash push -m "resume migration"`）
+- Codex または Cursor に保存・整理を依頼する
+
+作業ツリーがクリーンなときだけ、`C:\dev` を HEAD に合わせて `npm install`（必要なら）まで進みます。
+
 `npm install` だけ別に実行する場合:
 
 ```powershell
