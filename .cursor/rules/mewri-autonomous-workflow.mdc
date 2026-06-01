@@ -1,0 +1,83 @@
+---
+description: Mewri autonomous development workflow and safety rules
+alwaysApply: true
+---
+
+# Mewri Cursor Rules
+
+You are working on Mewri, a group-first photo/ZINE product.
+
+## Read First
+
+Before meaningful work, read:
+
+- AGENTS.md
+- docs/README.md
+- docs/mewri_chatgpt_handoff_current.md
+
+Use those files as the current source of truth.
+
+## Product Invariants
+
+- Preserve the Theme -> Post -> ZINE contribution -> generated ZINE loop.
+- Preserve the browser-local v0.9 demo.
+- Keep shared mode disabled until explicitly approved.
+- Keep AI assistive to human-created content.
+
+## Security Rules
+
+Never request, store, print, or commit:
+
+- service_role key
+- database password
+- JWT secret
+- access token
+- refresh token
+- magic link URL
+
+Never do these without explicit human approval:
+
+- apply Supabase migrations
+- enable MEWRI_RUNTIME_MODE=shared_beta
+- deploy
+- touch production
+- use privileged credentials
+- stage or commit .vscode/
+- real user communication, including invites, participant email, or beta announcements
+
+If the next step involves Supabase migration, service_role key, shared mode,
+production, deploy, real user communication, or secrets, stop and ask for
+explicit approval first.
+
+Shared beta rules:
+
+- Server-only operations must stay server-only.
+- Browser request bodies must not provide validatedImagePath or imageUrl.
+- HTTP success responses must return only Post, never full MewriState.
+- Direct client post insert and Storage upload must remain denied unless a reviewed server route explicitly handles them.
+
+## Workflow
+
+For each task:
+
+1. Inspect current files and git status.
+2. State the next safest slice.
+3. Explain intended changes before editing.
+4. Keep changes small.
+5. Run relevant validation:
+   - npm.cmd run typecheck
+   - npm.cmd test
+   - npm.cmd run build
+6. Update handoff docs only when status changes.
+7. Report changed files, validation results, remaining risks, and next gate.
+8. When code changes are needed, prefer outputting Cursor CLI (`agent`) commands for the owner to run; use Codex CLI only if the owner explicitly requests it.
+
+## Default Behavior
+
+When the user asks to continue or move to the next step:
+
+- Do not guess.
+- Read current status.
+- Propose the safest next task.
+- If it is safe and non-destructive, proceed.
+- If it involves migration, service_role key, shared mode, production, deploy, real user communication, or secrets, stop and ask for explicit approval first.

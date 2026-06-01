@@ -5,6 +5,7 @@ import {
   resolveSharedBetaSupabasePostRpcEnvironment,
   resolveStagingSupabaseSharedBetaPostRpcEnvironment
 } from "./supabase-shared-beta-post-rpc-client";
+import { isPublicAnonKey, isValidSupabaseProjectUrl } from "./supabase-public-config";
 
 export type SupabaseAuthSessionEnvironment = SupabaseSharedBetaPostRpcEnvironment;
 
@@ -47,7 +48,9 @@ function assertAuthSessionEnvironment(config: SupabaseAuthSessionEnvironment): v
   }
 
   if (!isPublicAnonKey(config.anonKey)) {
-    throw new Error("Supabase auth session client requires the public anon key, not a service role key.");
+    throw new Error(
+      "Supabase auth session client requires a public anon or publishable key, not a service role or secret key."
+    );
   }
 }
 
@@ -59,17 +62,4 @@ function assertMemberAccessToken(accessToken: string): void {
   if (/service[_-]?role/i.test(accessToken)) {
     throw new Error("Supabase auth session client must not use a service role key as the access token.");
   }
-}
-
-function isValidSupabaseProjectUrl(projectUrl: string): boolean {
-  try {
-    const parsed = new URL(projectUrl);
-    return parsed.protocol === "https:" && parsed.hostname.endsWith(".supabase.co");
-  } catch {
-    return false;
-  }
-}
-
-function isPublicAnonKey(anonKey: string): boolean {
-  return anonKey.startsWith("eyJ");
 }

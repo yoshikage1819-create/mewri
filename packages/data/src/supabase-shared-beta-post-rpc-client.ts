@@ -6,6 +6,7 @@ import {
   CREATE_SHARED_BETA_POST_RPC,
   type SupabaseSharedBetaPostRpcClient
 } from "./supabase-shared-beta-post-gateway";
+import { isPublicAnonKey, isValidSupabaseProjectUrl } from "./supabase-public-config";
 
 export interface SupabaseSharedBetaPostRpcEnvironment {
   projectUrl: string;
@@ -109,7 +110,9 @@ function assertRpcClientInput(input: CreateSupabaseSharedBetaPostRpcClientInput)
   }
 
   if (!isPublicAnonKey(input.anonKey)) {
-    throw new Error("Shared beta RPC client requires the public anon key, not a service role key.");
+    throw new Error(
+      "Shared beta RPC client requires a public anon or publishable key, not a service role or secret key."
+    );
   }
 
   if (!input.accessToken.trim()) {
@@ -119,17 +122,4 @@ function assertRpcClientInput(input: CreateSupabaseSharedBetaPostRpcClientInput)
   if (/service[_-]?role/i.test(input.accessToken)) {
     throw new Error("Shared beta RPC client must not use a service role key as the access token.");
   }
-}
-
-function isValidSupabaseProjectUrl(projectUrl: string): boolean {
-  try {
-    const parsed = new URL(projectUrl);
-    return parsed.protocol === "https:" && parsed.hostname.endsWith(".supabase.co");
-  } catch {
-    return false;
-  }
-}
-
-function isPublicAnonKey(anonKey: string): boolean {
-  return anonKey.startsWith("eyJ");
 }

@@ -1,0 +1,65 @@
+---
+description: Owner-facing Japanese explanations and Cursor CLI command handoff
+alwaysApply: true
+---
+
+# Mewri Owner-Facing Workflow
+
+## Language And Reader
+
+- Respond to the owner in Japanese.
+- Assume the owner has almost no programming knowledge.
+- Avoid unexplained technical terms. If a term is necessary, explain it briefly.
+- Keep each next step small and concrete.
+
+## Progress Report Shape
+
+When reporting progress, use this order:
+
+1. Current state: what is working and what is not working yet.
+2. Next step: one safest next step.
+3. Owner check: what the owner must approve or check.
+4. Do not touch: production, secrets, shared mode, migrations, deploys, or real users.
+5. How to read the result: what success or failure will look like.
+
+## Cursor CLI Handoff
+
+When code work should be run by Cursor CLI, provide a copyable PowerShell command.
+Tell the owner to run it from the Mewri repository root.
+
+```powershell
+$prompt = @'
+Use $mewri-ship-beta.
+
+Goal:
+<short goal in Japanese or English>
+
+Context:
+- <current status>
+
+Constraints:
+- Do not touch production.
+- Do not use or ask for service_role key, database password, JWT secret, access token, refresh token, or magic link URL.
+- Do not apply migrations, enable shared mode, deploy, or contact real users unless the owner explicitly approves.
+- Preserve the browser-local v0.9 demo.
+- Keep trusted shared-beta operations server-only.
+
+Done when:
+- <acceptance condition>
+- npm.cmd run typecheck passes.
+- npm.cmd test passes.
+- npm.cmd run build passes when web/runtime behavior changes.
+- Report changed files, validation results, remaining risks, and the next gate.
+'@
+
+agent $prompt
+```
+
+Use interactive `agent` for sensitive or approval-heavy work. Do not use forced/non-interactive execution for migrations, secrets, shared mode, production, deploys, or real user communication.
+
+## When The Owner Asks To Continue
+
+- Read `AGENTS.md`, `docs/README.md`, `docs/mewri_chatgpt_handoff_current.md`, and `git status --short --branch`.
+- Propose the safest next task before editing.
+- If the task is safe and non-destructive, proceed.
+- If it involves migration, service_role key, shared mode, production, deploy, real user communication, or secrets, stop and ask for explicit approval first.

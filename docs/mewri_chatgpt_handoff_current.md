@@ -272,3 +272,25 @@ supabase       将来適用する migration 草案
 - Passing this verification does not enable closed beta or shared mode by itself.
 - Next gate: staging-only real adapter for `create_shared_beta_post` RPC, server-side
   image upload verification, and guarded `POST /api/shared-beta/posts` integration test.
+
+## 2026-05-29 shared-beta post image Storage client slice (C-2)
+
+- Added `packages/data/src/supabase-shared-beta-post-image-storage-client.ts`:
+  `createSupabaseSharedBetaPostImageStorageClient` implements
+  `SharedBetaPostImageStorageClient` via member JWT + public anon key (upload +
+  `objectExists` list lookup). Reuses staging/shared env resolvers from the RPC client.
+- No `POST /api/shared-beta/posts` env wiring, no shared mode, no Storage INSERT
+  migration, no deploy. Staging still has no client Storage upload policy (C5.2);
+  upload will fail at RLS until a future approved migration adds the server path policy.
+- Follow-up hardening removed the Storage client from the browser-used package root export
+  and tightened public Supabase key validation across auth/RPC/storage clients. Legacy
+  JWT anon keys require payload role `anon`; modern `sb_publishable_...` keys are allowed;
+  legacy `service_role` JWTs and modern `sb_secret_...` keys are rejected in the public
+  key slot.
+- Cursor owner rules were rewritten into readable ASCII instructions that tell Cursor to
+  answer the owner in Japanese and stop before migrations, secrets, shared mode,
+  production, deploys, or real user communication.
+- Validation: `npm.cmd run typecheck` passed; `npm.cmd test` passed with 128 tests;
+  `npm.cmd run build` passed.
+- Next gate (C-3): wire auth + RPC + image storage + repository into
+  `createSharedBetaPostServerDependenciesFromEnvironment` after explicit env-wiring approval.
