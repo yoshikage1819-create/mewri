@@ -65,6 +65,24 @@ OneDrive が「クラウドから大量削除」と聞いてきた場合:
 - 削除対象が **`node_modules` / `.next` だけ**なら、通常は問題ありません
 - **`apps` / `packages` / `docs` が含まれる**ならキャンセルしてください
 
+## なぜ Cursor の自動実行が止まって見えるか
+
+| 原因 | 説明 |
+| --- | --- |
+| **時間制限** | フォルダ全体のコピー（`robocopy`）や `npm install` は 5 分以上かかることがあり、エージェント側で中断される |
+| **OneDrive** | OneDrive 上のフォルダを丸ごとコピーすると、同期が絡み極端に遅くなる |
+| **UI 操作** | 作業フォルダの切り替えは Cursor の「フォルダを開く」が確実 |
+
+**対策:** 巨大フォルダの丸ごとコピーは使わない。Git で同じコミットを揃え、`C:\dev` だけで `npm install` する。
+
+### 再開用スクリプト（推奨）
+
+リポジトリルートで:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\resume-local-dev-migration.ps1
+```
+
 ## 採用しないこと（セキュリティ低下）
 
 - ウイルス対策の恒久的な除外
