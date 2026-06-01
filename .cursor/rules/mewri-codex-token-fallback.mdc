@@ -1,0 +1,76 @@
+---
+description: Safe Cursor fallback when Codex usage is exhausted
+alwaysApply: true
+---
+
+# Codex Usage Fallback
+
+Use this rule when the owner says Codex tokens, Codex usage, or Codex quota is exhausted.
+
+## Goal
+
+Keep useful progress moving in Cursor while waiting for Codex usage to reset, without weakening Mewri's closed shared beta safety boundaries.
+
+## Required Workspace
+
+Work only in the Cursor worktree unless the owner explicitly says otherwise:
+
+```text
+ph-cursor
+```
+
+Expected branch:
+
+```text
+cursor/parallel-local-ui-docs
+```
+
+Do not edit the main Codex worktree at the same time:
+
+```text
+ph
+```
+
+## Allowed While Codex Is Unavailable
+
+- Read code and docs.
+- Propose the next safe slice.
+- Improve owner-facing docs, setup notes, and handoff notes.
+- Make small UI copy/layout changes that do not touch auth, persistence, or shared data.
+- Add or improve tests for existing non-security behavior.
+- Run local validators:
+  - `npm.cmd run typecheck`
+  - `npm.cmd test`
+  - `npm.cmd run build`
+- Commit only to a `cursor/*` branch when the owner explicitly asks.
+- Prepare a Codex handoff that lists changed files, validations, risks, and review questions.
+
+## Stop And Wait For Codex
+
+Do not continue if the task involves:
+
+- Supabase migrations
+- auth/session logic
+- RLS policies
+- Storage policies or private image permissions
+- server route security
+- service_role key, database password, JWT secret, access token, refresh token, or magic link URL
+- `MEWRI_RUNTIME_MODE=shared_beta`
+- production
+- deploy
+- real participant communication
+- merge to `main`
+- push to `main`
+- final security approval
+
+If any of these appear, write a handoff for Codex instead of implementing.
+
+## Cursor Response Shape
+
+When continuing during Codex downtime, answer in Japanese:
+
+1. State that this is Codex-token fallback mode.
+2. State the current worktree and branch.
+3. State the one low-risk task being done.
+4. State what will be left for Codex review.
+5. Report changed files and validation results.

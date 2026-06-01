@@ -88,6 +88,12 @@ Before meaningful work:
 - Do not have Cline and Codex edit the same working tree concurrently. Finish
   or review one slice, then hand it to the other agent with the diff and test
   results.
+- If Codex usage is exhausted, Cursor may continue only in the dedicated
+  Cursor worktree/branch with low-risk UI, docs, tests, and handoff work.
+  Cursor must not merge to `main`, enable shared mode, apply migrations,
+  touch production, handle secrets, deploy, or make security-sensitive
+  decisions while waiting for Codex usage to reset. Queue those items for
+  Codex review.
 
 ## Verification
 

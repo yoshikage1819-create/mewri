@@ -305,3 +305,13 @@ supabase       将来適用する migration 草案
 - Next gate (C-3 continued): create the real server-only environment wiring for auth,
   request-scoped RPC, request-scoped image storage, repository, and image extraction only
   after explicit staging env-wiring approval.
+
+## 2026-06-01 Cursor fallback for Codex usage exhaustion
+
+- Added a Codex-token fallback rule for Cursor and a runbook:
+  `docs/mewri_cursor_codex_token_fallback.md`.
+- Cursor may continue in the `ph-cursor` worktree on `cursor/parallel-local-ui-docs`
+  while Codex usage is exhausted, but only for low-risk UI/docs/tests/handoff work.
+- Cursor must stop and queue work for Codex review if the task involves auth, RLS,
+  Storage policy, server route security, migrations, secrets, shared mode, production,
+  deploy, real user communication, merge to `main`, or push to `main`.
