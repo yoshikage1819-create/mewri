@@ -1,0 +1,9 @@
+# Keep heavy dev artifacts off Microsoft OneDrive sync.
+# Safe to regenerate with: npm.cmd install && npm.cmd run build
+node_modules/
+.next/
+dist/
+build/
+coverage/
+.turbo/
+.vercel/
