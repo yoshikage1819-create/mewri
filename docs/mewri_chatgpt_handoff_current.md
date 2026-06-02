@@ -1,6 +1,17 @@
 # Mewri 現在のプロジェクト概要 - ChatGPT 引き継ぎ用
 
-更新日: 2026-06-01
+更新日: 2026-06-02
+
+## 開発用 worktree（現在）
+
+```text
+Codex 主 worktree:   C:\dev\mewri\ph          （通常は main）
+Cursor 用 worktree:  C:\dev\mewri\ph-cursor   （cursor/* ブランチ）
+```
+
+- 両方とも OneDrive の外（`C:\dev\mewri\`）で運用する。
+- 旧 OneDrive コピー（`OneDrive\ドキュメント\ph`、`ph-cursor`）は**現在の作業用 worktree ではない**。
+  `ph-cursor` フォルダは削除済み。新しい作業では開かない。
 
 ## プロダクト概要
 
@@ -350,11 +361,11 @@ supabase       将来適用する migration 草案
 
 - Added `.onedriveignore` for `node_modules`, `.next`, and other regenerable artifacts.
 - Added `docs/mewri_owner_local_dev_disk_setup.md`.
-- Day-to-day Cursor worktree: `C:\dev\mewri\ph-cursor` (git worktree; main repo remains
-  `OneDrive\ドキュメント\ph` for Codex).
+- Active worktrees under `C:\dev\mewri\`: Codex `ph`, Cursor `ph-cursor` (git worktrees).
 - Added `tools/resume-local-dev-migration.ps1` (stops before `git restore` when the
   worktree is dirty; see owner doc).
-- OneDrive `ドキュメント\ph-cursor` removed after C:\dev worktree registration was fixed.
+- Legacy OneDrive `ドキュメント\ph-cursor` removed; OneDrive paths are not active
+  development worktrees.
 - Owner: open `C:\dev\mewri\ph-cursor` in Cursor; run `npm.cmd install` there if
   `node_modules` is missing.
 
@@ -371,11 +382,11 @@ supabase       将来適用する migration 草案
 
 1. Review PR #1 diff; confirm no accidental shared-beta or security coupling.
 2. Merge to `main` only after approval (Cursor must not merge or push to `main`).
-3. Continue v0.10 foundation work from the `ph` worktree on `main` after merge.
+3. Continue v0.10 foundation work from `C:\dev\mewri\ph` on `main` after merge.
 
 ### Owner next (no Codex required)
 
-- Keep using `C:\dev\mewri\ph-cursor` in Cursor; do not reopen deleted OneDrive `ph-cursor`.
+- Cursor: `C:\dev\mewri\ph-cursor`. Codex: `C:\dev\mewri\ph`. Do not use old OneDrive copies.
 - Wait for Codex review before merging PR #1 (merge deferred while Codex usage resets).
 
 ## 2026-06-01 local demo progress copy slice (Cursor fallback, pre-merge)
