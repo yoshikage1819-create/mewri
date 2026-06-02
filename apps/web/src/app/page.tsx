@@ -7,7 +7,7 @@ import {
   buildAddSamplePostsConfirmMessage,
   buildGenerateZineConfirmMessage,
   calcReadinessPercent,
-  escapeSvgText,
+  createSampleImageDataUrl,
   formatFullDate,
   formatPostSubmitSuccessMessage,
   formatRemainingToday,
@@ -209,7 +209,7 @@ export default function HomePage() {
           userId: activeUser.id,
           groupId: activeGroup.id,
           themeId: theme.id,
-          imageUrl: createSampleImage(theme.title, themeIndex, itemIndex),
+          imageUrl: createSampleImageDataUrl(theme.title, themeIndex, itemIndex),
           caption: `${theme.title} のサンプル ${itemIndex + 1}`,
           now: new Date(now.getTime() + (themeIndex * 2 + itemIndex) * 1000)
         })
@@ -236,7 +236,7 @@ export default function HomePage() {
 
   function useSampleImageForPost() {
     if (!activeTheme) return;
-    setImageUrl(createSampleImage(activeTheme.title, Math.max(0, cycleThemes.indexOf(activeTheme)), 0));
+    setImageUrl(createSampleImageDataUrl(activeTheme.title, Math.max(0, cycleThemes.indexOf(activeTheme)), 0));
     setSelectedFileName("サンプル画像");
     setImageNotice("サンプル画像を選択しました。");
     setCaption((current) => current || `${activeTheme.title} のサンプル`);
@@ -478,7 +478,7 @@ export default function HomePage() {
                             <span className="pageNumber">p.{page.pageNumber}</span>
                           </header>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={post?.imageUrl || createSampleImage("ZINE", 0, 0)} alt={post?.caption || "ZINEページ"} />
+                          <img src={post?.imageUrl || createSampleImageDataUrl("ZINE", 0, 0)} alt={post?.caption || "ZINEページ"} />
                           <p>{post?.caption || page.aiCaption || "キャプションなし"}</p>
                         </article>
                       );
@@ -715,32 +715,6 @@ function PostCard({ post, theme, cycleTitle }: { post: Post; theme?: Theme; cycl
       </div>
     </article>
   );
-}
-
-function createSampleImage(title: string, themeIndex: number, itemIndex: number): string {
-  const palettes = [
-    ["#2563eb", "#f59e0b"],
-    ["#0f766e", "#8b5cf6"],
-    ["#be123c", "#38bdf8"]
-  ];
-  const [a, b] = palettes[themeIndex % palettes.length];
-  const text = escapeSvgText(title);
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
-      <defs>
-        <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0%" stop-color="${a}"/>
-          <stop offset="100%" stop-color="${b}"/>
-        </linearGradient>
-      </defs>
-      <rect width="900" height="1200" fill="url(#g)"/>
-      <circle cx="${240 + itemIndex * 260}" cy="${360 + themeIndex * 80}" r="180" fill="rgba(255,255,255,0.20)"/>
-      <rect x="96" y="760" width="708" height="220" rx="24" fill="rgba(255,255,255,0.86)"/>
-      <text x="132" y="850" font-family="Arial, sans-serif" font-size="52" font-weight="700" fill="#171717">${text}</text>
-      <text x="132" y="920" font-family="Arial, sans-serif" font-size="28" fill="#404040">Mewri sample ${itemIndex + 1}</text>
-    </svg>
-  `;
-  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
 function optimizeLocalImage(file: File): Promise<string> {

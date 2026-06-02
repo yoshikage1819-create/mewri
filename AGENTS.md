@@ -72,6 +72,22 @@ Before meaningful work:
 - Add durable guidance only for repeated failure modes; do not grow agent
   instructions from one-off preferences.
 
+## Codex App And CLI Routing
+
+- Treat Codex app as the command center for product judgment, priority,
+  interpreting short failure logs, and producing the next minimal CLI prompt.
+- Do not use Codex app for broad "inspect the whole repo and implement"
+  requests when a CLI slice can do the work with less context.
+- Treat Codex CLI as the worker and verifier for repository edits,
+  multi-file implementation, validators, and uncommitted-diff review.
+- Keep app prompts short. Refer to the handoff and source-of-truth docs
+  instead of pasting long project history.
+- Keep CLI prompts short and outcome-first. Include only the selected slice,
+  relevant files or findings, constraints, and done checks.
+- For security-sensitive work, use separate CLI sessions for implementation
+  and review. Do not let a long app conversation substitute for review over
+  the actual diff.
+
 ## Agent Routing
 
 - Use Codex CLI as the primary implementer and verifier for application code,

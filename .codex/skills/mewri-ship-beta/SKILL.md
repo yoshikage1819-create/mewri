@@ -29,6 +29,12 @@ description: Plan, implement, review, and verify work in the Mewri repository wh
   application, deployment, participant communication, or spending money.
 - When receiving a Cline handoff or reviewing Cline edits, re-read source
   files and `git diff`; do not assume a free-model conclusion is correct.
+- In Codex app, prefer deciding the next slice and producing a compact CLI
+  prompt. In Codex CLI, prefer implementing, validating, and reviewing the
+  actual diff.
+- Avoid broad app requests such as "inspect everything and implement"; split
+  work into one CLI-ready slice with `Goal`, `Context`, `Constraints`, and
+  `Done when`.
 
 ## Protect Invariants
 

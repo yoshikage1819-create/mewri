@@ -369,25 +369,11 @@ supabase       将来適用する migration 草案
 - Owner: open `C:\dev\mewri\ph-cursor` in Cursor; run `npm.cmd install` there if
   `node_modules` is missing.
 
-## 2026-06-01 Cursor branch opened for review (PR #1)
+## 2026-06-02 PR #1 merged to main
 
-- Branch: `cursor/parallel-local-ui-docs` (pushed).
-- PR: https://github.com/yoshikage1819-create/mewri/pull/1
-- Scope on branch: local dev migration docs/script, local demo UI polish slices (no auth,
-  RLS, Storage policy, migrations, shared mode, deploy, or secrets).
-- Validation on branch tip: `npm.cmd run typecheck`, `npm.cmd test` (143+ tests),
-  `npm.cmd run build`, `git diff --check`.
-
-### Codex next (when available)
-
-1. Review PR #1 diff; confirm no accidental shared-beta or security coupling.
-2. Merge to `main` only after approval (Cursor must not merge or push to `main`).
-3. Continue v0.10 foundation work from `C:\dev\mewri\ph` on `main` after merge.
-
-### Owner next (no Codex required)
-
-- Cursor: `C:\dev\mewri\ph-cursor`. Codex: `C:\dev\mewri\ph`. Do not use old OneDrive copies.
-- Wait for Codex review before merging PR #1 (merge deferred while Codex usage resets).
+- PR: https://github.com/yoshikage1819-create/mewri/pull/1 (merged via `4d5a4fb`).
+- Scope was local dev migration docs/script, local demo UI polish, resume script safety.
+- Cursor branch `cursor/parallel-local-ui-docs` should track `origin/main` after merges.
 
 ## 2026-06-01 local demo progress copy slice (Cursor fallback, pre-merge)
 
@@ -425,52 +411,38 @@ supabase       将来適用する migration 草案
   App-level compaction is automatic and not directly schedulable from repo code;
   durable compression is handled by keeping this handoff current after each slice.
 
-## Cursor → Codex handoff (PR #1, open)
+## 2026-06-02 Codex app / CLI token economy update
 
-Per `docs/mewri_ai_parallel_fallback_execution_design.md`.
+- Adopted the pasted operating guidance: Codex app is the command center for
+  priority, log interpretation, and producing compact CLI prompts; Codex CLI is
+  the default implementer, validator, and diff reviewer.
+- Updated durable repo guidance so future prompts stay short:
+  `AGENTS.md`, `.codex/skills/mewri-ship-beta/SKILL.md`,
+  `docs/mewri_ai_workbench_setup.md`, and
+  `docs/mewri_ai_parallel_fallback_execution_design.md`.
+- Updated Codex CLI examples from the old OneDrive path to `C:\dev\mewri\ph`.
+- No product code, Supabase, auth, RLS, Storage, migration, env, shared mode,
+  deployment, or production resources were touched.
 
-```text
-Cursor handoff
+## 2026-06-02 Parallel mode: Codex on shared-beta post route (in progress)
 
-Branch:
-cursor/parallel-local-ui-docs
+- Worktree: `C:\dev\mewri\ph` on `main` (local uncommitted work at last check).
+- Surfaces: `apps/web/src/app/api/shared-beta/posts/*` (route-boundary,
+  server-dependencies, new `image-file.ts`).
+- Cursor must **not** edit those files until Codex commits or explicitly hands off.
 
-Base:
-origin/main at 250470421d1b2cbc54f6d7da977207b309a91f71 (merged into branch tip)
+### Cursor next (parallel mode)
 
-PR:
-https://github.com/yoshikage1819-create/mewri/pull/1
+- Continue fallback queue on `cursor/parallel-local-ui-docs`: local demo UI/tests/docs only.
+- Rebase or merge `origin/main` into the Cursor branch after each `main` advance.
 
-Changed files (branch vs main, summary):
-- docs: owner local dev setup, handoff, parallel/fallback design, cursor fallback runbook
-- tools/resume-local-dev-migration.ps1 (dirty-worktree safety stop)
-- apps/web local demo UI polish + local-demo-ui.ts helpers/tests
-- .onedriveignore
+### Codex next on `C:\dev\mewri\ph`
 
-What changed:
-- Move active development to C:\dev worktrees; document legacy OneDrive paths as inactive.
-- Local demo UX: accessibility, confirmations, progress copy, first-post guidance.
-- Resume migration script no longer runs git restore when uncommitted work exists.
+- Finish and commit shared-beta post route slice; run security review pass.
+- Continue v0.10 foundation per §次に行うべきこと item 1 (staging adapter wiring after owner approval).
 
-Validation (latest local-demo slices):
-- npm.cmd run typecheck: pass
-- npm.cmd test: pass (143 tests on branch tip before last docs-only edit)
-- npm.cmd run build: pass
-- git diff --check: pass
+## 2026-06-02 local demo sample image helper slice (Cursor, parallel mode)
 
-Explicit non-goals:
-- No auth/session/RLS/Storage/migration/shared mode/deploy/production changes on this branch.
-
-Risks:
-- Branch includes many local-demo UI commits; review for accidental imports from shared-beta paths.
-- Do not merge until Codex confirms security boundaries unchanged.
-
-Needs Codex review before:
-- merge PR #1 to main
-- any v0.10 adapter/env wiring on main (C:\dev\mewri\ph)
-```
-
-### Next gate after PR #1 merge (Codex on `C:\dev\mewri\ph`)
-
-Continue v0.10 closed shared beta foundation per handoff §次に行うべきこと item 1
-(staging adapter + auth + verified Storage upload wiring, explicit owner approval first).
+- Merged `origin/main` (PR #1 + Codex workflow docs) into `cursor/parallel-local-ui-docs`.
+- Moved `createSampleImageDataUrl` into `local-demo-ui.ts` with tests (SVG title escaping).
+- No shared-beta API, auth, or persistence changes.

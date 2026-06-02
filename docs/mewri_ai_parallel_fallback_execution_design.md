@@ -7,10 +7,30 @@ Status: active operating design for Codex + Cursor coordination
 ## Purpose
 
 This document lets Cursor continue implementation safely when Codex usage is
-exhausted, and lets Codex and Cursor work in parallel without editing the same
-surface or weakening the closed shared beta boundary.
+exhausted, and lets Codex app, Codex CLI, and Cursor work without editing the
+same surface or weakening the closed shared beta boundary.
 
-It is not a product roadmap. It is an execution design for agent coordination.
+It is not a product roadmap. It is an execution design for agent coordination
+and token economy.
+
+## Codex App / CLI Split
+
+| Surface | Use | Avoid |
+| --- | --- | --- |
+| Codex app | Decide priority, split the next slice, interpret short logs, produce CLI prompts | Long repo-wide implementation sessions |
+| Codex CLI | Implement, run validators, review actual diffs, commit/push after approval | Product strategy debates or broad planning |
+| Cursor | Low-risk UI/docs/tests during fallback | Security-sensitive implementation or main merge |
+
+Default ratio while token saving matters:
+
+```text
+Codex CLI: 70-85%
+Codex app: 5-20%
+Cursor fallback: 5-20%
+```
+
+The more security-sensitive the slice is, the more it should move toward
+Codex CLI and away from app/Cursor implementation.
 
 ## Current Worktrees
 

@@ -3,6 +3,7 @@ import {
   buildAddSamplePostsConfirmMessage,
   buildGenerateZineConfirmMessage,
   calcReadinessPercent,
+  createSampleImageDataUrl,
   escapeSvgText,
   formatFullDate,
   formatPostSubmitSuccessMessage,
@@ -93,5 +94,22 @@ describe("formatRemainingToday", () => {
 describe("escapeSvgText", () => {
   it("escapes characters that would break SVG text nodes", () => {
     expect(escapeSvgText(`a & b <c> "d" 'e'`)).toBe("a &amp; b &lt;c&gt; &quot;d&quot; &apos;e&apos;");
+  });
+});
+
+describe("createSampleImageDataUrl", () => {
+  it("returns an SVG data URL with the escaped title", () => {
+    const url = createSampleImageDataUrl(`Theme <1>`, 0, 0);
+    expect(url.startsWith("data:image/svg+xml;charset=UTF-8,")).toBe(true);
+    const decoded = decodeURIComponent(url.replace("data:image/svg+xml;charset=UTF-8,", ""));
+    expect(decoded).toContain("Theme &lt;1&gt;");
+    expect(decoded).not.toContain("Theme <1>");
+  });
+
+  it("cycles palette colors by theme index", () => {
+    const first = decodeURIComponent(createSampleImageDataUrl("A", 0, 0).split(",")[1]);
+    const second = decodeURIComponent(createSampleImageDataUrl("A", 1, 0).split(",")[1]);
+    expect(first).toContain("#2563eb");
+    expect(second).toContain("#0f766e");
   });
 });
