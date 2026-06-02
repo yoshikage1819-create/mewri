@@ -446,3 +446,9 @@ supabase       将来適用する migration 草案
 - Merged `origin/main` (PR #1 + Codex workflow docs) into `cursor/parallel-local-ui-docs`.
 - Moved `createSampleImageDataUrl` into `local-demo-ui.ts` with tests (SVG title escaping).
 - No shared-beta API, auth, or persistence changes.
+
+## 2026-06-02 local demo post list empty-state slice (Cursor fallback)
+
+- Context-aware empty post list copy (`formatEmptyPostListMessage`, `formatPostListKicker`).
+- Extracted `calcLocalImageScale` for tested local image downscale math.
+- Codex token exhausted: Cursor continues on `ph-cursor` only; do not edit `ph` shared-beta API WIP.

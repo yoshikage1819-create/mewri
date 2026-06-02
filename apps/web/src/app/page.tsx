@@ -7,8 +7,12 @@ import {
   buildAddSamplePostsConfirmMessage,
   buildGenerateZineConfirmMessage,
   calcReadinessPercent,
+  calcLocalImageScale,
   createSampleImageDataUrl,
+  formatEmptyPostListMessage,
   formatFullDate,
+  formatPostListKicker,
+  type PostListMode,
   formatPostSubmitSuccessMessage,
   formatRemainingToday,
   formatZineGenerateBlockedHint,
@@ -20,8 +24,6 @@ import {
 const appService: MewriAppService = createBrowserLocalMewriAppService();
 
 type ActiveSection = "active" | "posts";
-type PostListMode = "all" | "theme";
-
 export default function HomePage() {
   const [state, setState] = useState<MewriState | null>(null);
   const [selectedThemeId, setSelectedThemeId] = useState("");
@@ -414,7 +416,7 @@ export default function HomePage() {
 
               <div className="postGrid editorialGrid sameThemeGrid">
                 <div className="postListHeader">
-                  <p className="kicker">{postListMode === "all" ? "全投稿" : `テーマ: ${selectedTheme?.title ?? "未設定"}`}</p>
+                  <p className="kicker">{formatPostListKicker(postListMode, selectedTheme?.title)}</p>
                   {postListMode === "theme" && (
                     <button className="ghostButton formGhost" type="button" onClick={() => setPostListMode("all")}>
                       全投稿に戻る
@@ -422,7 +424,9 @@ export default function HomePage() {
                   )}
                 </div>
                 {visiblePosts.length === 0 ? (
-                  <p className="emptyText">投稿がまだありません。</p>
+                  <p className="emptyText" role="status">
+                    {formatEmptyPostListMessage(postListMode, selectedTheme?.title)}
+                  </p>
                 ) : (
                   visiblePosts.map((post) => (
                     <PostCard key={post.id} post={post} theme={state.themes.find((theme) => theme.id === post.themeId)} cycleTitle={activeCycle.title} />
@@ -724,8 +728,7 @@ function optimizeLocalImage(file: File): Promise<string> {
 
     image.onload = () => {
       try {
-        const maxEdge = 1280;
-        const scale = Math.min(1, maxEdge / Math.max(image.naturalWidth, image.naturalHeight));
+        const scale = calcLocalImageScale(image.naturalWidth, image.naturalHeight);
         const canvas = document.createElement("canvas");
         canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
         canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));

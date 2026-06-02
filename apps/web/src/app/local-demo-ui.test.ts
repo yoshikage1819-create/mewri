@@ -2,16 +2,53 @@ import { describe, expect, it } from "vitest";
 import {
   buildAddSamplePostsConfirmMessage,
   buildGenerateZineConfirmMessage,
+  calcLocalImageScale,
   calcReadinessPercent,
   createSampleImageDataUrl,
   escapeSvgText,
+  formatEmptyPostListMessage,
   formatFullDate,
+  formatPostListKicker,
   formatPostSubmitSuccessMessage,
   formatRemainingToday,
   formatZineGenerateBlockedHint,
   formatZineRemainingHeadline,
   resolveScrollBehavior
 } from "./local-demo-ui";
+
+describe("formatPostListKicker", () => {
+  it("labels the all-posts view", () => {
+    expect(formatPostListKicker("all")).toBe("全投稿");
+  });
+
+  it("labels a theme filter with the theme title", () => {
+    expect(formatPostListKicker("theme", "朝の光")).toBe("テーマ: 朝の光");
+  });
+});
+
+describe("formatEmptyPostListMessage", () => {
+  it("guides first-time posting in the all-posts view", () => {
+    expect(formatEmptyPostListMessage("all")).toContain("最初の1枚");
+  });
+
+  it("names the filtered theme when a theme has no posts", () => {
+    expect(formatEmptyPostListMessage("theme", "公園")).toContain("「公園」");
+  });
+});
+
+describe("calcLocalImageScale", () => {
+  it("does not upscale small images", () => {
+    expect(calcLocalImageScale(800, 600)).toBe(1);
+  });
+
+  it("downscales images larger than the max edge", () => {
+    expect(calcLocalImageScale(2560, 1280)).toBe(0.5);
+  });
+
+  it("returns 1 for invalid dimensions", () => {
+    expect(calcLocalImageScale(0, 100)).toBe(1);
+  });
+});
 
 describe("buildAddSamplePostsConfirmMessage", () => {
   it("includes the total sample post count", () => {

@@ -1,5 +1,24 @@
 export const LOCAL_DEMO_RESET_CONFIRM_MESSAGE = "デモデータを初期状態に戻します。よろしいですか？";
 
+export type PostListMode = "all" | "theme";
+
+export function formatPostListKicker(mode: PostListMode, themeTitle?: string): string {
+  return mode === "all" ? "全投稿" : `テーマ: ${themeTitle?.trim() || "未設定"}`;
+}
+
+export function formatEmptyPostListMessage(mode: PostListMode, themeTitle?: string): string {
+  if (mode === "theme") {
+    const title = themeTitle?.trim() || "このテーマ";
+    return `「${title}」にはまだ投稿がありません。上の「参加中のZINE」から写真を追加できます。`;
+  }
+  return "投稿がまだありません。今日のテーマから最初の1枚を投稿してください。";
+}
+
+export function calcLocalImageScale(naturalWidth: number, naturalHeight: number, maxEdge = 1280): number {
+  if (naturalWidth <= 0 || naturalHeight <= 0) return 1;
+  return Math.min(1, maxEdge / Math.max(naturalWidth, naturalHeight));
+}
+
 export function buildAddSamplePostsConfirmMessage(themeCount: number): string {
   const postCount = Math.max(0, themeCount) * 2;
   return `各テーマにサンプル投稿を2件ずつ追加します（合計${postCount}件）。よろしいですか？`;
