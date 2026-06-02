@@ -1,6 +1,6 @@
 # Mewri Documentation Index
 
-更新日: 2026-05-27
+更新日: 2026-06-02
 
 ## 現行の正本
 

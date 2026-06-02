@@ -424,3 +424,16 @@ supabase       将来適用する migration 草案
 - Chat context has been compacted by the Codex app at least once in this thread.
   App-level compaction is automatic and not directly schedulable from repo code;
   durable compression is handled by keeping this handoff current after each slice.
+
+## 2026-06-02 Codex app / CLI token economy update
+
+- Adopted the pasted operating guidance: Codex app is the command center for
+  priority, log interpretation, and producing compact CLI prompts; Codex CLI is
+  the default implementer, validator, and diff reviewer.
+- Updated durable repo guidance so future prompts stay short:
+  `AGENTS.md`, `.codex/skills/mewri-ship-beta/SKILL.md`,
+  `docs/mewri_ai_workbench_setup.md`, and
+  `docs/mewri_ai_parallel_fallback_execution_design.md`.
+- Updated Codex CLI examples from the old OneDrive path to `C:\dev\mewri\ph`.
+- No product code, Supabase, auth, RLS, Storage, migration, env, shared mode,
+  deployment, or production resources were touched.

@@ -146,22 +146,59 @@ OpenAI は Codex が対象プランに含まれ、Free/Go への提供は期間�
 
 ## 日常の進め方
 
-1. Cline の Plan mode で、次の一片について目的、非対象、受け入れ条件、
+Codex app は司令塔、Codex CLI は作業者 + 検証者として使う。トークン節約を
+優先する間は、app で長い実装相談を続けず、次の CLI スライスを短く切る。
+
+| 目的 | 使うもの | 理由 |
+| --- | --- | --- |
+| 次に何を切るか、優先順位、失敗ログの短い解釈 | Codex app | 広い文脈の判断に向く |
+| 1〜数ファイルの実装、validators、diff review | Codex CLI | repo の実差分と検証に集中できる |
+| Auth / RLS / Storage / route security / migration | Codex CLI + review pass | 実装と独立レビューを分ける |
+| UI 文言、docs、低リスク tests | Cursor / Cline / app | CLI 利用枠を温存できる |
+
+通常の比率は次を目安にする。
+
+```text
+Codex CLI: 70-85%
+Codex app: 5-20%
+Cursor / Cline fallback: 5-20%
+```
+
+1. Codex app で、次の一片について目的、非対象、受け入れ条件、
    セキュリティ影響を整理する。
-2. UI 文言、文書、局所 CSS のような低リスク作業は Cline で実装してよい。
-3. 認証、RLS、Storage、秘密情報、migration、shared data path は Cline の
+2. app は CLI に渡す `Goal / Context / Constraints / Done when` 形式の
+   最小プロンプトを作る。全文 handoff や長い履歴は貼らない。
+3. UI 文言、文書、局所 CSS のような低リスク作業は Cline / Cursor で実装してよい。
+4. 認証、RLS、Storage、秘密情報、migration、shared data path は Cline の
    `/handoff-to-codex.md` で brief を作り、Codex CLI に渡す。
-4. Codex CLI では次の形式で開始する。
+5. Codex CLI では次の形式で開始する。
 
 ```text
 Use $mewri-ship-beta to implement this reviewed slice:
 <Cline で作成した brief>
 ```
 
-5. 同じ作業ツリーで Cline と Codex を同時に編集させない。差分と検証結果を
+6. 同じ作業ツリーで Cline と Codex を同時に編集させない。差分と検証結果を
    確認してから次の agent に渡す。
-6. コード変更後は `npm.cmd run typecheck` と `npm.cmd test` を実行し、
+7. コード変更後は `npm.cmd run typecheck` と `npm.cmd test` を実行し、
    UI/runtime 変更時は `npm.cmd run build` も実行する。
+
+### Codex app で頼むこと / 頼まないこと
+
+app に頼む:
+
+```text
+handoff に基づいて、v0.10 の次スライスを1つだけ切って。
+Codex CLI に渡す Goal / Context / Constraints / Done when 形式で出して。
+```
+
+app に頼まない:
+
+```text
+リポジトリ全体を見て、shared beta の本番接続まで進めて。
+```
+
+後者は context と判断範囲が膨らみ、token 消費と安全リスクが上がる。
 
 ## Codex CLI 実装ループ
 
@@ -178,13 +215,13 @@ VS Code terminal やローカル PowerShell で対話セッションを開ける
 通常の複数ファイル実装:
 
 ```powershell
-codex.cmd -C "C:\Users\kouda\OneDrive\ドキュメント\ph" --model gpt-5.5 -c model_reasoning_effort='"medium"' -s workspace-write -a on-request
+codex.cmd -C "C:\dev\mewri\ph" --model gpt-5.5 -c model_reasoning_effort='"medium"' -s workspace-write -a on-request
 ```
 
 Auth / RLS / Storage / migration / server route / shared-data 境界:
 
 ```powershell
-codex.cmd -C "C:\Users\kouda\OneDrive\ドキュメント\ph" --model gpt-5.5 -c model_reasoning_effort='"high"' -s workspace-write -a on-request
+codex.cmd -C "C:\dev\mewri\ph" --model gpt-5.5 -c model_reasoning_effort='"high"' -s workspace-write -a on-request
 ```
 
 指定モデルが利用できない場合は `--model` を外し、CLI の利用可能な既定
@@ -218,7 +255,7 @@ Done when:
 - Report changed files, validation evidence, remaining risk, and next gate.
 '@
 
-codex.cmd exec -C "C:\Users\kouda\OneDrive\ドキュメント\ph" --model gpt-5.5 -c model_reasoning_effort='"high"' -s workspace-write $prompt
+codex.cmd exec -C "C:\dev\mewri\ph" --model gpt-5.5 -c model_reasoning_effort='"high"' -s workspace-write $prompt
 ```
 
 ### 命令文の型
