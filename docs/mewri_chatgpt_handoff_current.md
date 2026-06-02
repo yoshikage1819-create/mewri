@@ -452,3 +452,10 @@ supabase       将来適用する migration 草案
 - Context-aware empty post list copy (`formatEmptyPostListMessage`, `formatPostListKicker`).
 - Extracted `calcLocalImageScale` for tested local image downscale math.
 - Codex token exhausted: Cursor continues on `ph-cursor` only; do not edit `ph` shared-beta API WIP.
+
+## 2026-06-02 local demo mobile spacing slice (Cursor fallback)
+
+- Tuned `styles.css` mobile rules (`<=759px`) to match `home-wireframe.svg` section rhythm
+  (~20px between blocks, ~16px shell inset) and v0.9.7 tap/readability guidance.
+- Adjusted shell, section panels, post form, ZINE generate block, theme pills, and ZINE book gaps.
+- No logic, auth, or shared-beta changes.
