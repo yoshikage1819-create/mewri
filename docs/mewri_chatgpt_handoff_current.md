@@ -1,6 +1,6 @@
 # Mewri 現在のプロジェクト概要 - ChatGPT 引き継ぎ用
 
-更新日: 2026-05-29
+更新日: 2026-06-02
 
 ## プロダクト概要
 
@@ -315,3 +315,31 @@ supabase       将来適用する migration 草案
 - Cursor must stop and queue work for Codex review if the task involves auth, RLS,
   Storage policy, server route security, migrations, secrets, shared mode, production,
   deploy, real user communication, merge to `main`, or push to `main`.
+
+## 2026-06-01 RPC migration approval checklist alignment
+
+- Codex verified that `supabase/migrations/202605290001_shared_beta_create_post_rpc.sql`
+  already follows the preferred public-only RPC grant shape:
+  `authenticated` gets EXECUTE on `public.create_shared_beta_post` only, while
+  `private.create_shared_beta_post` remains callable only through the security-definer
+  public wrapper.
+- Added a local SQL contract test so future edits cannot accidentally grant
+  `authenticated` direct EXECUTE on the private RPC or remove anon/public revokes.
+- Updated `docs/mewri_supabase_staging_rpc_migration_approval_checklist_v0_10.md`
+  so Part B no longer describes案1 as a future/manual fix; it is now the adopted
+  draft contract.
+- No staging SQL was applied, no live Supabase connection was made, no env values were
+  added, shared mode remains disabled, and production was not touched.
+
+## 2026-06-02 AI parallel/fallback execution design
+
+- Added `docs/mewri_ai_parallel_fallback_execution_design.md` as the concrete
+  coordination design for Codex + Cursor.
+- It defines the `C:\dev\mewri\ph` Codex worktree, `C:\dev\mewri\ph-cursor`
+  Cursor worktree, file ownership matrix, parallel protocol, fallback queue,
+  ready-to-paste Cursor prompts, and handoff templates.
+- Updated `docs/README.md` and `docs/mewri_cursor_codex_token_fallback.md` so
+  Cursor can find the design without reading the full chat.
+- Chat context has been compacted by the Codex app at least once in this thread.
+  App-level compaction is automatic and not directly schedulable from repo code;
+  durable compression is handled by keeping this handoff current after each slice.

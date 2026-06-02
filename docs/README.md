@@ -17,6 +17,7 @@
 | staging RPC migration approval | `mewri_supabase_staging_rpc_migration_approval_checklist_v0_10.md` | RPC migration 適用前のオーナー承認チェックリスト |
 | Storage RLS local check | `mewri_storage_rls_local_read_check_instructions.md` | staging Storage read 境界を実ログインで確認する local-only 手順 |
 | AI 開発運用 | `mewri_ai_workbench_setup.md` | Codex CLI / Cline / モデル選択の正本 |
+| AI 並列・fallback 実装設計 | `mewri_ai_parallel_fallback_execution_design.md` | Codex と Cursor の並列実装、token 枯渇時の作業継続設計 |
 
 ## 根拠・参考資料
 

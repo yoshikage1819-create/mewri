@@ -11,12 +11,15 @@ to reset. It follows the research report's split:
 - Codex: security-sensitive implementation, independent review, Supabase,
   auth, RLS, Storage, migrations, deployment, and final merge decisions.
 
+For the concrete parallel/fallback implementation design, use
+`docs/mewri_ai_parallel_fallback_execution_design.md`.
+
 ## Safe Starting Point
 
-Use the dedicated Cursor worktree named:
+Use the dedicated Cursor worktree on the local disk:
 
 ```text
-ph-cursor
+C:\dev\mewri\ph-cursor
 ```
 
 Expected branch:
@@ -28,12 +31,13 @@ cursor/parallel-local-ui-docs
 Do not work in the Codex worktree at the same time:
 
 ```text
-ph
+C:\dev\mewri\ph
 ```
 
 ## What Cursor May Do During Codex Downtime
 
 - Read repository status and active docs.
+- Read `docs/mewri_ai_parallel_fallback_execution_design.md`.
 - Propose one safe next task.
 - Improve docs, onboarding notes, non-secret setup guides, and owner-facing
   explanations.
