@@ -3,6 +3,19 @@
 import { canGenerateZine, type MewriState, type Post, type Theme } from "@mewri/core";
 import { createBrowserLocalMewriAppService, createEvent, createPost, type MewriAppService } from "@mewri/data";
 import { useEffect, useMemo, useState } from "react";
+import {
+  buildAddSamplePostsConfirmMessage,
+  buildGenerateZineConfirmMessage,
+  calcReadinessPercent,
+  escapeSvgText,
+  formatFullDate,
+  formatPostSubmitSuccessMessage,
+  formatRemainingToday,
+  formatZineGenerateBlockedHint,
+  formatZineRemainingHeadline,
+  LOCAL_DEMO_RESET_CONFIRM_MESSAGE,
+  scrollToElementById
+} from "./local-demo-ui";
 
 const appService: MewriAppService = createBrowserLocalMewriAppService();
 
@@ -20,6 +33,7 @@ export default function HomePage() {
   const [showUrlFallback, setShowUrlFallback] = useState(false);
   const [postSubmitNotice, setPostSubmitNotice] = useState("");
   const [loadNotice, setLoadNotice] = useState("");
+  const [zineGenerateNotice, setZineGenerateNotice] = useState("");
   const [activeSection, setActiveSection] = useState<ActiveSection>("active");
 
   useEffect(() => {
@@ -144,11 +158,13 @@ export default function HomePage() {
     setImageNotice("");
     setSelectedThemeId(todayThemeId);
     setPostListMode("all");
-    setPostSubmitNotice(`投稿しました。進行 ${nextCyclePostCount}/${targetPostCount}`);
+    setZineGenerateNotice("");
+    setPostSubmitNotice(formatPostSubmitSuccessMessage(nextCyclePostCount, targetPostCount));
   }
 
   function handleGenerateZine() {
     if (!activeCycle || !activeGroup || !zineReady) return;
+    if (!window.confirm(buildGenerateZineConfirmMessage(activeCycle.title, Boolean(publishedZine)))) return;
 
     setState(
       appService.commands.publishZineForCycle({
@@ -163,9 +179,13 @@ export default function HomePage() {
         }
       })
     );
+    setZineGenerateNotice("ZINEを生成しました。下のプレビューをご覧ください。");
+    window.requestAnimationFrame(() => scrollToElementById("generated-zine"));
   }
 
   function handleReset() {
+    if (!window.confirm(LOCAL_DEMO_RESET_CONFIRM_MESSAGE)) return;
+
     const nextState = appService.demo.reset();
     setState(nextState);
     setSelectedThemeId(nextState.themes.find((theme) => theme.status === "active")?.id ?? nextState.themes[0]?.id ?? "");
@@ -175,10 +195,13 @@ export default function HomePage() {
     setSelectedFileName("");
     setImageNotice("");
     setPostSubmitNotice("");
+    setZineGenerateNotice("");
   }
 
   function addSamplePosts() {
     if (!state || !activeGroup || !activeUser) return;
+    if (!window.confirm(buildAddSamplePostsConfirmMessage(visibleZineThemes.length))) return;
+
     const now = new Date();
     const samples = visibleZineThemes.flatMap((theme, themeIndex) =>
       [0, 1].map((itemIndex) =>
@@ -225,7 +248,9 @@ export default function HomePage() {
         <section className="loadPanel">
           <p className="kicker">Mewri MVP</p>
           <h1>読み込み中</h1>
-          <p>{loadNotice || "ローカル状態を読み込んでいます。"}</p>
+          <p role={loadNotice ? "alert" : "status"} aria-live={loadNotice ? "assertive" : "polite"}>
+            {loadNotice || "ローカル状態を読み込んでいます。"}
+          </p>
         </section>
       </main>
     );
@@ -233,6 +258,9 @@ export default function HomePage() {
 
   return (
     <main className="shell">
+      <a className="skipLink" href="#active-zine">
+        メインコンテンツへスキップ
+      </a>
       <header className="masthead" role="banner">
         <div className="mastLeft">
           <p className="kicker">{activeGroup.name}</p>
@@ -242,19 +270,24 @@ export default function HomePage() {
           </div>
         </div>
         <div className="mastRight">
-          <button className="ghostButton compactOnly" type="button" onClick={addSamplePosts}>
+          <button
+            className="ghostButton compactOnly"
+            type="button"
+            aria-label="各テーマにサンプル投稿を追加"
+            onClick={addSamplePosts}
+          >
             サンプル投入
           </button>
-          <button className="ghostButton" type="button" onClick={handleReset}>
+          <button className="ghostButton" type="button" aria-label="デモを初期状態に戻す" onClick={handleReset}>
             リセット
           </button>
         </div>
       </header>
 
-      <aside className="demoNotice" aria-label="beta notice">
+      <aside className="demoNotice" aria-label="デモの説明">
         <p>
-          <strong>β / 端末内のみ</strong>
-          保存先: このブラウザのlocalStorage
+          <strong>デモ（この端末だけ）</strong>
+          写真と投稿はこのブラウザにだけ保存されます。別の端末や他の人とは共有されません。
         </p>
       </aside>
 
@@ -280,9 +313,7 @@ export default function HomePage() {
                   <span className="ctaMeta">{formatRemainingToday()}</span>
                 </a>
 
-                {cyclePosts.length > 0 && (
-                  <ActiveZineProgressCard postCount={cyclePosts.length} targetPostCount={targetPostCount} />
-                )}
+                <ActiveZineProgressCard postCount={cyclePosts.length} targetPostCount={targetPostCount} />
 
                 <form id="post-form" className="postForm editorialForm quickPostForm" onSubmit={handleSubmitPost}>
                   <label className="photoUpload">
@@ -290,7 +321,11 @@ export default function HomePage() {
                     <small>スマホやPCから、今日の1枚を選択</small>
                     <input className="fileInput" type="file" accept="image/*" onChange={handleSelectFile} />
                   </label>
-                  {imageNotice && <p className="imageNotice">{imageNotice}</p>}
+                  {imageNotice && (
+                    <p className="imageNotice" role="status" aria-live="polite">
+                      {imageNotice}
+                    </p>
+                  )}
 
                   {imageUrl && (
                     <div className="localPreview">
@@ -317,7 +352,11 @@ export default function HomePage() {
                     <textarea value={caption} onChange={(event) => setCaption(event.target.value)} placeholder="ひとこと" />
                   </label>
 
-                  {postSubmitNotice && <p className="postSubmitNotice">{postSubmitNotice}</p>}
+                  {postSubmitNotice && (
+                    <p className="postSubmitNotice" role="status" aria-live="polite">
+                      {postSubmitNotice}
+                    </p>
+                  )}
 
                   <div className="formActions editorialActions">
                     <button className="submitButton" type="submit" disabled={!imageUrl || !activeTheme?.id}>
@@ -407,10 +446,15 @@ export default function HomePage() {
                 zineReady={zineReady}
                 onGenerateZine={handleGenerateZine}
               />
+              {zineGenerateNotice && (
+                <p className="zineGenerateNotice" role="status" aria-live="polite">
+                  {zineGenerateNotice}
+                </p>
+              )}
             </div>
 
             {publishedZine ? (
-              <section className="zineBook" aria-label="生成済みZINE">
+              <section className="zineBook" id="generated-zine" aria-label="生成済みZINE">
                 <article className="zineCover zinePaperPage coverPage">
                   <p className="kicker">COVER</p>
                   <h3>{publishedZine.title}</h3>
@@ -497,10 +541,18 @@ export default function HomePage() {
       </section>
 
       <nav className="bottomNav" aria-label="セクションナビ">
-        <a className={activeSection === "active" ? "active" : ""} href="#active-zine">
+        <a
+          className={activeSection === "active" ? "active" : ""}
+          href="#active-zine"
+          aria-current={activeSection === "active" ? "location" : undefined}
+        >
           参加中
         </a>
-        <a className={activeSection === "posts" ? "active" : ""} href="#zine-contents">
+        <a
+          className={activeSection === "posts" ? "active" : ""}
+          href="#zine-contents"
+          aria-current={activeSection === "posts" ? "location" : undefined}
+        >
           中身
         </a>
       </nav>
@@ -564,11 +616,13 @@ function ActiveZineProgressCard({
   targetPostCount: number;
 }) {
   const remainingPosts = Math.max(0, targetPostCount - postCount);
+  const headline =
+    postCount === 0 ? "最初の写真を投稿して、このZINEを始めましょう" : formatZineRemainingHeadline(remainingPosts);
 
   return (
     <section className="activeProgressCard" aria-label="参加中ZINEの進行">
       <p>
-        <strong>{remainingPosts === 0 ? "ZINEを作れます" : `あと${remainingPosts}枚でZINEを作れます`}</strong>
+        <strong>{headline}</strong>
         <span>{postCount}/{targetPostCount}</span>
       </p>
     </section>
@@ -597,6 +651,7 @@ function CycleProgressCard({
   const postedThemeCount = themes.filter((theme) => posts.some((post) => post.themeId === theme.id)).length;
   const remainingPosts = Math.max(0, targetPostCount - totalPostCount);
   const readinessPercent = calcReadinessPercent(totalPostCount, targetPostCount);
+  const generateBlockedHint = formatZineGenerateBlockedHint(remainingPosts, zineReady);
 
   return (
     <section className="cycleCard">
@@ -623,16 +678,26 @@ function CycleProgressCard({
         })}
       </div>
       <div className="cycleProgressSummary">
-        <p>{zineReady ? "ZINEを作れる枚数が集まりました" : `あと${remainingPosts}枚でZINEを作れます`}</p>
+        <p>{zineReady ? "ZINEを作れる枚数が集まりました" : formatZineRemainingHeadline(remainingPosts)}</p>
         <div className="progressTrack" role="progressbar" aria-label="ZINEの完成進捗" aria-valuemin={0} aria-valuemax={100} aria-valuenow={readinessPercent}>
           <span style={{ width: `${readinessPercent}%` }} />
         </div>
         <small>{totalPostCount}/{targetPostCount}枚</small>
       </div>
       <div className="cycleGenerate">
-        <button type="button" disabled={!zineReady} onClick={onGenerateZine}>
+        <button
+          type="button"
+          disabled={!zineReady}
+          aria-describedby={generateBlockedHint ? "zine-generate-hint" : undefined}
+          onClick={onGenerateZine}
+        >
           ZINEを作る
         </button>
+        {generateBlockedHint && (
+          <p className="hintText" id="zine-generate-hint">
+            {generateBlockedHint}
+          </p>
+        )}
       </div>
     </section>
   );
@@ -678,10 +743,6 @@ function createSampleImage(title: string, themeIndex: number, itemIndex: number)
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
-function escapeSvgText(value: string): string {
-  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&apos;");
-}
-
 function optimizeLocalImage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const sourceUrl = URL.createObjectURL(file);
@@ -713,23 +774,4 @@ function optimizeLocalImage(file: File): Promise<string> {
     };
     image.src = sourceUrl;
   });
-}
-
-function formatFullDate(date: Date): string {
-  return date.toLocaleDateString("ja-JP", { weekday: "short", month: "short", day: "2-digit", year: "numeric" });
-}
-
-function formatRemainingToday(now: Date = new Date()): string {
-  const end = new Date(now);
-  end.setHours(23, 59, 59, 999);
-  const ms = Math.max(0, end.getTime() - now.getTime());
-  const hours = Math.floor(ms / 3600000);
-  const minutes = Math.floor((ms % 3600000) / 60000);
-  if (hours <= 0) return `残り${minutes}分`;
-  return `残り${hours}時間${minutes}分`;
-}
-
-function calcReadinessPercent(current: number, target: number): number {
-  if (target <= 0) return 0;
-  return Math.min(100, Math.round((current / target) * 100));
 }

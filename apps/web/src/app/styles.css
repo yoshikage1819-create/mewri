@@ -31,6 +31,12 @@ html {
   scroll-behavior: smooth;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 body {
   background: radial-gradient(1200px 900px at 20% -20%, rgba(231, 139, 84, 0.12), transparent 60%),
     radial-gradient(980px 720px at 100% 10%, rgba(109, 160, 111, 0.10), transparent 62%),
@@ -53,10 +59,37 @@ a {
   color: inherit;
 }
 
+:where(button, a, input, textarea, select):focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
 .shell {
   margin: 0 auto;
   max-width: 1160px;
   padding: 22px 16px 110px;
+  position: relative;
+}
+
+.skipLink {
+  background: var(--ink);
+  border-radius: var(--radius-sm);
+  color: var(--paper2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  left: 12px;
+  letter-spacing: 0.04em;
+  padding: 10px 14px;
+  position: absolute;
+  text-decoration: none;
+  top: -120px;
+  z-index: 20;
+}
+
+.skipLink:focus,
+.skipLink:focus-visible {
+  top: 12px;
 }
 
 .loadPanel {
@@ -945,6 +978,13 @@ a {
   padding: clamp(18px, 4vw, 28px);
 }
 
+.zineGenerateNotice {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
 .zineSubhead {
   display: grid;
   gap: 4px;
@@ -1446,7 +1486,24 @@ a {
 
 @media (max-width: 759px) {
   .shell {
-    padding-bottom: calc(36px + env(safe-area-inset-bottom, 0px));
+    padding: 18px 12px calc(28px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .demoNotice {
+    margin-top: 4px;
+  }
+
+  .quickPostForm {
+    padding: 12px;
+  }
+
+  .zineMakeBlock {
+    margin-top: 24px;
+    padding: 16px;
+  }
+
+  .zineGenerateNotice {
+    margin: 0;
   }
 
   .primaryCta {

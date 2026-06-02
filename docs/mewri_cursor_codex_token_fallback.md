@@ -16,7 +16,7 @@ For the concrete parallel/fallback implementation design, use
 
 ## Safe Starting Point
 
-Use the dedicated Cursor worktree on the local disk:
+Use the dedicated Cursor worktree on a **local disk outside OneDrive**:
 
 ```text
 C:\dev\mewri\ph-cursor
@@ -33,6 +33,8 @@ Do not work in the Codex worktree at the same time:
 ```text
 C:\dev\mewri\ph
 ```
+
+Legacy OneDrive copies are not active worktrees. Do not reopen them for new work.
 
 ## What Cursor May Do During Codex Downtime
 

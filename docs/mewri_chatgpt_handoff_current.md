@@ -2,6 +2,17 @@
 
 更新日: 2026-06-02
 
+## 開発用 worktree（現在）
+
+```text
+Codex 主 worktree:   C:\dev\mewri\ph          （通常は main）
+Cursor 用 worktree:  C:\dev\mewri\ph-cursor   （cursor/* ブランチ）
+```
+
+- 両方とも OneDrive の外（`C:\dev\mewri\`）で運用する。
+- 旧 OneDrive コピー（`OneDrive\ドキュメント\ph`、`ph-cursor`）は**現在の作業用 worktree ではない**。
+  `ph-cursor` フォルダは削除済み。新しい作業では開かない。
+
 ## プロダクト概要
 
 Mewri は一般的な写真フィードではなく、数人で写真を持ち寄り、数日分の投稿から ZINE を完成させるサービスです。
@@ -315,6 +326,76 @@ supabase       将来適用する migration 草案
 - Cursor must stop and queue work for Codex review if the task involves auth, RLS,
   Storage policy, server route security, migrations, secrets, shared mode, production,
   deploy, real user communication, merge to `main`, or push to `main`.
+
+## 2026-06-01 local demo UI polish slice (Cursor fallback)
+
+- Extracted local-demo pure helpers to `apps/web/src/app/local-demo-ui.ts`
+  (`calcReadinessPercent`, `formatRemainingToday`, `escapeSvgText`) with unit tests.
+- Local demo home: owner-facing demo notice copy (no `localStorage` jargon), `aria-live`
+  on photo/post status messages, `aria-current` on bottom section nav links.
+- No auth, persistence, shared-beta route, migration, env, or shared mode changes.
+- Codex should review this slice only for accidental coupling to shared-beta paths;
+  no security-sensitive code was touched.
+
+## 2026-06-01 local demo safety and focus slice (Cursor fallback)
+
+- Commit `1d3889f`: local demo notice, `aria-live` / `aria-current`, helper extraction.
+- Added `formatFullDate` to `local-demo-ui.ts`, reset confirmation dialog, load-error
+  `role="alert"`, and global `:focus-visible` outlines for keyboard navigation.
+- No auth, persistence, shared-beta, migration, or env changes.
+
+## 2026-06-01 local demo ZINE generate slice (Cursor fallback)
+
+- ZINE生成前に確認ダイアログ（初回生成 / 作り直しで文言を切り替え）。
+- 生成後はステータス表示と `#generated-zine` へのスムーズスクロール。
+- モバイル幅（759px以下）の余白を投稿フォーム・ZINE生成ブロックで調整。
+- No auth, persistence, shared-beta, migration, or env changes.
+
+## 2026-06-01 local demo navigation slice (Cursor fallback)
+
+- Skip link to main content, clearer header button labels, sample-post bulk-add confirmation.
+- Scroll-to-ZINE respects `prefers-reduced-motion`; page metadata title/description in Japanese.
+- No auth, persistence, shared-beta, migration, or env changes.
+
+## 2026-06-01 local dev disk migration (owner PC performance)
+
+- Added `.onedriveignore` for `node_modules`, `.next`, and other regenerable artifacts.
+- Added `docs/mewri_owner_local_dev_disk_setup.md`.
+- Active worktrees under `C:\dev\mewri\`: Codex `ph`, Cursor `ph-cursor` (git worktrees).
+- Added `tools/resume-local-dev-migration.ps1` (stops before `git restore` when the
+  worktree is dirty; see owner doc).
+- Legacy OneDrive `ドキュメント\ph-cursor` removed; OneDrive paths are not active
+  development worktrees.
+- Owner: open `C:\dev\mewri\ph-cursor` in Cursor; run `npm.cmd install` there if
+  `node_modules` is missing.
+
+## 2026-06-01 Cursor branch opened for review (PR #1)
+
+- Branch: `cursor/parallel-local-ui-docs` (pushed).
+- PR: https://github.com/yoshikage1819-create/mewri/pull/1
+- Scope on branch: local dev migration docs/script, local demo UI polish slices (no auth,
+  RLS, Storage policy, migrations, shared mode, deploy, or secrets).
+- Validation on branch tip: `npm.cmd run typecheck`, `npm.cmd test` (139 tests),
+  `npm.cmd run build`, `git diff --check`.
+
+### Codex next (when available)
+
+1. Review PR #1 diff; confirm no accidental shared-beta or security coupling.
+2. Merge to `main` only after approval (Cursor must not merge or push to `main`).
+3. Continue v0.10 foundation work from `C:\dev\mewri\ph` on `main` after merge.
+
+### Owner next (no Codex required)
+
+- Cursor: `C:\dev\mewri\ph-cursor`. Codex: `C:\dev\mewri\ph`. Do not use old OneDrive copies.
+- Wait for Codex review before merging PR #1 (merge deferred while Codex usage resets).
+
+## 2026-06-01 local demo progress copy slice (Cursor fallback, pre-merge)
+
+- Shared ZINE progress copy helpers in `local-demo-ui.ts`
+  (`formatZineRemainingHeadline`, `formatZineGenerateBlockedHint`, `formatPostSubmitSuccessMessage`).
+- Show the progress card even before the first post, with a first-post encouragement line.
+- Disabled「ZINEを作る」button now has an owner-facing hint via `aria-describedby`.
+- No auth, persistence, shared-beta, migration, or env changes.
 
 ## 2026-06-01 RPC migration approval checklist alignment
 
