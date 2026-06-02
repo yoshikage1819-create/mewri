@@ -56,12 +56,12 @@ supabase/migrations/202605290001_shared_beta_create_post_rpc.sql
 
 ## Part B — execute 付与方針（技術判断 → オーナー決定）
 
-### 現状の草案（コミット `10961bd`）
+### 現状の草案（案 1 採用済み）
 
 | 関数 | 役割 | 草案の grant |
 | --- | --- | --- |
-| `private.create_shared_beta_post` | 実処理（`security definer`） | `authenticated` に **EXECUTE** |
-| `public.create_shared_beta_post` | 薄いラッパ（`security invoker`） | `authenticated` に **EXECUTE** |
+| `private.create_shared_beta_post` | 実処理（`security definer`） | `authenticated` に **EXECUTE なし** |
+| `public.create_shared_beta_post` | 公開 RPC 入口（`security definer`） | `authenticated` に **EXECUTE** |
 
 `anon` / `public` ロールへの grant は **revoke 済み**（草案どおり）。
 
@@ -71,27 +71,27 @@ Foundation では `private.is_group_member` などに `authenticated` へ EXECUT
 
 今回の `private.create_shared_beta_post` は RLS からは呼ばず、**アプリが呼ぶ RPC 用** です。Supabase の通常の `.rpc()` は **public** スキーマの関数だけを公開します。
 
-### 推奨（案 1 — 適用前に migration を 1 行修正してから staging へ）
+### 採用方針（案 1 — 現在の migration 草案に反映済み）
 
 | 決定 | 内容 |
 | --- | --- |
-| **採用推奨** | **`authenticated` には `public.create_shared_beta_post` の EXECUTE のみ** 付与する |
-| **削除** | `grant execute on function private.create_shared_beta_post ... to authenticated` の行を **削除** |
-| **併せて修正** | `public.create_shared_beta_post` を **`security definer`** に変更し、`set search_path = ''` を維持する（ラッパが owner 権限で private を呼び、呼び出し元に private EXECUTE を要求しない） |
+| **採用済み** | **`authenticated` には `public.create_shared_beta_post` の EXECUTE のみ** 付与する |
+| **維持すること** | `grant execute on function private.create_shared_beta_post ... to authenticated` の行を追加しない |
+| **併せて維持** | `public.create_shared_beta_post` は **`security definer`** とし、`set search_path = ''` を維持する（ラッパが owner 権限で private を呼び、呼び出し元に private EXECUTE を要求しない） |
 
 **理由（オーナー向け）**: 利用者が使う入口を **public の 1 本** にそろえ、private 関数をログイン済みユーザーが SQL から直接叩ける余地を減らす。アプリコードは既に `rpc("create_shared_beta_post", ...)` のみを想定している。
 
-### 代替（案 2 — 修正なしで草案のまま staging 試験）
+### 非採用（案 2 — private 入口も authenticated に開く）
 
 | 決定 | 内容 |
 | --- | --- |
-| 条件付き可 | 両方に `authenticated` EXECUTE のまま適用しても、private 内の検証は同じで、**.rpc() から private は通常呼べない** |
+| 現時点では非採用 | 両方に `authenticated` EXECUTE を付与しても、private 内の検証は同じで、**.rpc() から private は通常呼べない** |
 | リスク | 認証済みセッションで SQL を直接叩くと private 入口も使える（ラッパと同等の検証だが **入口が 2 つ**） |
-| 運用 | staging 限定の短期試験なら可。**本番前の shared mode 有効化前には案 1 へ寄せる** |
+| 運用 | 本番前の shared mode 有効化前には案 1 が必須。現在の草案はすでに案 1 で固定する |
 
 **オーナー記入**
 
-- 採用案: ☐ 案 1（推奨・適用前に migration 修正）　☐ 案 2（草案のまま）
+- 採用案: ☑ 案 1（public RPC 入口のみ）　☐ 案 2（非採用）
 
 ---
 
