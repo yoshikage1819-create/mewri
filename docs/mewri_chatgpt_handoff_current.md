@@ -375,7 +375,7 @@ supabase       将来適用する migration 草案
 - PR: https://github.com/yoshikage1819-create/mewri/pull/1
 - Scope on branch: local dev migration docs/script, local demo UI polish slices (no auth,
   RLS, Storage policy, migrations, shared mode, deploy, or secrets).
-- Validation on branch tip: `npm.cmd run typecheck`, `npm.cmd test` (139 tests),
+- Validation on branch tip: `npm.cmd run typecheck`, `npm.cmd test` (143+ tests),
   `npm.cmd run build`, `git diff --check`.
 
 ### Codex next (when available)
@@ -424,3 +424,53 @@ supabase       将来適用する migration 草案
 - Chat context has been compacted by the Codex app at least once in this thread.
   App-level compaction is automatic and not directly schedulable from repo code;
   durable compression is handled by keeping this handoff current after each slice.
+
+## Cursor → Codex handoff (PR #1, open)
+
+Per `docs/mewri_ai_parallel_fallback_execution_design.md`.
+
+```text
+Cursor handoff
+
+Branch:
+cursor/parallel-local-ui-docs
+
+Base:
+origin/main at 250470421d1b2cbc54f6d7da977207b309a91f71 (merged into branch tip)
+
+PR:
+https://github.com/yoshikage1819-create/mewri/pull/1
+
+Changed files (branch vs main, summary):
+- docs: owner local dev setup, handoff, parallel/fallback design, cursor fallback runbook
+- tools/resume-local-dev-migration.ps1 (dirty-worktree safety stop)
+- apps/web local demo UI polish + local-demo-ui.ts helpers/tests
+- .onedriveignore
+
+What changed:
+- Move active development to C:\dev worktrees; document legacy OneDrive paths as inactive.
+- Local demo UX: accessibility, confirmations, progress copy, first-post guidance.
+- Resume migration script no longer runs git restore when uncommitted work exists.
+
+Validation (latest local-demo slices):
+- npm.cmd run typecheck: pass
+- npm.cmd test: pass (143 tests on branch tip before last docs-only edit)
+- npm.cmd run build: pass
+- git diff --check: pass
+
+Explicit non-goals:
+- No auth/session/RLS/Storage/migration/shared mode/deploy/production changes on this branch.
+
+Risks:
+- Branch includes many local-demo UI commits; review for accidental imports from shared-beta paths.
+- Do not merge until Codex confirms security boundaries unchanged.
+
+Needs Codex review before:
+- merge PR #1 to main
+- any v0.10 adapter/env wiring on main (C:\dev\mewri\ph)
+```
+
+### Next gate after PR #1 merge (Codex on `C:\dev\mewri\ph`)
+
+Continue v0.10 closed shared beta foundation per handoff §次に行うべきこと item 1
+(staging adapter + auth + verified Storage upload wiring, explicit owner approval first).
