@@ -453,6 +453,11 @@ supabase       将来適用する migration 草案
 - Extracted `calcLocalImageScale` for tested local image downscale math.
 - Codex token exhausted: Cursor continues on `ph-cursor` only; do not edit `ph` shared-beta API WIP.
 
+## 2026-06-02 local demo review guide (Cursor fallback, docs only)
+
+- Added `docs/runbooks/local-demo-review-guide.md` for non-technical reviewers.
+- Linked from `docs/README.md`. Covers safety notice, feedback note UI, and manual reporting.
+
 ## 2026-06-02 local demo mobile spacing slice (Cursor fallback)
 
 - Tuned `styles.css` mobile rules (`<=759px`) to match `home-wireframe.svg` section rhythm
