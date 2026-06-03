@@ -19,6 +19,7 @@
 | AI 開発運用 | `mewri_ai_workbench_setup.md` | Codex CLI / Cline / モデル選択の正本 |
 | PC を軽くする開発の置き場所 | `mewri_owner_local_dev_disk_setup.md` | OneDrive 外の推奨パスと移行手順 |
 | AI 並列・fallback 実装設計 | `mewri_ai_parallel_fallback_execution_design.md` | Codex と Cursor の並列実装、token 枯渇時の作業継続設計 |
+| Cursor fallback PR 文案 | `mewri_cursor_fallback_pr_draft.md` | `cursor/parallel-local-ui-docs` 用の PR 説明ドラフト（オーナー/Codex が開く・編集する） |
 | ローカルデモの確認（非技術者） | `runbooks/local-demo-review-guide.md` | 安全に触って感想を伝える手順（コード・本番・秘密情報は触らない） |
 
 ## 根拠・参考資料
