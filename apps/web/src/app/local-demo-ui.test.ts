@@ -13,8 +13,22 @@ import {
   formatRemainingToday,
   formatZineGenerateBlockedHint,
   formatZineRemainingHeadline,
+  LOCAL_DEMO_SAFETY_POINTS,
+  LOCAL_DEMO_SAFETY_SUMMARY,
   resolveScrollBehavior
 } from "./local-demo-ui";
+
+describe("LOCAL_DEMO_SAFETY_POINTS", () => {
+  it("covers local demo scope and Codex review expectation", () => {
+    const combined = LOCAL_DEMO_SAFETY_POINTS.map((point) => `${point.title} ${point.body}`).join(" ");
+    expect(LOCAL_DEMO_SAFETY_SUMMARY).toContain("注意");
+    expect(combined).toContain("ローカルデモ");
+    expect(combined).toContain("本番データ");
+    expect(combined).toContain("ログイン");
+    expect(combined).toContain("データベース");
+    expect(combined).toContain("Codex");
+  });
+});
 
 describe("formatPostListKicker", () => {
   it("labels the all-posts view", () => {

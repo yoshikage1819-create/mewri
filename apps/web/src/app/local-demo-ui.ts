@@ -1,5 +1,31 @@
 export const LOCAL_DEMO_RESET_CONFIRM_MESSAGE = "デモデータを初期状態に戻します。よろしいですか？";
 
+export const LOCAL_DEMO_SAFETY_SUMMARY = "この画面の範囲と注意（開発・確認用）";
+
+export type LocalDemoSafetyPoint = {
+  title: string;
+  body: string;
+};
+
+export const LOCAL_DEMO_SAFETY_POINTS: readonly LocalDemoSafetyPoint[] = [
+  {
+    title: "ローカルデモです",
+    body: "本番の Mewri ではなく、この端末で試すための画面です。"
+  },
+  {
+    title: "本番データは使いません",
+    body: "実際の参加者のデータや、本番サーバー上のデータには接続していません。"
+  },
+  {
+    title: "今回の画面作業の対象外",
+    body: "ログイン、クラウドのデータベース、写真のクラウド保存、サーバー側の安全な受け渡しは、この見た目・文言の作業では触れていません。"
+  },
+  {
+    title: "本番に出す前に",
+    body: "本番に近い形で公開する前に、Codex による確認が必要です。"
+  }
+] as const;
+
 export type PostListMode = "all" | "theme";
 
 export function formatPostListKicker(mode: PostListMode, themeTitle?: string): string {

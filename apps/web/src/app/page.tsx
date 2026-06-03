@@ -20,6 +20,7 @@ import {
   LOCAL_DEMO_RESET_CONFIRM_MESSAGE,
   scrollToElementById
 } from "./local-demo-ui";
+import { LocalDemoSafetyNotice } from "./local-demo-safety-notice";
 
 const appService: MewriAppService = createBrowserLocalMewriAppService();
 
@@ -292,6 +293,8 @@ export default function HomePage() {
           写真と投稿はこのブラウザにだけ保存されます。別の端末や他の人とは共有されません。
         </p>
       </aside>
+
+      <LocalDemoSafetyNotice />
 
       <section className="homeGrid" aria-label="ホーム">
         <div className="mainCol">
