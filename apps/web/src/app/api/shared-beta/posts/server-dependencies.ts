@@ -2,9 +2,9 @@ import type { ID } from "@mewri/core";
 import {
   createSharedBetaPostRouteBoundary,
   DEFAULT_POST_IMAGE_BUCKET,
-  type MewriRepository,
   type MewriRuntimeEnvironment
 } from "@mewri/data";
+import type { SharedBetaPostAuthorizationSource } from "@mewri/data/src/shared-beta-post-authorization-source";
 import {
   resolveAccessTokenFromRequest,
   resolveSupabaseAuthenticatedUserIdFromRequest,
@@ -41,7 +41,7 @@ export interface SharedBetaPostServerDependencyFactoryOptions {
   imageStorageClientFactory?: (input: { accessToken: string }) => SharedBetaPostImageStorageClient;
   postGatewayClient?: SupabaseSharedBetaPostRpcClient;
   postGatewayClientFactory?: (input: { accessToken: string }) => SupabaseSharedBetaPostRpcClient;
-  repository?: MewriRepository;
+  authorizationSource?: SharedBetaPostAuthorizationSource;
   resolveImageFile?: (input: {
     request: Request;
     authenticatedUserId: ID;
@@ -67,7 +67,7 @@ export function createSharedBetaPostServerDependenciesFromEnvironment(
 
   if (
     !options.authClient ||
-    !options.repository ||
+    !options.authorizationSource ||
     (!options.imageStorageClient && !options.imageStorageClientFactory) ||
     (!options.postGatewayClient && !options.postGatewayClientFactory)
   ) {
@@ -90,7 +90,12 @@ export function createSharedBetaPostServerDependenciesFromEnvironment(
       }
     },
     async resolveValidatedImagePath(input) {
-      if (!isUploadAuthorized(options.repository!, input.authenticatedUserId, input.post)) {
+      const authorization = await options.authorizationSource!.canCreatePost({
+        authenticatedUserId: input.authenticatedUserId,
+        groupId: input.post.groupId,
+        themeId: input.post.themeId
+      });
+      if (!authorization.ok) {
         return undefined;
       }
 
@@ -126,7 +131,7 @@ export function createSharedBetaPostServerDependenciesFromEnvironment(
 
       const postGateway = createSupabaseSharedBetaPostGateway(postGatewayClient);
       return createSharedBetaPostRouteBoundary({
-        repository: options.repository!,
+        authorizationSource: options.authorizationSource!,
         postCommandService: postGateway,
         authorization: {
           postImageBucket,
@@ -201,23 +206,4 @@ function resolvePostGatewayClient(
 
 function validatedImageKey(imagePath: string, groupId: ID, userId: ID): string {
   return `${groupId}\n${userId}\n${imagePath}`;
-}
-
-function isUploadAuthorized(
-  repository: MewriRepository,
-  authenticatedUserId: ID,
-  post: {
-    groupId: ID;
-    themeId: ID;
-  }
-): boolean {
-  const isMember = repository.groupMembers
-    .listByGroupId(post.groupId)
-    .some((member) => member.userId === authenticatedUserId);
-  if (!isMember) {
-    return false;
-  }
-
-  const theme = repository.themes.getById(post.themeId);
-  return Boolean(theme && theme.groupId === post.groupId && theme.status === "active");
 }

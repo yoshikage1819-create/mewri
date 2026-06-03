@@ -2,6 +2,10 @@ import type { ID, Post } from "@mewri/core";
 import type { SubmitPostCommand } from "./mewri-app-service";
 import { submitPost } from "./mewri-service";
 import type { MewriRepository } from "./repository";
+import {
+  createRepositorySharedBetaPostAuthorizationSource,
+  type SharedBetaPostAuthorizationSourceResult
+} from "./shared-beta-post-authorization-source";
 
 export type SharedBetaPostAuthorizationFailure =
   | "server_request_required"
@@ -44,6 +48,26 @@ export function assertSharedBetaPostSubmissionAllowed(
   command: SubmitPostCommand,
   options: SharedBetaPostAuthorizationOptions
 ): void {
+  const actorId = assertSharedBetaPostServerContextAllowed(command);
+  assertSharedBetaPostAuthorizationSourceResult(
+    createRepositorySharedBetaPostAuthorizationSource(repository).canCreatePost({
+      authenticatedUserId: actorId,
+      groupId: command.input.groupId,
+      themeId: command.input.themeId
+    }) as SharedBetaPostAuthorizationSourceResult
+  );
+  assertSharedBetaPostImageAllowed(command, options, actorId);
+}
+
+export function assertSharedBetaPostServerContextAndImageAllowed(
+  command: SubmitPostCommand,
+  options: SharedBetaPostAuthorizationOptions
+): void {
+  const actorId = assertSharedBetaPostServerContextAllowed(command);
+  assertSharedBetaPostImageAllowed(command, options, actorId);
+}
+
+function assertSharedBetaPostServerContextAllowed(command: SubmitPostCommand): ID {
   const context = command.context;
   const actorId = context?.currentUserId;
 
@@ -59,18 +83,14 @@ export function assertSharedBetaPostSubmissionAllowed(
     deny("identity_mismatch", "Authenticated users may create posts only as themselves.");
   }
 
-  const isMember = repository.groupMembers
-    .listByGroupId(command.input.groupId)
-    .some((member) => member.userId === actorId);
-  if (!isMember) {
-    deny("group_membership_required", "Shared beta posts require membership in the destination group.");
-  }
+  return actorId;
+}
 
-  const theme = repository.themes.getById(command.input.themeId);
-  if (!theme || theme.groupId !== command.input.groupId || theme.status !== "active") {
-    deny("active_group_theme_required", "Shared beta posts require an active theme in the destination group.");
-  }
-
+function assertSharedBetaPostImageAllowed(
+  command: SubmitPostCommand,
+  options: SharedBetaPostAuthorizationOptions,
+  actorId: ID
+): void {
   if (!isPrivatePostImagePath(command.input.imageUrl, options.postImageBucket, command.input.groupId, actorId)) {
     deny(
       "private_image_path_required",
@@ -89,6 +109,14 @@ export function assertSharedBetaPostSubmissionAllowed(
       "validated_image_required",
       "Shared beta posts require an image verified by a server-side upload or storage lookup."
     );
+  }
+}
+
+export function assertSharedBetaPostAuthorizationSourceResult(
+  result: SharedBetaPostAuthorizationSourceResult
+): void {
+  if (!result.ok) {
+    deny(result.code, result.message);
   }
 }
 

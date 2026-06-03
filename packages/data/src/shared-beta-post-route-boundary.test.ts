@@ -3,17 +3,18 @@ import { describe, expect, it, vi } from "vitest";
 import { createMemoryRepository } from "./memory-repository";
 import { type SubmitPostCommand } from "./mewri-app-service";
 import { createSeedState } from "./seed";
+import { createRepositorySharedBetaPostAuthorizationSource } from "./shared-beta-post-authorization-source";
 import { createSharedBetaPostRouteBoundary } from "./shared-beta-post-route-boundary";
 
 const POST_IMAGE_BUCKET = "post-images";
 const ACTIVE_THEME_ID = "theme_cycle_group_first_2026-05-20_1";
 
 describe("shared beta post route boundary", () => {
-  it("submits once when authenticated server context and a server-validated image path are provided", () => {
+  it("submits once when authenticated server context and a server-validated image path are provided", async () => {
     const submitPost = vi.fn(() => makeSubmittedPost());
     const boundary = createRouteBoundary({ submitPost });
 
-    const result = boundary.submitPost(makeRouteInput());
+    const result = await boundary.submitPost(makeRouteInput());
 
     expect(result).toEqual({ ok: true, post: makeSubmittedPost() });
     expect(result).not.toHaveProperty("state");
@@ -54,17 +55,17 @@ describe("shared beta post route boundary", () => {
       expectedCode: "private_image_path_required",
       input: makeRouteInput({ serverValidatedImagePath: "data:image/png;base64,private-data" })
     }
-  ])("rejects command execution $name", ({ expectedCode, input }) => {
+  ])("rejects command execution $name", async ({ expectedCode, input }) => {
     const submitPost = vi.fn(() => makeSubmittedPost());
     const boundary = createRouteBoundary({ submitPost });
 
-    const result = boundary.submitPost(input);
+    const result = await boundary.submitPost(input);
 
     expect(result).toMatchObject({ ok: false, code: expectedCode });
     expect(submitPost).not.toHaveBeenCalled();
   });
 
-  it("rejects command execution for non-members", () => {
+  it("rejects command execution for non-members", async () => {
     const state = createSeedState(new Date("2026-05-20T09:00:00.000Z"));
     const otherGroup = makeOtherGroup();
     const otherTheme = makeOtherTheme(otherGroup);
@@ -78,7 +79,7 @@ describe("shared beta post route boundary", () => {
       }
     });
 
-    const result = boundary.submitPost(
+    const result = await boundary.submitPost(
       makeRouteInput({
         post: {
           groupId: otherGroup.id,
@@ -126,7 +127,7 @@ describe("shared beta post route boundary", () => {
       },
       input: makeRouteInput()
     }
-  ])("rejects command execution $name", ({ setupState, input }) => {
+  ])("rejects command execution $name", async ({ setupState, input }) => {
     const state = createSeedState(new Date("2026-05-20T09:00:00.000Z"));
     const submitPost = vi.fn(() => makeSubmittedPost());
     const boundary = createRouteBoundary({
@@ -134,7 +135,7 @@ describe("shared beta post route boundary", () => {
       seedState: setupState(state)
     });
 
-    const result = boundary.submitPost(input);
+    const result = await boundary.submitPost(input);
 
     expect(result).toMatchObject({ ok: false, code: "active_group_theme_required" });
     expect(submitPost).not.toHaveBeenCalled();
@@ -148,7 +149,7 @@ function createRouteBoundary(options: {
   const repository = createMemoryRepository(options.seedState ?? createSeedState(new Date("2026-05-20T09:00:00.000Z")));
 
   return createSharedBetaPostRouteBoundary({
-    repository,
+    authorizationSource: createRepositorySharedBetaPostAuthorizationSource(repository),
     authorization: {
       postImageBucket: POST_IMAGE_BUCKET,
       isPostImageUploadValidated: () => true

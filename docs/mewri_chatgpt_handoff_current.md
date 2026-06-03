@@ -477,3 +477,35 @@ supabase       将来適用する migration 草案
   membership/theme authorization source or repository adapter plus an approved
   upload mechanism/policy. Until that exists and is approved, leave the
   exported route fail-closed.
+
+## 2026-06-03 C-4 trusted authorization source contract slice
+
+- Added a narrow `SharedBetaPostAuthorizationSource` contract that answers only
+  whether an authenticated user may create a post for a target group/theme. It
+  does not expose `MewriState`, repository handles, Storage clients, or Supabase
+  details.
+- Added a memory-repository adapter helper for tests/local compatibility:
+  `createRepositorySharedBetaPostAuthorizationSource`. The app route factory now
+  requires this narrow authorization source instead of a full `MewriRepository`.
+- Updated the shared-beta route boundary so authorization source checks run
+  before RPC command execution, and the app route factory checks the source
+  before image file resolution/upload. Unauthorized member/theme cases do not
+  upload and do not call RPC.
+- Preserved fail-closed behavior: the exported route remains
+  `503 shared_beta_route_unavailable` unless the explicit staging gate and
+  trusted auth, authorization source, Storage, and RPC dependencies are all
+  injected.
+- Fixed a review-found ordering regression in the local guarded command service:
+  membership/theme authorization now runs before server image validation.
+- No live Supabase connection, real env values, service-role key, migration,
+  shared mode, deployment, or production resource was used.
+- Validation: `npm.cmd run typecheck` passed; `npm.cmd test` passed with
+  166 tests; `npm.cmd run build` passed; `git diff --check` returned only CRLF
+  normalization warnings.
+- Independent review: the standard `codex.cmd review --uncommitted` timed out.
+  Full-access review found the authorization-before-image-validation ordering
+  issue; it was fixed and covered by a regression test. Final full-access review
+  reported no discrete correctness, security, or maintainability issues.
+- Remaining blocker/next gate: live staging activation still needs an approved
+  Storage upload mechanism/policy and real staging adapters. Stop before
+  credentials, migrations, shared mode, deployment, or production.

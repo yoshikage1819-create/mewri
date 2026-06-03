@@ -1,5 +1,9 @@
 import type { Group, Theme } from "@mewri/core";
-import { createMemoryRepository, createSeedState } from "@mewri/data";
+import {
+  createMemoryRepository,
+  createRepositorySharedBetaPostAuthorizationSource,
+  createSeedState
+} from "@mewri/data";
 import type { SupabaseAuthSessionClient } from "@mewri/data/src/supabase-auth-session";
 import type {
   SharedBetaPostImageFile,
@@ -99,22 +103,29 @@ describe("shared beta post server dependency factory", () => {
 
   it("keeps the route unavailable when public staging config lacks a trusted authorization source", async () => {
     const handler = createSharedBetaPostRouteHandler(
-      createSharedBetaPostServerDependenciesFromEnvironment(STAGING_ROUTE_ENVIRONMENT)
+      createSharedBetaPostServerDependenciesFromEnvironment(STAGING_ROUTE_ENVIRONMENT, {
+        authClient: { getUser: vi.fn(async () => ({ data: { user: { id: "user_demo" } } })) },
+        imageStorageClient: { uploadObject: vi.fn(async () => ({ ok: true })) },
+        postGatewayClient: { rpc: vi.fn() }
+      })
     );
 
-    const response = await handler(makeJsonRequest());
+    const response = await handler(makeJsonRequest({ authorization: "Bearer token_a" }));
+    const body = await response.json();
 
     expect(response.status).toBe(503);
+    expect(body).toMatchObject({ ok: false, error: { code: "shared_beta_route_unavailable" } });
   });
 
-  it("keeps the route unavailable when staging config has a repository but lacks explicit trusted clients", async () => {
+  it("keeps the route unavailable when staging config has an authorization source but lacks trusted clients", async () => {
     const authClient: SupabaseAuthSessionClient = {
       getUser: vi.fn(async () => ({ data: { user: { id: "user_demo" } } }))
     };
+    const repository = createMemoryRepository(createSeedState(new Date("2026-05-20T09:00:00.000Z")));
     const handler = createSharedBetaPostRouteHandler(
       createSharedBetaPostServerDependenciesFromEnvironment(STAGING_ROUTE_ENVIRONMENT, {
         authClient,
-        repository: createMemoryRepository(createSeedState(new Date("2026-05-20T09:00:00.000Z")))
+        authorizationSource: createRepositorySharedBetaPostAuthorizationSource(repository)
       })
     );
 
@@ -243,11 +254,13 @@ describe("shared beta post server dependency factory", () => {
     const handler = createSharedBetaPostRouteHandler(
       createSharedBetaPostServerDependenciesFromEnvironment(STAGING_ROUTE_ENVIRONMENT, {
         ...makeCompleteOptions({
-          repository: createMemoryRepository({
-            ...seedState,
-            groups: [...seedState.groups, otherGroup],
-            themes: [...seedState.themes, otherTheme]
-          }),
+          authorizationSource: createRepositorySharedBetaPostAuthorizationSource(
+            createMemoryRepository({
+              ...seedState,
+              groups: [...seedState.groups, otherGroup],
+              themes: [...seedState.themes, otherTheme]
+            })
+          ),
           imageStorageClient: undefined,
           imageStorageClientFactory,
           postGatewayClient: undefined,
@@ -440,7 +453,9 @@ function makeCompleteOptions(
     postGatewayClient: {
       rpc: vi.fn()
     },
-    repository: createMemoryRepository(createSeedState(new Date("2026-05-20T09:00:00.000Z"))),
+    authorizationSource: createRepositorySharedBetaPostAuthorizationSource(
+      createMemoryRepository(createSeedState(new Date("2026-05-20T09:00:00.000Z")))
+    ),
     resolveImageFile: async () => makeFile({ name: "photo.webp", type: "image/webp", size: 12 }),
     generateImageFilename: () => "photo.webp",
     ...overrides
