@@ -16,8 +16,12 @@ import {
   formatFeedbackCharCount,
   LOCAL_DEMO_BANNER_BODY,
   LOCAL_DEMO_BANNER_TITLE,
+  LOCAL_DEMO_FEEDBACK_CHAR_COUNT_ID,
   LOCAL_DEMO_FEEDBACK_INTRO,
   LOCAL_DEMO_FEEDBACK_MAX_CHARS,
+  LOCAL_DEMO_FEEDBACK_TEXTAREA_ID,
+  LOCAL_DEMO_SAFETY_PANEL_ID,
+  LOCAL_DEMO_SAFETY_SUMMARY_ID,
   LOCAL_DEMO_SAFETY_POINTS,
   LOCAL_DEMO_SAFETY_SUMMARY,
   resolveScrollBehavior
@@ -25,11 +29,20 @@ import {
 
 describe("formatFeedbackCharCount", () => {
   it("shows current and max length in Japanese", () => {
-    expect(formatFeedbackCharCount(12, LOCAL_DEMO_FEEDBACK_MAX_CHARS)).toBe("12文字 / 最大500文字");
+    expect(formatFeedbackCharCount(12, LOCAL_DEMO_FEEDBACK_MAX_CHARS)).toBe("入力文字数 12文字 / 最大500文字");
   });
 
   it("clamps displayed length to the max", () => {
-    expect(formatFeedbackCharCount(999, 500)).toBe("500文字 / 最大500文字");
+    expect(formatFeedbackCharCount(999, 500)).toBe("入力文字数 500文字 / 最大500文字");
+  });
+});
+
+describe("local demo accessibility ids", () => {
+  it("uses stable ids for safety and feedback regions", () => {
+    expect(LOCAL_DEMO_SAFETY_SUMMARY_ID).toBe("local-demo-safety-summary");
+    expect(LOCAL_DEMO_SAFETY_PANEL_ID).toBe("local-demo-safety-panel");
+    expect(LOCAL_DEMO_FEEDBACK_TEXTAREA_ID).toBe("local-demo-feedback-textarea");
+    expect(LOCAL_DEMO_FEEDBACK_CHAR_COUNT_ID).toBe("local-demo-feedback-char-count");
   });
 });
 

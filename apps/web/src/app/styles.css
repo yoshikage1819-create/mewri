@@ -189,21 +189,52 @@ a {
 }
 
 .demoSafetyNotice summary {
+  align-items: center;
   color: var(--ink);
   cursor: pointer;
+  display: flex;
   font-size: 13px;
   font-weight: 650;
+  gap: 6px;
   list-style: none;
   min-height: 40px;
   padding: 10px 12px;
+}
+
+.demoSafetyNotice summary::before {
+  color: var(--ink);
+  content: "▸";
+  flex: 0 0 auto;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.demoSafetyNotice[open] summary::before {
+  content: "▾";
 }
 
 .demoSafetyNotice summary::-webkit-details-marker {
   display: none;
 }
 
+.demoSafetyNotice summary:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
 .demoSafetyNotice[open] summary {
   border-bottom: 1px dashed rgba(46, 42, 38, 0.2);
+}
+
+.demoSafetyToggleHint::after {
+  color: var(--muted);
+  content: "（開いて読む）";
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.demoSafetyNotice[open] .demoSafetyToggleHint::after {
+  content: "（閉じる）";
 }
 
 .demoSafetyNotice ul {
@@ -215,19 +246,25 @@ a {
 }
 
 .demoSafetyNotice li {
+  border-left: 3px solid rgba(46, 42, 38, 0.22);
   display: grid;
-  gap: 2px;
+  gap: 4px;
+  padding-left: 10px;
 }
 
-.demoSafetyNotice li strong {
+.demoSafetyPointTitle {
   color: var(--ink);
   font-size: 12px;
   font-weight: 700;
+  line-height: 1.4;
+  margin: 0;
 }
 
-.demoSafetyNotice li span {
+.demoSafetyPointBody {
+  color: var(--muted);
   font-size: 12px;
   line-height: 1.55;
+  margin: 0;
 }
 
 .demoFeedbackNote {
@@ -281,8 +318,9 @@ a {
   justify-content: space-between;
 }
 
-.demoFeedbackMeta p {
+.demoFeedbackCharCount {
   color: var(--muted);
+  display: block;
   font-family: var(--font-mono);
   font-size: 12px;
   margin: 0;

@@ -7,6 +7,10 @@ export const LOCAL_DEMO_BANNER_BODY =
 
 export const LOCAL_DEMO_SAFETY_SUMMARY = "この画面の範囲と注意（開発・確認用）";
 
+export const LOCAL_DEMO_SAFETY_SUMMARY_ID = "local-demo-safety-summary";
+
+export const LOCAL_DEMO_SAFETY_PANEL_ID = "local-demo-safety-panel";
+
 export type LocalDemoSafetyPoint = {
   title: string;
   body: string;
@@ -43,9 +47,17 @@ export const LOCAL_DEMO_FEEDBACK_PLACEHOLDER =
 
 export const LOCAL_DEMO_FEEDBACK_CLEAR_LABEL = "メモを消す";
 
+export const LOCAL_DEMO_FEEDBACK_SECTION_LABEL = "デモの感想メモ";
+
+export const LOCAL_DEMO_FEEDBACK_INTRO_ID = "local-demo-feedback-intro";
+
+export const LOCAL_DEMO_FEEDBACK_TEXTAREA_ID = "local-demo-feedback-textarea";
+
+export const LOCAL_DEMO_FEEDBACK_CHAR_COUNT_ID = "local-demo-feedback-char-count";
+
 export function formatFeedbackCharCount(length: number, maxChars: number): string {
   const safeLength = Math.max(0, Math.min(length, maxChars));
-  return `${safeLength}文字 / 最大${maxChars}文字`;
+  return `入力文字数 ${safeLength}文字 / 最大${maxChars}文字`;
 }
 
 export type PostListMode = "all" | "theme";
