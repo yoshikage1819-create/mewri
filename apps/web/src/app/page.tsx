@@ -14,6 +14,8 @@ import {
   formatPostListKicker,
   type PostListMode,
   formatPostSubmitSuccessMessage,
+  LOCAL_DEMO_BANNER_BODY,
+  LOCAL_DEMO_BANNER_TITLE,
   formatRemainingToday,
   formatZineGenerateBlockedHint,
   formatZineRemainingHeadline,
@@ -290,8 +292,8 @@ export default function HomePage() {
 
       <aside className="demoNotice" aria-label="デモの説明">
         <p>
-          <strong>デモ（この端末だけ）</strong>
-          写真と投稿はこのブラウザにだけ保存されます。別の端末や他の人とは共有されません。
+          <strong>{LOCAL_DEMO_BANNER_TITLE}</strong>
+          {LOCAL_DEMO_BANNER_BODY}
         </p>
       </aside>
 

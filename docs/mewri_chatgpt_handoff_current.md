@@ -453,6 +453,11 @@ supabase       将来適用する migration 草案
 - Extracted `calcLocalImageScale` for tested local image downscale math.
 - Codex token exhausted: Cursor continues on `ph-cursor` only; do not edit `ph` shared-beta API WIP.
 
+## 2026-06-02 local demo copy consistency audit (Cursor fallback)
+
+- Aligned banner, safety notice bullets, feedback intro, tests, and review guide wording.
+- Single source for user-facing copy: `local-demo-ui.ts` (including top banner text).
+
 ## 2026-06-02 local demo review guide (Cursor fallback, docs only)
 
 - Added `docs/runbooks/local-demo-review-guide.md` for non-technical reviewers.

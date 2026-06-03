@@ -1,5 +1,10 @@
 export const LOCAL_DEMO_RESET_CONFIRM_MESSAGE = "デモデータを初期状態に戻します。よろしいですか？";
 
+export const LOCAL_DEMO_BANNER_TITLE = "デモ（この端末だけ）";
+
+export const LOCAL_DEMO_BANNER_BODY =
+  "これはローカルデモです。写真と投稿はこのブラウザにだけ保存され、送信はされません。別の端末や他の人とは共有されません。";
+
 export const LOCAL_DEMO_SAFETY_SUMMARY = "この画面の範囲と注意（開発・確認用）";
 
 export type LocalDemoSafetyPoint = {
@@ -10,26 +15,26 @@ export type LocalDemoSafetyPoint = {
 export const LOCAL_DEMO_SAFETY_POINTS: readonly LocalDemoSafetyPoint[] = [
   {
     title: "ローカルデモです",
-    body: "本番の Mewri ではなく、この端末で試すための画面です。"
+    body: "本番の Mewri ではなく、この端末のブラウザで試す画面です。"
   },
   {
-    title: "本番データは使いません",
-    body: "実際の参加者のデータや、本番サーバー上のデータには接続していません。"
+    title: "本番・参加者データは使いません",
+    body: "本番のデータや、非公開ベータの参加者データは使わず、ここにも入力しないでください。"
   },
   {
-    title: "今回の画面作業の対象外",
-    body: "ログイン、クラウドのデータベース、写真のクラウド保存、サーバー側の安全な受け渡しは、この見た目・文言の作業では触れていません。"
+    title: "秘密情報は入力しない",
+    body: "パスワード、トークン、魔法のリンク、本番やステージングのログイン情報は入力しないでください。"
   },
   {
-    title: "本番に出す前に",
-    body: "本番に近い形で公開する前に、Codex による確認が必要です。"
+    title: "本番に出す前に Codex 確認",
+    body: "ログイン、データベース、写真のクラウド保存、API の安全設計、デプロイ・本番公開は、Codex による確認後に進みます。"
   }
 ] as const;
 
 export const LOCAL_DEMO_FEEDBACK_MAX_CHARS = 500;
 
 export const LOCAL_DEMO_FEEDBACK_INTRO =
-  "ここに書いた内容は、この端末の画面にだけ表示されます。送信や保存はされません。ページを再読み込みすると消えます。";
+  "ここに書いた内容は、この端末の画面にだけ表示されます。送信やサーバーへの保存はされません。ページを再読み込みすると消えます。";
 
 export const LOCAL_DEMO_FEEDBACK_LABEL = "感想・改善のメモ（任意）";
 

@@ -14,6 +14,8 @@ import {
   formatZineGenerateBlockedHint,
   formatZineRemainingHeadline,
   formatFeedbackCharCount,
+  LOCAL_DEMO_BANNER_BODY,
+  LOCAL_DEMO_BANNER_TITLE,
   LOCAL_DEMO_FEEDBACK_INTRO,
   LOCAL_DEMO_FEEDBACK_MAX_CHARS,
   LOCAL_DEMO_SAFETY_POINTS,
@@ -31,6 +33,14 @@ describe("formatFeedbackCharCount", () => {
   });
 });
 
+describe("LOCAL_DEMO_BANNER copy", () => {
+  it("states local demo and device-only storage", () => {
+    expect(LOCAL_DEMO_BANNER_TITLE).toContain("この端末だけ");
+    expect(LOCAL_DEMO_BANNER_BODY).toContain("ローカルデモ");
+    expect(LOCAL_DEMO_BANNER_BODY).toContain("送信");
+  });
+});
+
 describe("LOCAL_DEMO_FEEDBACK_INTRO", () => {
   it("states the note is device-only and not sent", () => {
     expect(LOCAL_DEMO_FEEDBACK_INTRO).toContain("この端末");
@@ -44,9 +54,14 @@ describe("LOCAL_DEMO_SAFETY_POINTS", () => {
     const combined = LOCAL_DEMO_SAFETY_POINTS.map((point) => `${point.title} ${point.body}`).join(" ");
     expect(LOCAL_DEMO_SAFETY_SUMMARY).toContain("注意");
     expect(combined).toContain("ローカルデモ");
-    expect(combined).toContain("本番データ");
+    expect(combined).toContain("本番");
+    expect(combined).toContain("非公開ベータ");
+    expect(combined).toContain("パスワード");
+    expect(combined).toContain("トークン");
     expect(combined).toContain("ログイン");
     expect(combined).toContain("データベース");
+    expect(combined).toContain("API");
+    expect(combined).toContain("デプロイ");
     expect(combined).toContain("Codex");
   });
 });
