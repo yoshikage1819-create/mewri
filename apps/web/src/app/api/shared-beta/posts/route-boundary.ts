@@ -1,5 +1,22 @@
 import type { ID } from "@mewri/core";
 import type { SharedBetaPostRouteBoundary } from "@mewri/data";
+import {
+  SHARED_BETA_POST_IMAGE_MAX_BYTES,
+  type SharedBetaPostImageFile
+} from "@mewri/data/src/supabase-post-image-storage";
+import { formValueToSharedBetaPostImageFile, SHARED_BETA_POST_IMAGE_FORM_FIELD } from "./image-file";
+
+const SHARED_BETA_MULTIPART_OVERHEAD_MAX_BYTES = 64 * 1024;
+const SHARED_BETA_MULTIPART_MAX_BYTES =
+  SHARED_BETA_POST_IMAGE_MAX_BYTES + SHARED_BETA_MULTIPART_OVERHEAD_MAX_BYTES;
+
+interface SharedBetaPostRoutePostInput {
+  userId: string;
+  groupId: string;
+  themeId: string;
+  caption?: string;
+  imageFile?: SharedBetaPostImageFile;
+}
 
 export interface SharedBetaPostRouteDependencies {
   isRouteAvailable?(): boolean;
@@ -7,22 +24,12 @@ export interface SharedBetaPostRouteDependencies {
   resolveValidatedImagePath(input: {
     request: Request;
     authenticatedUserId: ID;
-    post: {
-      userId: ID;
-      groupId: ID;
-      themeId: ID;
-      caption?: string;
-    };
+    post: SharedBetaPostRoutePostInput;
   }): Promise<string | undefined>;
   resolveBoundary(input?: {
     request: Request;
     authenticatedUserId: ID;
-    post: {
-      userId: ID;
-      groupId: ID;
-      themeId: ID;
-      caption?: string;
-    };
+    post: SharedBetaPostRoutePostInput;
   }): SharedBetaPostRouteBoundary | undefined;
 }
 
@@ -64,20 +71,6 @@ export function createSharedBetaPostRouteHandler(
       );
     }
 
-    const parsedBody = await parseBody(request);
-    if (!parsedBody.ok) {
-      return Response.json(
-        {
-          ok: false,
-          error: {
-            code: "invalid_request_body",
-            message: parsedBody.error
-          }
-        },
-        { status: 400 }
-      );
-    }
-
     const authenticatedUserId = await dependencies.resolveAuthenticatedUserId(request);
 
     if (!authenticatedUserId) {
@@ -90,6 +83,20 @@ export function createSharedBetaPostRouteHandler(
           }
         },
         { status: 401 }
+      );
+    }
+
+    const parsedBody = await parseBody(request);
+    if (!parsedBody.ok) {
+      return Response.json(
+        {
+          ok: false,
+          error: {
+            code: "invalid_request_body",
+            message: parsedBody.error
+          }
+        },
+        { status: parsedBody.status ?? 400 }
       );
     }
 
@@ -176,15 +183,15 @@ export function createSharedBetaPostRouteHandler(
 async function parseBody(request: Request): Promise<
   | {
       ok: true;
-      value: {
-        userId: string;
-        groupId: string;
-        themeId: string;
-        caption?: string;
-      };
+      value: SharedBetaPostRoutePostInput;
     }
-  | { ok: false; error: string }
+  | { ok: false; error: string; status?: number }
 > {
+  const contentType = request.headers.get("content-type") ?? "";
+  if (contentType.toLowerCase().includes("multipart/form-data")) {
+    return parseMultipartBody(request);
+  }
+
   let body: unknown;
 
   try {
@@ -222,6 +229,92 @@ async function parseBody(request: Request): Promise<
       caption
     }
   };
+}
+
+async function parseMultipartBody(request: Request): Promise<
+  | {
+      ok: true;
+      value: SharedBetaPostRoutePostInput;
+    }
+  | { ok: false; error: string; status?: number }
+> {
+  const lengthCheck = validateMultipartContentLength(request);
+  if (!lengthCheck.ok) {
+    return lengthCheck;
+  }
+
+  let formData: FormData;
+
+  try {
+    formData = await request.formData();
+  } catch {
+    return { ok: false, error: "Multipart request body must be valid form data." };
+  }
+
+  if (formData.has("validatedImagePath") || formData.has("imageUrl")) {
+    return { ok: false, error: "Client-supplied image paths are not accepted." };
+  }
+
+  const userId = asNonEmptyString(formData.get("userId"));
+  const groupId = asNonEmptyString(formData.get("groupId"));
+  const themeId = asNonEmptyString(formData.get("themeId"));
+  const caption = asOptionalString(formData.get("caption"));
+
+  if (!userId || !groupId || !themeId) {
+    return {
+      ok: false,
+      error: "userId, groupId, and themeId are required strings."
+    };
+  }
+
+  return {
+    ok: true,
+    value: {
+      userId,
+      groupId,
+      themeId,
+      caption,
+      imageFile: formValueToSharedBetaPostImageFile(formData.get(SHARED_BETA_POST_IMAGE_FORM_FIELD))
+    }
+  };
+}
+
+function validateMultipartContentLength(request: Request): { ok: true } | { ok: false; error: string; status: number } {
+  const rawContentLength = request.headers.get("content-length");
+  if (!rawContentLength) {
+    return {
+      ok: false,
+      error: "Multipart request content-length is required before reading an image upload.",
+      status: 411
+    };
+  }
+
+  if (!/^[0-9]+$/.test(rawContentLength)) {
+    return {
+      ok: false,
+      error: "Multipart request content-length must be a positive integer.",
+      status: 400
+    };
+  }
+
+  const contentLength = Number.parseInt(rawContentLength, 10);
+  if (!Number.isSafeInteger(contentLength) || contentLength <= 0) {
+    return {
+      ok: false,
+      error: "Multipart request content-length must be a positive integer.",
+      status: 400
+    };
+  }
+
+  if (contentLength > SHARED_BETA_MULTIPART_MAX_BYTES) {
+    return {
+      ok: false,
+      error: "Multipart request body is too large.",
+      status: 413
+    };
+  }
+
+  return { ok: true };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

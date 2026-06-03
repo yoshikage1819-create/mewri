@@ -437,3 +437,43 @@ supabase       将来適用する migration 草案
 - Updated Codex CLI examples from the old OneDrive path to `C:\dev\mewri\ph`.
 - No product code, Supabase, auth, RLS, Storage, migration, env, shared mode,
   deployment, or production resources were touched.
+
+## 2026-06-02 C-3 code-only staging route factory slice
+
+- Added an explicit staging-only route gate
+  `MEWRI_ENABLE_STAGING_SHARED_BETA_POST_ROUTE=true` for
+  `POST /api/shared-beta/posts`. The exported route still returns
+  `503 shared_beta_route_unavailable` by default, including with no gate or no
+  trusted repository/authorization source.
+- The route factory now resolves public Supabase URL + anon/publishable key
+  only for the gated staging route. It rejects service-role/secret-style keys
+  in the public key slot and does not require or use `SUPABASE_SERVICE_ROLE_KEY`.
+- Added request-scoped auth, Storage, and RPC client factory paths that use the
+  same member access token after authentication passes. Tests use injected
+  fake clients only; no live Supabase request was made. After review, the
+  route factory remains fail-closed unless trusted auth, repository, Storage,
+  and RPC dependencies are all explicitly injected; it does not silently create
+  a live Storage upload path from env alone.
+- Added multipart form parsing for shared-beta post requests. The server route
+  accepts `userId`, `groupId`, `themeId`, `caption`, and an `image` file, rejects
+  client-supplied `validatedImagePath`/`imageUrl`, and passes the file to the
+  server upload boundary.
+- Added tests for missing staging gate, incomplete/invalid public config,
+  service-role/secret key rejection, request-scoped client factories, missing
+  auth before upload/RPC, multipart missing/unsupported/oversized image
+  rejection, unauthorized group/theme rejection, and happy-path fake posting.
+- No real env values, service-role key, live Supabase connection, migration,
+  shared mode, deployment, or production resource was used.
+- Validation: `npm.cmd run typecheck` passed; `npm.cmd test` passed with
+  160 tests; `npm.cmd run build` passed; `git diff --check` returned only CRLF
+  normalization warnings.
+- Independent review: the first `codex.cmd review --uncommitted` hit the known
+  Windows sandbox spawn failure. The full-access rerun found a P2 issue where
+  default Storage client fallback would fail against current staging RLS; fixed
+  by requiring explicit trusted Storage/RPC clients or factories. Final
+  full-access rerun reported no C-3 route finding; it only flagged the unrelated
+  excluded `docs/mewri_friend_pitch_deck.html` artifact.
+- Blocker: true live staging route activation still needs a trusted Supabase
+  membership/theme authorization source or repository adapter plus an approved
+  upload mechanism/policy. Until that exists and is approved, leave the
+  exported route fail-closed.
