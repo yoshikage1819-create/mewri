@@ -20,6 +20,7 @@ import {
   LOCAL_DEMO_RESET_CONFIRM_MESSAGE,
   scrollToElementById
 } from "./local-demo-ui";
+import { LocalDemoFeedbackNote } from "./local-demo-feedback-note";
 import { LocalDemoSafetyNotice } from "./local-demo-safety-notice";
 
 const appService: MewriAppService = createBrowserLocalMewriAppService();
@@ -504,6 +505,8 @@ export default function HomePage() {
               </div>
             )}
           </HomeSection>
+
+          <LocalDemoFeedbackNote />
 
           <details className="futureModules">
             <summary>

@@ -26,6 +26,23 @@ export const LOCAL_DEMO_SAFETY_POINTS: readonly LocalDemoSafetyPoint[] = [
   }
 ] as const;
 
+export const LOCAL_DEMO_FEEDBACK_MAX_CHARS = 500;
+
+export const LOCAL_DEMO_FEEDBACK_INTRO =
+  "ここに書いた内容は、この端末の画面にだけ表示されます。送信や保存はされません。ページを再読み込みすると消えます。";
+
+export const LOCAL_DEMO_FEEDBACK_LABEL = "感想・改善のメモ（任意）";
+
+export const LOCAL_DEMO_FEEDBACK_PLACEHOLDER =
+  "例：写真の選び方がわかりやすかった／ボタンの文字が小さく感じた";
+
+export const LOCAL_DEMO_FEEDBACK_CLEAR_LABEL = "メモを消す";
+
+export function formatFeedbackCharCount(length: number, maxChars: number): string {
+  const safeLength = Math.max(0, Math.min(length, maxChars));
+  return `${safeLength}文字 / 最大${maxChars}文字`;
+}
+
 export type PostListMode = "all" | "theme";
 
 export function formatPostListKicker(mode: PostListMode, themeTitle?: string): string {

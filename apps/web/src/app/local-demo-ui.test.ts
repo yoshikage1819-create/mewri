@@ -13,10 +13,31 @@ import {
   formatRemainingToday,
   formatZineGenerateBlockedHint,
   formatZineRemainingHeadline,
+  formatFeedbackCharCount,
+  LOCAL_DEMO_FEEDBACK_INTRO,
+  LOCAL_DEMO_FEEDBACK_MAX_CHARS,
   LOCAL_DEMO_SAFETY_POINTS,
   LOCAL_DEMO_SAFETY_SUMMARY,
   resolveScrollBehavior
 } from "./local-demo-ui";
+
+describe("formatFeedbackCharCount", () => {
+  it("shows current and max length in Japanese", () => {
+    expect(formatFeedbackCharCount(12, LOCAL_DEMO_FEEDBACK_MAX_CHARS)).toBe("12文字 / 最大500文字");
+  });
+
+  it("clamps displayed length to the max", () => {
+    expect(formatFeedbackCharCount(999, 500)).toBe("500文字 / 最大500文字");
+  });
+});
+
+describe("LOCAL_DEMO_FEEDBACK_INTRO", () => {
+  it("states the note is device-only and not sent", () => {
+    expect(LOCAL_DEMO_FEEDBACK_INTRO).toContain("この端末");
+    expect(LOCAL_DEMO_FEEDBACK_INTRO).toContain("送信");
+    expect(LOCAL_DEMO_FEEDBACK_INTRO).toContain("保存");
+  });
+});
 
 describe("LOCAL_DEMO_SAFETY_POINTS", () => {
   it("covers local demo scope and Codex review expectation", () => {

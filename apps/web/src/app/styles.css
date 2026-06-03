@@ -230,6 +230,64 @@ a {
   line-height: 1.55;
 }
 
+.demoFeedbackNote {
+  background: rgba(255, 253, 248, 0.72);
+  border: 1px solid rgba(46, 42, 38, 0.18);
+  border-radius: var(--radius-md);
+  display: grid;
+  gap: 12px;
+  margin-top: 4px;
+  padding: 14px;
+}
+
+.demoFeedbackIntro {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.demoFeedbackField {
+  display: grid;
+  gap: 8px;
+}
+
+.demoFeedbackField span {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.demoFeedbackField textarea {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(46, 42, 38, 0.24);
+  border-radius: var(--radius-md);
+  font-family: var(--font-ui), "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  min-height: 112px;
+  padding: 12px;
+  resize: vertical;
+  width: 100%;
+}
+
+.demoFeedbackMeta {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  justify-content: space-between;
+}
+
+.demoFeedbackMeta p {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  margin: 0;
+}
+
 .kicker {
   color: var(--muted);
   font-family: var(--font-mono);
@@ -1560,6 +1618,11 @@ a {
   .demoSafetyNotice summary {
     min-height: 44px;
     padding: 10px 12px;
+  }
+
+  .demoFeedbackNote {
+    margin-top: 0;
+    padding: 12px;
   }
 
   .homeGrid {
