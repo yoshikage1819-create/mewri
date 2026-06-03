@@ -1,6 +1,85 @@
 # Mewri 現在のプロジェクト概要 - ChatGPT 引き継ぎ用
 
-更新日: 2026-06-02
+更新日: 2026-06-01
+
+## Codex reset: Cursor branch summary
+
+Review this block first after reset. Cursor work stays on `ph-cursor` only.
+
+| Item | Value |
+| --- | --- |
+| Branch | `cursor/parallel-local-ui-docs` |
+| Branch tip | `dcfcb48` — Improve local demo safety and feedback accessibility. |
+| `origin/main` base (review from) | `f336e0a` |
+| Worktree | `C:\dev\mewri\ph-cursor` |
+
+**Cursor did not:** merge to `main`, push to `main`, or edit `supabase/**`,
+`apps/web/src/app/api/**`, `packages/data/**`, auth/session/login, RLS/Storage
+policies/migrations, env/secrets, deploy/staging activation, or production settings.
+
+### Completed safe fallback tasks (this branch)
+
+- Local dev disk migration docs, `.onedriveignore`, resume script (`121acf1` dirty-worktree guard).
+- PR #1 scope merged on `main` (`4d5a4fb`); branch rebased/merged `origin/main` as needed.
+- Local demo UI polish: helpers in `local-demo-ui.ts`, banner copy, `aria-live` / `aria-current`, focus styles, reset/ZINE confirm dialogs, skip link, reduced-motion scroll, Japanese metadata.
+- ZINE progress copy, empty post list, `calcLocalImageScale`, sample image helper.
+- Mobile spacing tuned to wireframe rhythm (`<=759px`).
+- Collapsible **local demo safety notice** (scope / no prod-beta / no secrets).
+- Ephemeral **feedback note** UI (textarea + clear only; no submit or persistence).
+- Non-technical **`docs/runbooks/local-demo-review-guide.md`**.
+- Copy consistency pass (`LOCAL_DEMO_*` in `local-demo-ui.ts`).
+- Accessibility pass on safety notice + feedback note (labels, keyboard, non-color cues, char count for screen readers).
+
+### Commits on branch since `origin/main` at `f336e0a`
+
+```text
+dcfcb48 Improve local demo safety and feedback accessibility.
+394d2f0 Align local demo user-facing copy across UI and docs.
+493a58d Add non-technical local demo review runbook.
+862835b Add ephemeral local demo feedback note UI.
+941ce8b Add collapsible local demo safety scope notice.
+cdb190f Tune local demo mobile spacing to wireframe rhythm.
+30dc99e Improve local demo empty post list guidance.
+fe8aff4 Merge main and extract local demo sample image helper.
+3d5fa98 Align owner and handoff docs with C:\dev worktree design.
+```
+
+Older commits on the same branch (before `f336e0a`) include PR #1 handoff, migration
+runbook/script, and earlier local-demo slices — see `git log origin/main..HEAD` in
+`ph-cursor` for the full list.
+
+### Files / areas touched (high level)
+
+- `apps/web/src/app/local-demo-ui.ts`, `local-demo-ui.test.ts`
+- `apps/web/src/app/local-demo-safety-notice.tsx`, `local-demo-feedback-note.tsx`
+- `apps/web/src/app/page.tsx`, `styles.css` (banner, demo notice, safety/feedback blocks, mobile layout)
+- `docs/runbooks/local-demo-review-guide.md`, `docs/README.md` (runbook link)
+- `docs/mewri_owner_local_dev_disk_setup.md`, `tools/resume-local-dev-migration.ps1`, `.onedriveignore`
+- Parallel/fallback design docs (`mewri_ai_parallel_fallback_execution_design.md`, etc.)
+
+No changes to shared-beta API routes, `packages/data` runtime, Supabase SQL, or auth.
+
+### Validation history (Cursor branch)
+
+| Check | Result |
+| --- | --- |
+| `npm.cmd test` | Pass — **161** tests (latest on `dcfcb48`; count grew with `local-demo-ui` tests) |
+| `npm.cmd run typecheck` | Pass (spot-checked during slices) |
+| `npm.cmd run build` | Pass (spot-checked during slices) |
+| `npm.cmd run lint` | **Fails** — pre-existing issue: `next lint` treats `lint` as a directory under `apps/web` (not introduced by Cursor branch) |
+
+App tests were not required for docs-only handoff updates.
+
+### Codex review checklist (after reset)
+
+1. In `C:\dev\mewri\ph-cursor`, `git fetch` and checkout `cursor/parallel-local-ui-docs` at `dcfcb48`.
+2. `git diff f336e0a..dcfcb48` (or `origin/main...HEAD`) — confirm scope is UI/docs/tests only.
+3. Open local demo (`npm.cmd run dev`); Tab through safety notice and feedback note; confirm copy matches `local-demo-review-guide.md`.
+4. Skim `local-demo-ui.ts` for accidental imports from shared-beta or env-dependent code.
+5. Decide PR/merge strategy — **Codex or owner merges**; Cursor must not merge to `main`.
+6. Continue shared-beta / v0.10 work in `C:\dev\mewri\ph` on `main` separately; do not edit in-flight API files in `ph` until committed or handed off.
+
+Slice-level notes below are historical detail; this section is the canonical branch summary.
 
 ## 開発用 worktree（現在）
 
