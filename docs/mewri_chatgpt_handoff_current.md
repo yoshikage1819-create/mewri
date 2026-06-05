@@ -509,3 +509,59 @@ supabase       将来適用する migration 草案
 - Remaining blocker/next gate: live staging activation still needs an approved
   Storage upload mechanism/policy and real staging adapters. Stop before
   credentials, migrations, shared mode, deployment, or production.
+
+## 2026-06-03 Cursor fallback routing expansion
+
+- Documentation-only workflow update. No product code, Supabase wiring, env
+  values, migrations, shared mode, deploy, or production resources were changed.
+- Expanded Cursor-safe implementation lanes for fallback/parallel periods:
+  local demo UI/accessibility, pure local-demo helpers and tests, local-only
+  feedback UI, ZINE preview/readability, fixtures and regression tests, owner
+  docs/runbooks, and handoff cleanup.
+- Fallback now explicitly means Codex CLI and Codex app are both unavailable
+  until reset. Routing in that mode is Cursor 80-90%, ChatGPT 10-20%, Codex CLI
+  0%, and Codex app 0%.
+- ChatGPT is the owner command center only: choose the next safe Cursor task,
+  rewrite Cursor prompts, interpret short non-secret validation logs, and format
+  handoffs. ChatGPT is not a code executor, not a Codex diff-review substitute,
+  and must not approve auth/RLS/Storage/migration/API-security work as
+  merge-ready.
+- Cursor hard stops remain: `supabase/**`, `apps/web/src/app/api/**`,
+  `packages/data/**` shared-beta auth/storage/RPC/security/runtime/Supabase
+  code, secrets/env/deploy/production, migrations, staging activation, and main
+  merge/push. If Cursor reaches those surfaces during fallback, it stops and
+  writes a handoff for Codex after reset.
+- Unrelated/untracked `.vscode/` and `docs/mewri_friend_pitch_deck.html` remain
+  excluded from staging/commit decisions.
+
+## 2026-06-05 Phase 1 Mewri Memory Pack
+
+- Added repository-local canonical memory files under `memory/` for project
+  core, current status, safety constraints, shared-beta gates,
+  Codex/Cursor/ChatGPT protocol, architecture, and next actions.
+- Added `docs/mewri_memory_pack.md` to explain Phase 1 purpose, selective
+  memory injection, stale-memory risk, critical-memory review rules, and the
+  future optional roles of Obsidian and Mem0.
+- Updated `AGENTS.md` and `docs/README.md` with lightweight memory-pack
+  pointers. Do not inject all memory files by default; select only the relevant
+  files and verify critical memory against current repo docs before
+  security-sensitive work.
+- No Mem0 or Obsidian integration, selector tooling, app code, Supabase work,
+  migrations, env values, deploy, shared mode, production changes, service-role
+  key use, or real Supabase connection were added.
+- Unrelated/untracked `.vscode/` and `docs/mewri_friend_pitch_deck.html` remain
+  excluded from staging/commit decisions.
+
+## 2026-06-05 Obsidian memory vault bootstrap
+
+- Added docs for local Obsidian memory-vault setup:
+  `docs/mewri_obsidian_memory_vault_setup.md`.
+- Created a local, non-repo Obsidian vault at `C:\dev\mewri\memory-vault` with:
+  `README.md`, `mewri/00-start-here.md`, `mewri/obsidian-rules.md`,
+  `mewri/memory-pack-sync.md`, `mewri/chatgpt-fallback-command-center.md`, and
+  `.obsidian/app.json`.
+- The vault is a human reading/editing UI only. Repo `memory/` remains the
+  intended canonical agent-readable memory pack once added.
+- No Obsidian Sync, plugin, Mem0, selector tooling, app runtime dependency,
+  Supabase connection, env values, migration, shared mode, deploy, production
+  resource, or secret handling was added.

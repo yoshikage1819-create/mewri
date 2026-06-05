@@ -19,6 +19,8 @@
 | AI 開発運用 | `mewri_ai_workbench_setup.md` | Codex CLI / Cline / モデル選択の正本 |
 | PC を軽くする開発の置き場所 | `mewri_owner_local_dev_disk_setup.md` | OneDrive 外の推奨パスと移行手順 |
 | AI 並列・fallback 実装設計 | `mewri_ai_parallel_fallback_execution_design.md` | Codex と Cursor の並列実装、token 枯渇時の作業継続設計 |
+| AI memory pack | `mewri_memory_pack.md` and `../memory/` | Compact canonical memory for selective Codex/Cursor/ChatGPT context injection |
+| Obsidian memory vault | `mewri_obsidian_memory_vault_setup.md` | ローカル Obsidian vault の開き方と安全ルール |
 
 ## 根拠・参考資料
 
@@ -87,3 +89,10 @@ mewri_student_pack_development_setup.md
 - Codex 活用の調査レポートは参考資料として保持し、製品の source of truth
   とは区別する。
 - 過去の読める β記録は、製品判断や回帰確認に役立つため履歴として維持する。
+
+## AI Memory Pack
+
+- `mewri_memory_pack.md` explains the Phase 1 repo-local memory pack.
+- `../memory/` is the canonical compact memory source for selective
+  Codex/Cursor/ChatGPT context injection.
+- Do not inject all memory files by default; select only relevant files.
