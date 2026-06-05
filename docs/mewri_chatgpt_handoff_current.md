@@ -1,71 +1,150 @@
-# Mewri 現在のプロジェクト概要 - ChatGPT 引き継ぎ用
+# Mewri 現在のプロジェクト概要E- ChatGPT 引き継ぎ用
 
-更新日: 2026-06-02
+更新日: 2026-06-05
 
-## 開発用 worktree（現在）
+## Codex reset: Cursor branch summary
+
+Review this block first after reset. Cursor work stays on `ph-cursor` only.
+
+| Item | Value |
+| --- | --- |
+| Branch | `cursor/parallel-local-ui-docs` |
+| Branch tip | `cursor/parallel-local-ui-docs` after merging current `origin/main` |
+| Current review base | current `origin/main` after memory pack commit (`845bab6`) |
+| Worktree | `C:\dev\mewri\ph-cursor` |
+
+**Cursor did not:** merge to `main`, push to `main`, or edit `supabase/**`,
+`apps/web/src/app/api/**`, `packages/data/**`, auth/session/login, RLS/Storage
+policies/migrations, env/secrets, deploy/staging activation, or production settings.
+
+### Completed safe fallback tasks (this branch)
+
+- Local dev disk migration docs, `.onedriveignore`, resume script (`121acf1` dirty-worktree guard).
+- PR #1 scope merged on `main` (`4d5a4fb`); branch rebased/merged `origin/main` as needed.
+- Local demo UI polish: helpers in `local-demo-ui.ts`, banner copy, `aria-live` / `aria-current`, focus styles, reset/ZINE confirm dialogs, skip link, reduced-motion scroll, Japanese metadata.
+- ZINE progress copy, empty post list, `calcLocalImageScale`, sample image helper.
+- Mobile spacing tuned to wireframe rhythm (`<=759px`).
+- Collapsible **local demo safety notice** (scope / no prod-beta / no secrets).
+- Ephemeral **feedback note** UI (textarea + clear only; no submit or persistence).
+- Non-technical **`docs/runbooks/local-demo-review-guide.md`**.
+- Copy consistency pass (`LOCAL_DEMO_*` in `local-demo-ui.ts`).
+- Accessibility pass on safety notice + feedback note (labels, keyboard, non-color cues, char count for screen readers).
+
+### Cursor fallback commits before latest `origin/main` merge
 
 ```text
-Codex 主 worktree:   C:\dev\mewri\ph          （通常は main）
-Cursor 用 worktree:  C:\dev\mewri\ph-cursor   （cursor/* ブランチ）
+dcfcb48 Improve local demo safety and feedback accessibility.
+394d2f0 Align local demo user-facing copy across UI and docs.
+493a58d Add non-technical local demo review runbook.
+862835b Add ephemeral local demo feedback note UI.
+941ce8b Add collapsible local demo safety scope notice.
+cdb190f Tune local demo mobile spacing to wireframe rhythm.
+30dc99e Improve local demo empty post list guidance.
+fe8aff4 Merge main and extract local demo sample image helper.
+3d5fa98 Align owner and handoff docs with C:\dev worktree design.
 ```
 
-- 両方とも OneDrive の外（`C:\dev\mewri\`）で運用する。
-- 旧 OneDrive コピー（`OneDrive\ドキュメント\ph`、`ph-cursor`）は**現在の作業用 worktree ではない**。
-  `ph-cursor` フォルダは削除済み。新しい作業では開かない。
+Older commits on the same branch (before `f336e0a`) include PR #1 handoff, migration
+runbook/script, and earlier local-demo slices  Esee `git log origin/main..HEAD` in
+`ph-cursor` for the full list.
 
-## プロダクト概要
+### Files / areas touched (high level)
 
-Mewri は一般的な写真フィードではなく、数人で写真を持ち寄り、数日分の投稿から ZINE を完成させるサービスです。
+- `apps/web/src/app/local-demo-ui.ts`, `local-demo-ui.test.ts`
+- `apps/web/src/app/local-demo-safety-notice.tsx`, `local-demo-feedback-note.tsx`
+- `apps/web/src/app/page.tsx`, `styles.css` (banner, demo notice, safety/feedback blocks, mobile layout)
+- `docs/runbooks/local-demo-review-guide.md`, `docs/README.md` (runbook link)
+- `docs/mewri_owner_local_dev_disk_setup.md`, `tools/resume-local-dev-migration.ps1`, `.onedriveignore`
+- Parallel/fallback design docs (`mewri_ai_parallel_fallback_execution_design.md`, etc.)
+
+No changes to shared-beta API routes, `packages/data` runtime, Supabase SQL, or auth.
+
+### Validation history (Cursor branch)
+
+| Check | Result |
+| --- | --- |
+| `npm.cmd test` | Pass - **161** tests before latest main merge; rerun after conflict resolution |
+| `npm.cmd run typecheck` | Pass (spot-checked during slices) |
+| `npm.cmd run build` | Pass (spot-checked during slices) |
+| `npm.cmd run lint` | **Fails**  Epre-existing issue: `next lint` treats `lint` as a directory under `apps/web` (not introduced by Cursor branch) |
+
+App tests were not required for docs-only handoff updates.
+
+### Codex review checklist (after reset)
+
+1. In `C:\dev\mewri\ph-cursor`, `git fetch` and checkout latest `cursor/parallel-local-ui-docs`.
+2. Review `origin/main...HEAD`; for the focused app slice, `f336e0a..dcfcb48` remains the UI/docs/tests-only range.
+3. Open local demo (`npm.cmd run dev`); Tab through safety notice and feedback note; confirm copy matches `local-demo-review-guide.md`.
+4. Skim `local-demo-ui.ts` for accidental imports from shared-beta or env-dependent code.
+5. Decide PR/merge strategy  E**Codex or owner merges**; Cursor must not merge to `main`.
+6. Continue shared-beta / v0.10 work in `C:\dev\mewri\ph` on `main` separately; do not edit in-flight API files in `ph` until committed or handed off.
+
+Slice-level notes below are historical detail; this section is the canonical branch summary.
+
+## 開発用 worktree�E�現在�E�E
 
 ```text
-今日のテーマを見る
+Codex 主 worktree:   C:\dev\mewri\ph          �E�通常は main�E�E
+Cursor 用 worktree:  C:\dev\mewri\ph-cursor   �E�Eursor/* ブランチE��E
+```
+
+- 両方とめEOneDrive の外！EC:\dev\mewri\`�E�で運用する、E
+- 旧 OneDrive コピ�E�E�EOneDrive\ドキュメンチEph`、`ph-cursor`�E��E**現在の作業用 worktree ではなぁE*、E
+  `ph-cursor` フォルダは削除済み。新しい作業では開かなぁE��E
+
+## プロダクト概要E
+
+Mewri は一般皁E��写真フィードではなく、数人で写真を持ち寁E��、数日刁E�E投稿から ZINE を完�Eさせるサービスです、E
+
+```text
+今日のチE�Eマを見る
 -> 写真を軽く投稿する
--> 進行中の ZINE に投稿が蓄積する
--> 生成された ZINE を読む
+-> 進行中の ZINE に投稿が蓄積すめE
+-> 生�EされぁEZINE を読む
 ```
 
-## 現在動いているもの: v0.9 ローカルデモ
+## 現在動いてぁE��も�E: v0.9 ローカルチE��
 
-- Next.js の Web アプリとして実装済み。
-- UI は日本語で、モバイルと desktop の表示を確認済み。
-- 「参加中のZINE」で今日の active theme に写真を投稿できる。
-- 「このZINEの中身」で投稿一覧と生成 ZINE を閲覧できる。
-- 画像ファイル選択、ローカルプレビュー、ZINE 生成が動く。
-- データ保存はブラウザの `localStorage` のみ。
-- 他端末・他ユーザーとのデータ共有、ログイン、実画像アップロードはまだない。
+- Next.js の Web アプリとして実裁E��み、E
+- UI は日本語で、モバイルと desktop の表示を確認済み、E
+- 「参加中のZINE」で今日の active theme に写真を投稿できる、E
+- 「このZINEの中身」で投稿一覧と生�E ZINE を閲覧できる、E
+- 画像ファイル選択、ローカルプレビュー、ZINE 生�Eが動く、E
+- チE�Eタ保存�Eブラウザの `localStorage` のみ、E
+- 他端末・他ユーザーとのチE�Eタ共有、ログイン、実画像アチE�Eロード�EまだなぁE��E
 
-公開デモ対象は `mewri-b` です。
+公開デモ対象は `mewri-b` です、E
 
-## 次に進めているもの: v0.10 Closed Shared Beta Foundation
+## 次に進めてぁE��も�E: v0.10 Closed Shared Beta Foundation
 
-目的は、招待された少人数が同じ active ZINE に投稿できる将来の共有ベータ基盤を安全に準備することです。
+目皁E�E、招征E��れた少人数が同ぁEactive ZINE に投稿できる封E��の共有�Eータ基盤を安�Eに準備することです、E
 
-現在の作業ツリーには、まだ commit / push / deploy していない次の準備実装があります。
+現在の作業チE��ーには、まだ commit / push / deploy してぁE��ぁE��の準備実裁E��あります、E
 
-- Supabase を推奨バックエンドとする方針文書。
-- `packages/data` に閉じた共有モード用の設定判定境界。
-- Supabase Postgres の schema / RLS / Storage policy の SQL 草案。
-- SQL 草案はレビューを経て、cycle/theme/post/ZINE/page の group 整合性を
-  複合外部キーで保護し、検証済み server write / upload 経路ができるまで
-  post insert と画像 upload policy を開かない安全側の状態に更新済み。
-- 設定不足時にローカルデモへ戻ること、未完成の共有モードを起動しないことのテスト。
-- 文字化けしていた初期の意思決定ログと要件定義の復旧。
-- Codex CLI を主実装・検証、Cline を計画と低リスク補助に使う
-  `AGENTS.md`、Skill、Cline rules/workflows、運用文書。
-- Cursor Pro は現時点では導入せず、Codex/Cline の token・利用上限による
-  中断が実装速度の継続的な阻害要因になった場合に試験導入を再検討する。
+- Supabase を推奨バックエンドとする方針文書、E
+- `packages/data` に閉じた�E有モード用の設定判定墁E��、E
+- Supabase Postgres の schema / RLS / Storage policy の SQL 草案、E
+- SQL 草案�Eレビューを経て、cycle/theme/post/ZINE/page の group 整合性めE
+  褁E��外部キーで保護し、検証済み server write / upload 経路ができるまで
+  post insert と画僁Eupload policy を開かなぁE���E側の状態に更新済み、E
+- 設定不足時にローカルチE��へ戻ること、未完�Eの共有モードを起動しなぁE��とのチE��ト、E
+- 斁E��化けしてぁE��初期の意思決定ログと要件定義の復旧、E
+- Codex CLI を主実裁E�E検証、Cline を計画と低リスク補助に使ぁE
+  `AGENTS.md`、Skill、Cline rules/workflows、E��用斁E��、E
+- Cursor Pro は現時点では導�Eせず、Codex/Cline の token・利用上限による
+  中断が実裁E��度の継続的な阻害要因になった場合に試験導�Eを�E検討する、E
 
 ## 重要な設計判断
 
-- 既存の `localStorage` デモは壊さず、既定動作として維持する。
-- Supabase 資格情報がなくても既存デモは build / 表示できる。
-- UI コンポーネントから Supabase へ直接問い合わせず、`packages/data` の repository/service 境界を使う。
-- 共有モードの投稿画像は Data URL ではなく private Storage に保存する。
-- 共有書き込みは招待済み認証ユーザーだけに許可し、匿名書き込みは許可しない。
-- group member だけが同じ group の Theme、Post、ZINE、画像を読める RLS を前提にする。
-- `service_role` はブラウザに公開しない。
+- 既存�E `localStorage` チE��は壊さず、既定動作として維持する、E
+- Supabase 賁E��惁E��がなくても既存デモは build / 表示できる、E
+- UI コンポ�EネントかめESupabase へ直接問い合わせず、`packages/data` の repository/service 墁E��を使ぁE��E
+- 共有モード�E投稿画像�E Data URL ではなぁEprivate Storage に保存する、E
+- 共有書き込みは招征E��み認証ユーザーだけに許可し、匿名書き込みは許可しなぁE��E
+- group member だけが同じ group の Theme、Post、ZINE、画像を読める RLS を前提にする、E
+- `service_role` はブラウザに公開しなぁE��E
 
-## 現在の主要データモデル
+## 現在の主要データモチE��
 
 ```text
 User / Profile
@@ -79,28 +158,28 @@ ZinePage
 EventLog
 ```
 
-共有ベータ準備では、招待管理用に `beta_invites` を運用テーブルとして追加する想定です。
+共有�Eータ準備では、招征E��琁E��に `beta_invites` を運用チE�Eブルとして追加する想定です、E
 
-## 明示的にまだ実装しないもの
+## 明示皁E��まだ実裁E��なぁE��の
 
-- 公開 signup と匿名投稿
+- 公閁Esignup と匿名投稿
 - public discovery
-- follow、いいね、コメント、通知
+- follow、いぁE�E、コメント、E��知
 - host-created themes
-- 個人受け取りテーマや post-first 投稿
-- 複数 ZINE / 複数 group への同時投稿
+- 個人受け取りチE�Eマや post-first 投稿
+- 褁E�� ZINE / 褁E�� group への同時投稿
 - 実際の Supabase 接続、ログイン画面、Storage upload、DB adapter
 
-これらを後回しにする理由は、まず「複数人が同じ ZINE に参加することが価値になるか」を安全に検証するためです。
+これらを後回しにする琁E��は、まず「褁E��人が同ぁEZINE に参加することが価値になるか」を安�Eに検証するためです、E
 
-## 技術構成
+## 技術構�E
 
 ```text
 apps/web       Next.js Web UI
-packages/core  ドメインモデルとビジネスロジック
-packages/data  localStorage / 将来の共有永続化境界
-docs           要件・判断・運用文書
-supabase       将来適用する migration 草案
+packages/core  ドメインモチE��とビジネスロジチE��
+packages/data  localStorage / 封E��の共有永続化墁E��
+docs           要件・判断・運用斁E��
+supabase       封E��適用する migration 草桁E
 ```
 
 主要ファイル:
@@ -119,113 +198,117 @@ supabase       将来適用する migration 草案
 - `docs/mewri_ai_workbench_setup.md`
 - `AGENTS.md`
 
-## 直近の検証結果
+## 直近�E検証結果
 
-- `npm.cmd run typecheck`: 成功
-- `npm.cmd test`: 成功 (`69` tests passed)
-- `npm.cmd run build`: 成功。Supabase 環境変数なしで build 可能
-- `375px`, `390px`, `1280px` 表示で横 overflow がないことを確認済み
+-
+`npm.cmd run typecheck`: 成功
+-
+`npm.cmd test`: 成功 (`69` tests passed)
+-
+`npm.cmd run build`: 成功。Supabase 環墁E��数なしで build 可能
+- `375px`, `390px`, `1280px` 表示で横 overflow がなぁE��とを確認済み
 - Codex/Cline `mewri-ship-beta` Skill の形式検証: 成功
-- SQL の `zine_pages.group_id` 制約に合わせ、DB row mapper が親 ZINE
-  から group を導出し、孤立ページを拒否する境界を追加。
+- SQL の `zine_pages.group_id` 制紁E��合わせ、DB row mapper が親 ZINE
+  から group を導�Eし、孤立�Eージを拒否する墁E��を追加、E
 - `packages/data/src/shared-beta-post-authorization.ts` に、shared beta の
-  server 投稿専用 command service を追加。未認証、なりすまし、非メンバー、
-  他 group / inactive theme、不正な private image path を投稿前に拒否し、
-  demo 操作や未認可 publish command は公開しない。
+  server 投稿専用 command service を追加。未認証、なりすまし、E��メンバ�E、E
+  仁Egroup / inactive theme、不正な private image path を投稿前に拒否し、E
+  demo 操作や未認可 publish command は公開しなぁE��E
 - `packages/data/src/shared-beta-post-route-boundary.ts` を追加し、認証結果と
-  server 側で検証済みの image path を受け取る route/application 境界を実装。
-  未認証・なりすまし・非メンバー・他 group / inactive theme・不正 path・
-  server 未検証 path の場合は shared-beta post command を実行しないテストを追加。
-- `apps/web/src/app/api/shared-beta/posts/route.ts` を追加。実 adapter/実 auth
-  の接続前は `503 shared_beta_route_unavailable` で閉じたままにし、
-  localStorage デモの投稿フローは変更しない。
-- shared-beta 投稿の成功 response は `MewriState` 全体ではなく、作成した
-  `Post` 一件だけを返す契約へ狭めた。HTTP response に `state` を含めない
-  回帰テストを追加し、将来の server-backed adapter 接続時に他 group の
-  state を誤って返さない境界を設けた。
-- `docs/README.md` を現行文書の入口として追加し、AI 運用とモデル選択は
+  server 側で検証済みの image path を受け取めEroute/application 墁E��を実裁E��E
+  未認証・なりすまし�E非メンバ�E・仁Egroup / inactive theme・不正 path・
+  server 未検証 path の場合�E shared-beta post command を実行しなぁE��ストを追加、E
+- `apps/web/src/app/api/shared-beta/posts/route.ts` を追加。宁Eadapter/宁Eauth
+  の接続前は `503 shared_beta_route_unavailable` で閉じたままにし、E
+  localStorage チE��の投稿フローは変更しなぁE��E
+- shared-beta 投稿の成功 response は `MewriState` 全体ではなく、作�Eした
+  `Post` 一件だけを返す契紁E��狭めた、ETTP response に `state` を含めなぁE
+  回帰チE��トを追加し、封E��の server-backed adapter 接続時に仁Egroup の
+  state を誤って返さなぁE��E��を設けた、E
+- `docs/README.md` を現行文書の入口として追加し、AI 運用とモチE��選択�E
   `docs/mewri_ai_workbench_setup.md` に統合。復旧済み正本に吸収された
-  文字化け旧計画と重複する旧モデルメモは削除した。
-- Codex 活用調査を運用へ反映し、CLI スライスを
+  斁E��化け旧計画と重褁E��る旧モチE��メモは削除した、E
+- Codex 活用調査を運用へ反映し、CLI スライスめE
   `Goal / Context / Constraints / Done when` で定義すること、shared-data
-  セキュリティ差分は validators 後に別の Codex review pass を必須にする
-  ことを `AGENTS.md`、Skill、AI workbench に追加した。
-- 2026-05-28 に公式モデル案内と CLI 設定を再確認し、今後の実装・独立
-  review の推奨モデルを `gpt-5.5` / reasoning `high` に更新した。
-- 2026-05-28 に post route 成功 response の P1 remediation slice を実装。
-  `packages/data` の guarded post command と route boundary、および
-  `apps/web` の HTTP handler は、成功時に作成済み `Post` 一件のみを
-  返し、全 `MewriState` を外部 response に含めない。
-- 2026-05-28 に DB/RLS/storage 契約の remediation slice を実装。
-  migration 草案では `profiles.id` と user 参照を Supabase Auth 対応の
+  セキュリチE��差刁E�E validators 後に別の Codex review pass を忁E��にする
+  ことめE`AGENTS.md`、Skill、AI workbench に追加した、E
+- 2026-05-28 に公式モチE��案�Eと CLI 設定を再確認し、今後�E実裁E�E独竁E
+  review の推奨モチE��めE`gpt-5.5` / reasoning `high` に更新した、E
+- 2026-05-28 に post route 成功 response の P1 remediation slice を実裁E��E
+  `packages/data` の guarded post command と route boundary、およ�E
+  `apps/web` の HTTP handler は、�E功時に作�E済み `Post` 一件のみめE
+  返し、�E `MewriState` を外部 response に含めなぁE��E
+- 2026-05-28 に DB/RLS/storage 契紁E�E remediation slice を実裁E��E
+  migration 草案では `profiles.id` と user 参�EめESupabase Auth 対応�E
   `uuid` に維持しつつ、group/cycle/theme/post/ZINE/page/event の
-  domain-owned ID と関係キーを prefixed string を保持できる `text` に
-  統一した。複合 foreign key による group 整合性保護は維持する。
-- `private` RLS helper について、`authenticated` に schema `USAGE` と
-  read policy が使う helper の `EXECUTE` だけを付与した。`anon` には
-  policy も helper 権限も追加しない。
-- shared beta の Storage bucket は `post-images` 固定契約とし、
-  `SUPABASE_POST_IMAGE_BUCKET` に異なる値が指定された場合は shared
-  runtime を選択せず local mode へ閉じるテストを追加した。
+  domain-owned ID と関係キーめEprefixed string を保持できる `text` に
+  統一した。褁E�� foreign key による group 整合性保護は維持する、E
+- `private` RLS helper につぁE��、`authenticated` に schema `USAGE` と
+  read policy が使ぁEhelper の `EXECUTE` だけを付与した。`anon` には
+  policy めEhelper 権限も追加しなぁE��E
+- shared beta の Storage bucket は `post-images` 固定契紁E��し、E
+  `SUPABASE_POST_IMAGE_BUCKET` に異なる値が指定された場合�E shared
+  runtime を選択せぁElocal mode へ閉じるテストを追加した、E
 - 上記変更後、`npm.cmd run typecheck`、`npm.cmd test` (`69` tests
-  passed)、`npm.cmd run build` が成功した。
+  passed)、`npm.cmd run build` が�E功した、E
 - 2026-05-28 に `codex.cmd review --uncommitted -c model='"gpt-5.5"' -c model_reasoning_effort='"high"'`
-  を再実行し、SQL/RLS/storage および bucket contract の今回の修正には
-  finding が出なかった。未解決の P1 は、`validatedImagePath` が request
-  JSON 由来で server-side upload または lookup の証明になっていない点である。
-  これを修正し再 review が通るまで、staging migration、実 adapter
-  接続、shared mode 有効化へ進まない。
-- 2026-05-28 に上記 route/upload 信頼境界の remediation を実装した。
-  HTTP request body から `validatedImagePath` / `imageUrl` を拒否し、
-  server-only の image verification 依存関係が path を返さない限り投稿を
-  実行しない。さらに投稿 command service は、形式が正しい private path
-  であっても server-side upload / Storage lookup の検証結果なしでは拒否する。
-- この remediation 後、`npm.cmd run typecheck`、`npm.cmd test`
-  (`75` tests passed)、`npm.cmd run build` が成功した。
-- 完成差分に対して `codex.cmd review --uncommitted -c model='"gpt-5.5"' -c model_reasoning_effort='"high"'`
-  を外側実行環境から再実行し、追加 finding はなかった。
-  shared mode は未有効のまま維持し、staging migration / adapter 接続は
-  owner による次ゲート判断後にのみ進める。
-- 2026-05-28 の commit 準備確認で、`npm.cmd run typecheck`、
-  `npm.cmd test` (`75` tests passed)、`npm.cmd run build` が成功した。
-  build 生成物は git status に出ておらず、現在の差分は closed shared beta
-  foundation と agent/docs 運用整理の commit 単位として扱える。
-- 2026-05-28 に Supabase staging migration 適用前の拒否検証計画
-  `docs/mewri_supabase_staging_refusal_verification_plan_v0_10.md` を追加した。
-  migration 適用、project 作成、shared mode 有効化はまだ行っていない。
-  Owner が staging project と migration 対象を確認し、明示承認してから
-  `supabase link --project-ref <staging-project-ref>` に進む。
-- 2026-05-28 に staging Storage RLS read 境界を SQL Editor の管理者文脈ではなく
-  実 authenticated session で確認する local-only page / script を追加した。
+  を�E実行し、SQL/RLS/storage および bucket contract の今回の修正には
+  finding が�Eなかった。未解決の P1 は、`validatedImagePath` ぁErequest
+  JSON 由来で server-side upload また�E lookup の証明になってぁE��ぁE��である、E
+  これを修正し�E review が通るまで、staging migration、宁Eadapter
+  接続、shared mode 有効化へ進まなぁE��E
+- 2026-05-28 に上訁Eroute/upload 信頼墁E��の remediation を実裁E��た、E
+  HTTP request body から `validatedImagePath` / `imageUrl` を拒否し、E
+  server-only の image verification 依存関係が path を返さなぁE��り投稿めE
+  実行しなぁE��さらに投稿 command service は、形式が正しい private path
+  であってめEserver-side upload / Storage lookup の検証結果なしでは拒否する、E
+- こ�E remediation 後、`npm.cmd run typecheck`、`npm.cmd test`
+  (`75` tests passed)、`npm.cmd run build` が�E功した、E
+- 完�E差刁E��対して `codex.cmd review --uncommitted -c model='"gpt-5.5"' -c model_reasoning_effort='"high"'`
+  を外�E実行環墁E��ら�E実行し、追加 finding はなかった、E
+  shared mode は未有効のまま維持し、staging migration / adapter 接続�E
+  owner による次ゲート判断後にのみ進める、E
+- 2026-05-28 の commit 準備確認で、`npm.cmd run typecheck`、E
+
+`npm.cmd test` (`75` tests passed)、`npm.cmd run build` が�E功した、E
+  build 生�E物は git status に出ておらず、現在の差刁E�E closed shared beta
+  foundation と agent/docs 運用整琁E�E commit 単位として扱える、E
+- 2026-05-28 に Supabase staging migration 適用前�E拒否検証計画
+  `docs/mewri_supabase_staging_refusal_verification_plan_v0_10.md` を追加した、E
+  migration 適用、project 作�E、shared mode 有効化�Eまだ行ってぁE��ぁE��E
+  Owner ぁEstaging project と migration 対象を確認し、�E示承認してから
+  `supabase link --project-ref <staging-project-ref>` に進む、E
+- 2026-05-28 に staging Storage RLS read 墁E��めESQL Editor の管琁E��E��脈ではなぁE
+  宁Eauthenticated session で確認すめElocal-only page / script を追加した、E
   `tools/supabase-storage-rls-read-check.html` と
-  `tools/serve-storage-rls-check.mjs` は public anon key だけを使い、
-  Storage の metadata list 読み取り確認だけを行う。手順は
-  `docs/mewri_storage_rls_local_read_check_instructions.md` に記録した。
-  service_role key、shared mode、production resources は使わない。
-- 2026-05-28 に `mewri-staging` で Supabase staging refusal verification を完了した。
-  migration は正常適用され、tables と private `post-images` bucket (`public=false`) を確認済み。
-  `posts` は `SELECT` policy のみで、authenticated direct `INSERT` は拒否された。
-  `storage.objects` も `SELECT` policy のみで、authenticated direct `INSERT` は拒否された。
+  `tools/serve-storage-rls-check.mjs` は public anon key だけを使ぁE��E
+  Storage の metadata list 読み取り確認だけを行う。手頁E�E
+  `docs/mewri_storage_rls_local_read_check_instructions.md` に記録した、E
+  service_role key、shared mode、production resources は使わなぁE��E
+- 2026-05-28 に `mewri-staging` で Supabase staging refusal verification を完亁E��た、E
+  migration は正常適用され、tables と private `post-images` bucket (`public=false`) を確認済み、E
+  `posts` は `SELECT` policy のみで、authenticated direct `INSERT` は拒否された、E
+  `storage.objects` めE`SELECT` policy のみで、authenticated direct `INSERT` は拒否された、E
   `anon` には public table privileges がなく、`private` schema `USAGE` は
-  `authenticated=true` / `anon=false`、helper function `EXECUTE` grants は期待通り。
-  member-a は `group_staging_a` のみ、member-b は `group_staging_b` のみ見える。
-  local Storage RLS checker では、anon は A/B どちらの object metadata も見えず、
-  member-a は A のみ、member-b は B のみ見えることを確認した。
-  service_role key は使わず、production は触らず、shared mode は disabled のまま。
+  `authenticated=true` / `anon=false`、helper function `EXECUTE` grants は期征E��り、E
+  member-a は `group_staging_a` のみ、member-b は `group_staging_b` のみ見える、E
+  local Storage RLS checker では、anon は A/B どちら�E object metadata も見えず、E
+  member-a は A のみ、member-b は B のみ見えることを確認した、E
+  service_role key は使わず、production は触らず、shared mode は disabled のまま、E
 
 ## 次に行うべきこと
 
-1. 追加した route/application 境界へ、実 Supabase adapter・実認証セッション・
-   検証済み Storage upload 経路を接続し、staging で統合検証する（明示承認後）。
-2. 未 commit の docs / checklist / `.cursor/rules` を必要なら commit する。
-3. 実際の招待ユーザー間で同じ ZINE が共有されることを確認してから closed beta を開始する。
+1. 追加した route/application 墁E��へ、宁ESupabase adapter・実認証セチE��ョン・
+   検証済み Storage upload 経路を接続し、staging で統合検証する�E��E示承認後）、E
+2. 未 commit の docs / checklist / `.cursor/rules` を忁E��なめEcommit する、E
+3. 実際の招征E��ーザー間で同じ ZINE が�E有されることを確認してから closed beta を開始する、E
 
-## ChatGPT への注意
+## ChatGPT への注愁E
 
-- 共有ベータ機能はまだ稼働していません。現在動くのは browser-local v0.9 デモです。
-- v0.10 は staging（`mewri-staging`）に foundation + RPC migration 適用済みだが、
-  アプリは未接続・shared mode 無効のまま。production 接続済みと扱わないでください。
-- 新規提案では、Mewri の核である `今日のテーマ -> 投稿 -> ZINEへの貢献 -> 生成ZINE` を優先してください。
+- 共有�Eータ機�Eはまだ稼働してぁE��せん。現在動くのは browser-local v0.9 チE��です、E
+- v0.10 は staging�E�Emewri-staging`�E�に foundation + RPC migration 適用済みだが、E
+  アプリは未接続�Eshared mode 無効のまま。production 接続済みと扱わなぁE��ください、E
+- 新規提案では、Mewri の核である `今日のチE�EチE-> 投稿 -> ZINEへの貢献 -> 生�EZINE` を優先してください、E
 
 ## 2026-05-28 server-only shared-beta integration slice
 
@@ -235,7 +318,10 @@ supabase       将来適用する migration 草案
 - Image upload now requires authenticated membership and an active theme before reading or uploading the image; unauthorized attempts do not create objects.
 - The post gateway models one atomic post+event operation. A real Supabase implementation still needs a narrow RPC or equivalent transaction before staging/shared mode can be enabled.
 - No service role key was requested or used, no real env values were added, no migrations were applied, no deployment happened, and shared mode remains off.
-- Validation: `npm.cmd run typecheck` passed; `npm.cmd test` passed with 95 tests; `npm.cmd run build` passed.
+- Validation:
+`npm.cmd run typecheck` passed;
+`npm.cmd test` passed with 95 tests;
+`npm.cmd run build` passed.
 - Independent review: first `codex.cmd review --uncommitted` was blocked by nested Windows sandbox spawn failure; rerun with `codex.cmd -s danger-full-access review --uncommitted -c model='"gpt-5.5"' -c model_reasoning_effort='"high"'` found P1 upload-before-authorization and P2 malformed-cookie findings; both were fixed and covered by tests. Final rerun reported no actionable correctness issues.
 - Next gate: implement the real staging-only Supabase RPC/client adapter for the atomic post+event gateway and real image-file extraction only after human approval for staging env wiring. Production remains untouched.
 
@@ -245,7 +331,9 @@ supabase       将来適用する migration 草案
 - Updated `packages/data/src/supabase-shared-beta-post-gateway.ts` to use a narrow mocked Supabase `rpc("create_shared_beta_post", ...)` client shape and fail closed on RPC error, zero rows, multiple rows, or returned-row mismatch. It maps only through `postFromDbRow()` and returns `Post` only.
 - Updated mocked tests in `packages/data/src/supabase-shared-beta-post-gateway.test.ts` and `apps/web/src/app/api/shared-beta/posts/server-dependencies.test.ts`.
 - No real Supabase connection, no service role key, no env wiring, no shared mode, no deploy, and no production touch.
-- Validation: `npm.cmd run typecheck`, `npm.cmd test` (102 tests), and `npm.cmd run build` passed. `git diff --check` had only CRLF warnings.
+- Validation:
+`npm.cmd run typecheck`,
+`npm.cmd test` (102 tests), and `npm.cmd run build` passed. `git diff --check` had only CRLF warnings.
 - Independent review: `codex.cmd -s danger-full-access review --uncommitted -c model='"gpt-5.5"' -c model_reasoning_effort='"high"'` reported no discrete correctness, security, or maintainability issues.
 - Migration apply and staging RPC verification completed on 2026-05-29; see section below.
 - Remaining risk/next gate: connect real Supabase adapter/auth/upload path to
@@ -276,7 +364,7 @@ supabase       将来適用する migration 草案
 | C4.4 forged image path | Pass (`private_image_path_required`) |
 | C4.5 missing storage object | Pass (`storage_object_not_found`) |
 | C5.1 direct `posts` insert | Pass (`permission denied for table posts`) |
-| C5.2 direct Storage upload | Pass (denied; message `Bucket not found` — upload did not succeed) |
+| C5.2 direct Storage upload | Pass (denied; message `Bucket not found`  Eupload did not succeed) |
 
 - C3 created post example id `post_ddb242c9618e415b9ddf8f5692cfbe93` with matching
   `post_created` event (verified via RPC return row).
@@ -301,8 +389,11 @@ supabase       将来適用する migration 草案
 - Cursor owner rules were rewritten into readable ASCII instructions that tell Cursor to
   answer the owner in Japanese and stop before migrations, secrets, shared mode,
   production, deploys, or real user communication.
-- Validation: `npm.cmd run typecheck` passed; `npm.cmd test` passed with 128 tests;
-  `npm.cmd run build` passed.
+- Validation:
+`npm.cmd run typecheck` passed;
+`npm.cmd test` passed with 128 tests;
+
+`npm.cmd run build` passed.
 - Follow-up C-3 preparation updated the server route dependency shape so the post boundary
   can be resolved per request. `createSharedBetaPostServerDependenciesFromEnvironment`
   now supports request-scoped Storage and RPC client factories that receive the member
@@ -311,8 +402,11 @@ supabase       将来適用する migration 草案
 - No real env values, migration, shared mode, production deploy, or live Supabase connection
   were added. The default route still fails closed unless complete explicit wiring is
   injected.
-- Validation after C-3 preparation: `npm.cmd run typecheck` passed; `npm.cmd test` passed
-  with 129 tests; `npm.cmd run build` passed.
+- Validation after C-3 preparation:
+`npm.cmd run typecheck` passed;
+`npm.cmd test` passed
+  with 129 tests;
+`npm.cmd run build` passed.
 - Next gate (C-3 continued): create the real server-only environment wiring for auth,
   request-scoped RPC, request-scoped image storage, repository, and image extraction only
   after explicit staging env-wiring approval.
@@ -346,9 +440,9 @@ supabase       将来適用する migration 草案
 
 ## 2026-06-01 local demo ZINE generate slice (Cursor fallback)
 
-- ZINE生成前に確認ダイアログ（初回生成 / 作り直しで文言を切り替え）。
-- 生成後はステータス表示と `#generated-zine` へのスムーズスクロール。
-- モバイル幅（759px以下）の余白を投稿フォーム・ZINE生成ブロックで調整。
+- ZINE生�E前に確認ダイアログ�E��E回生戁E/ 作り直しで斁E��を�Eり替え）、E
+- 生�E後�EスチE�Eタス表示と `#generated-zine` へのスムーズスクロール、E
+- モバイル幁E��E59px以下）�E余白を投稿フォーム・ZINE生�EブロチE��で調整、E
 - No auth, persistence, shared-beta, migration, or env changes.
 
 ## 2026-06-01 local demo navigation slice (Cursor fallback)
@@ -359,35 +453,24 @@ supabase       将来適用する migration 草案
 
 ## 2026-06-01 local dev disk migration (owner PC performance)
 
-- Added `.onedriveignore` for `node_modules`, `.next`, and other regenerable artifacts.
+- Added `.onedriveignore` for
+ode_modules`, `.next`, and other regenerable artifacts.
 - Added `docs/mewri_owner_local_dev_disk_setup.md`.
 - Active worktrees under `C:\dev\mewri\`: Codex `ph`, Cursor `ph-cursor` (git worktrees).
 - Added `tools/resume-local-dev-migration.ps1` (stops before `git restore` when the
   worktree is dirty; see owner doc).
-- Legacy OneDrive `ドキュメント\ph-cursor` removed; OneDrive paths are not active
+- Legacy OneDrive `ドキュメンチEph-cursor` removed; OneDrive paths are not active
   development worktrees.
-- Owner: open `C:\dev\mewri\ph-cursor` in Cursor; run `npm.cmd install` there if
-  `node_modules` is missing.
+- Owner: open `C:\dev\mewri\ph-cursor` in Cursor; run
+`npm.cmd install` there if
 
-## 2026-06-01 Cursor branch opened for review (PR #1)
+ode_modules` is missing.
 
-- Branch: `cursor/parallel-local-ui-docs` (pushed).
-- PR: https://github.com/yoshikage1819-create/mewri/pull/1
-- Scope on branch: local dev migration docs/script, local demo UI polish slices (no auth,
-  RLS, Storage policy, migrations, shared mode, deploy, or secrets).
-- Validation on branch tip: `npm.cmd run typecheck`, `npm.cmd test` (139 tests),
-  `npm.cmd run build`, `git diff --check`.
+## 2026-06-02 PR #1 merged to main
 
-### Codex next (when available)
-
-1. Review PR #1 diff; confirm no accidental shared-beta or security coupling.
-2. Merge to `main` only after approval (Cursor must not merge or push to `main`).
-3. Continue v0.10 foundation work from `C:\dev\mewri\ph` on `main` after merge.
-
-### Owner next (no Codex required)
-
-- Cursor: `C:\dev\mewri\ph-cursor`. Codex: `C:\dev\mewri\ph`. Do not use old OneDrive copies.
-- Wait for Codex review before merging PR #1 (merge deferred while Codex usage resets).
+- PR: https://github.com/yoshikage1819-create/mewri/pull/1 (merged via `4d5a4fb`).
+- Scope was local dev migration docs/script, local demo UI polish, resume script safety.
+- Cursor branch `cursor/parallel-local-ui-docs` should track `origin/main` after merges.
 
 ## 2026-06-01 local demo progress copy slice (Cursor fallback, pre-merge)
 
@@ -407,7 +490,7 @@ supabase       将来適用する migration 草案
 - Added a local SQL contract test so future edits cannot accidentally grant
   `authenticated` direct EXECUTE on the private RPC or remove anon/public revokes.
 - Updated `docs/mewri_supabase_staging_rpc_migration_approval_checklist_v0_10.md`
-  so Part B no longer describes案1 as a future/manual fix; it is now the adopted
+  so Part B no longer describes桁E as a future/manual fix; it is now the adopted
   draft contract.
 - No staging SQL was applied, no live Supabase connection was made, no env values were
   added, shared mode remains disabled, and production was not touched.
@@ -438,6 +521,57 @@ supabase       将来適用する migration 草案
 - No product code, Supabase, auth, RLS, Storage, migration, env, shared mode,
   deployment, or production resources were touched.
 
+## 2026-06-02 Parallel mode note: Codex shared-beta route work (historical)
+
+- Historical note: C-3/C-4 shared-beta route and authorization-source work are now committed on `main`.
+- Surfaces: `apps/web/src/app/api/shared-beta/posts/*` (route-boundary,
+  server-dependencies, new `image-file.ts`).
+- Cursor must **not** edit those files during fallback or parallel UI/docs work unless Codex explicitly hands off a new slice.
+
+### Cursor next (parallel mode)
+
+- Continue fallback queue on `cursor/parallel-local-ui-docs`: local demo UI/tests/docs only.
+- Rebase or merge `origin/main` into the Cursor branch after each `main` advance.
+
+### Codex next on `C:\dev\mewri\ph`
+
+- Finish and commit shared-beta post route slice; run security review pass.
+- Continue v0.10 foundation per §次に行うべきこと item 1 (staging adapter wiring after owner approval).
+
+## 2026-06-02 local demo sample image helper slice (Cursor, parallel mode)
+
+- Merged `origin/main` (PR #1 + Codex workflow docs) into `cursor/parallel-local-ui-docs`.
+- Moved `createSampleImageDataUrl` into `local-demo-ui.ts` with tests (SVG title escaping).
+- No shared-beta API, auth, or persistence changes.
+
+## 2026-06-02 local demo post list empty-state slice (Cursor fallback)
+
+- Context-aware empty post list copy (`formatEmptyPostListMessage`, `formatPostListKicker`).
+- Extracted `calcLocalImageScale` for tested local image downscale math.
+- Codex token exhausted: Cursor continues on `ph-cursor` only; do not edit `ph` shared-beta API WIP.
+
+## 2026-06-02 local demo safety/feedback accessibility (Cursor fallback)
+
+- Safety notice: summary toggle hint, list structure, focus ring, non-color expand marker.
+- Feedback note: label/htmlFor, textarea describedby, output for char count with aria-label.
+- Review guide: keyboard/screen-reader notes added.
+
+## 2026-06-02 local demo copy consistency audit (Cursor fallback)
+
+- Aligned banner, safety notice bullets, feedback intro, tests, and review guide wording.
+- Single source for user-facing copy: `local-demo-ui.ts` (including top banner text).
+
+## 2026-06-02 local demo review guide (Cursor fallback, docs only)
+
+- Added `docs/runbooks/local-demo-review-guide.md` for non-technical reviewers.
+- Linked from `docs/README.md`. Covers safety notice, feedback note UI, and manual reporting.
+
+## 2026-06-02 local demo mobile spacing slice (Cursor fallback)
+
+- Tuned `styles.css` mobile rules (`<=759px`) to match `home-wireframe.svg` section rhythm
+  (~20px between blocks, ~16px shell inset) and v0.9.7 tap/readability guidance.
+- Adjusted shell, section panels, post form, ZINE generate block, theme pills, and ZINE book gaps.
+- No logic, auth, or shared-beta changes.
 ## 2026-06-02 C-3 code-only staging route factory slice
 
 - Added an explicit staging-only route gate
@@ -464,8 +598,11 @@ supabase       将来適用する migration 草案
   rejection, unauthorized group/theme rejection, and happy-path fake posting.
 - No real env values, service-role key, live Supabase connection, migration,
   shared mode, deployment, or production resource was used.
-- Validation: `npm.cmd run typecheck` passed; `npm.cmd test` passed with
-  160 tests; `npm.cmd run build` passed; `git diff --check` returned only CRLF
+- Validation:
+`npm.cmd run typecheck` passed;
+`npm.cmd test` passed with
+  160 tests;
+`npm.cmd run build` passed; `git diff --check` returned only CRLF
   normalization warnings.
 - Independent review: the first `codex.cmd review --uncommitted` hit the known
   Windows sandbox spawn failure. The full-access rerun found a P2 issue where
@@ -499,8 +636,11 @@ supabase       将来適用する migration 草案
   membership/theme authorization now runs before server image validation.
 - No live Supabase connection, real env values, service-role key, migration,
   shared mode, deployment, or production resource was used.
-- Validation: `npm.cmd run typecheck` passed; `npm.cmd test` passed with
-  166 tests; `npm.cmd run build` passed; `git diff --check` returned only CRLF
+- Validation:
+`npm.cmd run typecheck` passed;
+`npm.cmd test` passed with
+  166 tests;
+`npm.cmd run build` passed; `git diff --check` returned only CRLF
   normalization warnings.
 - Independent review: the standard `codex.cmd review --uncommitted` timed out.
   Full-access review found the authorization-before-image-validation ordering

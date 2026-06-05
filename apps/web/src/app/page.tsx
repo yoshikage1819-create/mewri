@@ -7,21 +7,27 @@ import {
   buildAddSamplePostsConfirmMessage,
   buildGenerateZineConfirmMessage,
   calcReadinessPercent,
-  escapeSvgText,
+  calcLocalImageScale,
+  createSampleImageDataUrl,
+  formatEmptyPostListMessage,
   formatFullDate,
+  formatPostListKicker,
+  type PostListMode,
   formatPostSubmitSuccessMessage,
+  LOCAL_DEMO_BANNER_BODY,
+  LOCAL_DEMO_BANNER_TITLE,
   formatRemainingToday,
   formatZineGenerateBlockedHint,
   formatZineRemainingHeadline,
   LOCAL_DEMO_RESET_CONFIRM_MESSAGE,
   scrollToElementById
 } from "./local-demo-ui";
+import { LocalDemoFeedbackNote } from "./local-demo-feedback-note";
+import { LocalDemoSafetyNotice } from "./local-demo-safety-notice";
 
 const appService: MewriAppService = createBrowserLocalMewriAppService();
 
 type ActiveSection = "active" | "posts";
-type PostListMode = "all" | "theme";
-
 export default function HomePage() {
   const [state, setState] = useState<MewriState | null>(null);
   const [selectedThemeId, setSelectedThemeId] = useState("");
@@ -209,7 +215,7 @@ export default function HomePage() {
           userId: activeUser.id,
           groupId: activeGroup.id,
           themeId: theme.id,
-          imageUrl: createSampleImage(theme.title, themeIndex, itemIndex),
+          imageUrl: createSampleImageDataUrl(theme.title, themeIndex, itemIndex),
           caption: `${theme.title} のサンプル ${itemIndex + 1}`,
           now: new Date(now.getTime() + (themeIndex * 2 + itemIndex) * 1000)
         })
@@ -236,7 +242,7 @@ export default function HomePage() {
 
   function useSampleImageForPost() {
     if (!activeTheme) return;
-    setImageUrl(createSampleImage(activeTheme.title, Math.max(0, cycleThemes.indexOf(activeTheme)), 0));
+    setImageUrl(createSampleImageDataUrl(activeTheme.title, Math.max(0, cycleThemes.indexOf(activeTheme)), 0));
     setSelectedFileName("サンプル画像");
     setImageNotice("サンプル画像を選択しました。");
     setCaption((current) => current || `${activeTheme.title} のサンプル`);
@@ -286,10 +292,12 @@ export default function HomePage() {
 
       <aside className="demoNotice" aria-label="デモの説明">
         <p>
-          <strong>デモ（この端末だけ）</strong>
-          写真と投稿はこのブラウザにだけ保存されます。別の端末や他の人とは共有されません。
+          <strong>{LOCAL_DEMO_BANNER_TITLE}</strong>
+          {LOCAL_DEMO_BANNER_BODY}
         </p>
       </aside>
+
+      <LocalDemoSafetyNotice />
 
       <section className="homeGrid" aria-label="ホーム">
         <div className="mainCol">
@@ -414,7 +422,7 @@ export default function HomePage() {
 
               <div className="postGrid editorialGrid sameThemeGrid">
                 <div className="postListHeader">
-                  <p className="kicker">{postListMode === "all" ? "全投稿" : `テーマ: ${selectedTheme?.title ?? "未設定"}`}</p>
+                  <p className="kicker">{formatPostListKicker(postListMode, selectedTheme?.title)}</p>
                   {postListMode === "theme" && (
                     <button className="ghostButton formGhost" type="button" onClick={() => setPostListMode("all")}>
                       全投稿に戻る
@@ -422,7 +430,9 @@ export default function HomePage() {
                   )}
                 </div>
                 {visiblePosts.length === 0 ? (
-                  <p className="emptyText">投稿がまだありません。</p>
+                  <p className="emptyText" role="status">
+                    {formatEmptyPostListMessage(postListMode, selectedTheme?.title)}
+                  </p>
                 ) : (
                   visiblePosts.map((post) => (
                     <PostCard key={post.id} post={post} theme={state.themes.find((theme) => theme.id === post.themeId)} cycleTitle={activeCycle.title} />
@@ -478,7 +488,7 @@ export default function HomePage() {
                             <span className="pageNumber">p.{page.pageNumber}</span>
                           </header>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={post?.imageUrl || createSampleImage("ZINE", 0, 0)} alt={post?.caption || "ZINEページ"} />
+                          <img src={post?.imageUrl || createSampleImageDataUrl("ZINE", 0, 0)} alt={post?.caption || "ZINEページ"} />
                           <p>{post?.caption || page.aiCaption || "キャプションなし"}</p>
                         </article>
                       );
@@ -497,6 +507,8 @@ export default function HomePage() {
               </div>
             )}
           </HomeSection>
+
+          <LocalDemoFeedbackNote />
 
           <details className="futureModules">
             <summary>
@@ -717,32 +729,6 @@ function PostCard({ post, theme, cycleTitle }: { post: Post; theme?: Theme; cycl
   );
 }
 
-function createSampleImage(title: string, themeIndex: number, itemIndex: number): string {
-  const palettes = [
-    ["#2563eb", "#f59e0b"],
-    ["#0f766e", "#8b5cf6"],
-    ["#be123c", "#38bdf8"]
-  ];
-  const [a, b] = palettes[themeIndex % palettes.length];
-  const text = escapeSvgText(title);
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
-      <defs>
-        <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0%" stop-color="${a}"/>
-          <stop offset="100%" stop-color="${b}"/>
-        </linearGradient>
-      </defs>
-      <rect width="900" height="1200" fill="url(#g)"/>
-      <circle cx="${240 + itemIndex * 260}" cy="${360 + themeIndex * 80}" r="180" fill="rgba(255,255,255,0.20)"/>
-      <rect x="96" y="760" width="708" height="220" rx="24" fill="rgba(255,255,255,0.86)"/>
-      <text x="132" y="850" font-family="Arial, sans-serif" font-size="52" font-weight="700" fill="#171717">${text}</text>
-      <text x="132" y="920" font-family="Arial, sans-serif" font-size="28" fill="#404040">Mewri sample ${itemIndex + 1}</text>
-    </svg>
-  `;
-  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
-}
-
 function optimizeLocalImage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const sourceUrl = URL.createObjectURL(file);
@@ -750,8 +736,7 @@ function optimizeLocalImage(file: File): Promise<string> {
 
     image.onload = () => {
       try {
-        const maxEdge = 1280;
-        const scale = Math.min(1, maxEdge / Math.max(image.naturalWidth, image.naturalHeight));
+        const scale = calcLocalImageScale(image.naturalWidth, image.naturalHeight);
         const canvas = document.createElement("canvas");
         canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
         canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));

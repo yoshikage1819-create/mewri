@@ -20,12 +20,12 @@ PC が重くなるのを防ぎます。セキュリティを弱めず、長期�
 ## 推奨フォルダ
 
 ```text
-C:\dev\mewri\ph-cursor    ← Cursor / Codex 用（このリポジトリ）
-C:\dev\mewri\ph           ← Codex 用メインがある場合のみ（1本化できるなら1本でよい）
+C:\dev\mewri\ph           ← Codex 主 worktree（通常は main）
+C:\dev\mewri\ph-cursor    ← Cursor 用 worktree（cursor/* ブランチ）
 ```
 
-OneDrive 上の `ドキュメント\ph-cursor` は、移行確認後に削除して構いません
-（削除前に Git で push 済みか確認してください）。
+旧 OneDrive の `ドキュメント\ph` / `ph-cursor` は**作業用ではありません**。
+`ph-cursor` は削除済みです。新しい作業では `C:\dev\...` だけを開いてください。
 
 ## いまのリポジトリで入れた対策
 
@@ -116,8 +116,8 @@ npm.cmd install
 - `.env` や API 鍵を USB・公開共有に置く
 - `service_role` などをローカル以外に広げる
 
-## Codex / Cursor の役割分担（変更なし）
+## Codex / Cursor の役割分担
 
-- Codex: `ph`（メイン）でセキュリティ敏感な実装
-- Cursor: `ph-cursor` で低リスク UI / ドキュメント
-- 作業フォルダのパスだけ `C:\dev\...` に変わる
+- Codex: `C:\dev\mewri\ph` でセキュリティ敏感な実装・レビュー・`main` へのマージ判断
+- Cursor: `C:\dev\mewri\ph-cursor` で低リスク UI / ドキュメント / テスト
+- 詳細な並列・fallback ルールは `docs/mewri_ai_parallel_fallback_execution_design.md`
