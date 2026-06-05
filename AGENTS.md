@@ -72,6 +72,14 @@ Before meaningful work:
 - Add durable guidance only for repeated failure modes; do not grow agent
   instructions from one-off preferences.
 
+## Memory Pack
+
+- Before large AI-assisted work, select only the relevant files from `memory/`.
+- Do not inject all memory files by default.
+- Critical memory must be checked against current repo docs before
+  security-sensitive work.
+- `memory/` is canonical; Obsidian and Mem0 are optional future layers.
+
 ## Codex App And CLI Routing
 
 - Treat Codex app as the command center for product judgment, priority,
@@ -105,11 +113,19 @@ Before meaningful work:
   or review one slice, then hand it to the other agent with the diff and test
   results.
 - If Codex usage is exhausted, Cursor may continue only in the dedicated
-  Cursor worktree/branch with low-risk UI, docs, tests, and handoff work.
-  Cursor must not merge to `main`, enable shared mode, apply migrations,
-  touch production, handle secrets, deploy, or make security-sensitive
-  decisions while waiting for Codex usage to reset. Queue those items for
-  Codex review.
+  Cursor worktree/branch with Cursor-safe slices: local-demo UI/accessibility,
+  pure local-demo helpers and tests, local-only feedback UI, ZINE readability,
+  non-secret docs/runbooks, fixtures, and handoff cleanup. In this fallback
+  mode Cursor is the primary implementer and ChatGPT may act only as command
+  center for task choice, short non-secret validation-log interpretation,
+  Cursor prompt rewriting, and handoff formatting. Codex CLI and Codex app are
+  0% until reset. ChatGPT is not a code executor and must not approve
+  security-sensitive diffs as merge-ready. Cursor must not edit `supabase/**`,
+  `apps/web/src/app/api/**`, or shared-beta auth/storage/RPC/security code in
+  `packages/data/**`; must not merge to `main`, enable shared mode, apply
+  migrations, touch production, handle secrets, deploy, or make
+  security-sensitive decisions while waiting for Codex usage to reset. Queue
+  those items for Codex review after reset.
 
 ## Verification
 
@@ -134,4 +150,5 @@ packages/core  Domain models and pure product logic
 packages/data  Repository/service/runtime boundaries
 supabase       Shared beta migration drafts
 docs           Product decisions, plans, and handoff notes
+memory         Canonical compact AI memory pack
 ```

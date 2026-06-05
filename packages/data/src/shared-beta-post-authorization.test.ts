@@ -1,5 +1,5 @@
 import type { Group, GroupMember, Theme } from "@mewri/core";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createMemoryRepository } from "./memory-repository";
 import { createSeedState } from "./seed";
 import {
@@ -91,6 +91,36 @@ describe("shared beta post authorization", () => {
         ),
       "group_membership_required"
     );
+  });
+
+  it("rejects non-members before server image validation", () => {
+    const state = createSeedState(new Date("2026-05-20T09:00:00.000Z"));
+    const otherGroup = makeOtherGroup();
+    const otherTheme = makeOtherTheme(otherGroup);
+    const isPostImageUploadValidated = vi.fn(() => true);
+    const service = createGuardedService(
+      {
+        ...state,
+        groups: [...state.groups, otherGroup],
+        themes: [...state.themes, otherTheme]
+      },
+      isPostImageUploadValidated
+    );
+
+    expectAuthorizationFailure(
+      () =>
+        service.submitPost(
+          makeCommand({
+            input: {
+              groupId: otherGroup.id,
+              themeId: otherTheme.id,
+              imageUrl: `post-images/${otherGroup.id}/user_demo/photo.webp`
+            }
+          })
+        ),
+      "group_membership_required"
+    );
+    expect(isPostImageUploadValidated).not.toHaveBeenCalled();
   });
 
   it("rejects an active theme that belongs to another group", () => {

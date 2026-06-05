@@ -84,6 +84,189 @@ describe("shared beta post HTTP route boundary", () => {
     expect(submitPost).not.toHaveBeenCalled();
   });
 
+  it("rejects a multipart request that claims its own image path was validated", async () => {
+    const submitPost = vi.fn();
+    const resolveValidatedImagePath = vi.fn();
+    const handler = createSharedBetaPostRouteHandler({
+      async resolveAuthenticatedUserId() {
+        return "user_demo";
+      },
+      resolveValidatedImagePath,
+      resolveBoundary() {
+        return { submitPost };
+      }
+    });
+    const formData = makeMultipartFormData();
+    formData.set("imageUrl", "post-images/group_first/user_demo/forged.webp");
+
+    const response = await handler(
+      new Request("http://localhost/api/shared-beta/posts", {
+        method: "POST",
+        headers: {
+          "content-length": "1024"
+        },
+        body: formData
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body).toMatchObject({ ok: false, error: { code: "invalid_request_body" } });
+    expect(resolveValidatedImagePath).not.toHaveBeenCalled();
+    expect(submitPost).not.toHaveBeenCalled();
+  });
+
+  it("passes a multipart image file to server upload verification", async () => {
+    const submitPost = vi.fn(() => ({ ok: true as const, post: SUBMITTED_POST }));
+    const resolveValidatedImagePath = vi.fn(async (input) => {
+      expect(input.post.imageFile).toMatchObject({
+        name: "photo.webp",
+        type: "image/webp",
+        size: 3
+      });
+      return "post-images/group_first/user_demo/photo.webp";
+    });
+    const handler = createSharedBetaPostRouteHandler({
+      async resolveAuthenticatedUserId() {
+        return "user_demo";
+      },
+      resolveValidatedImagePath,
+      resolveBoundary() {
+        return { submitPost };
+      }
+    });
+
+    const response = await handler(
+      new Request("http://localhost/api/shared-beta/posts", {
+        method: "POST",
+        headers: {
+          "content-length": "1024"
+        },
+        body: makeMultipartFormData()
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({ ok: true, post: SUBMITTED_POST });
+    expect(resolveValidatedImagePath).toHaveBeenCalledOnce();
+    expect(submitPost).toHaveBeenCalledOnce();
+  });
+
+  it("rejects unauthenticated multipart requests before body parsing", async () => {
+    const resolveAuthenticatedUserId = vi.fn(async () => undefined);
+    const resolveValidatedImagePath = vi.fn();
+    const submitPost = vi.fn();
+    const handler = createSharedBetaPostRouteHandler({
+      resolveAuthenticatedUserId,
+      resolveValidatedImagePath,
+      resolveBoundary() {
+        return { submitPost };
+      }
+    });
+
+    const response = await handler(
+      new Request("http://localhost/api/shared-beta/posts", {
+        method: "POST",
+        body: makeMultipartFormData()
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(body).toMatchObject({ ok: false, error: { code: "authentication_required" } });
+    expect(resolveAuthenticatedUserId).toHaveBeenCalledOnce();
+    expect(resolveValidatedImagePath).not.toHaveBeenCalled();
+    expect(submitPost).not.toHaveBeenCalled();
+  });
+
+  it("rejects authenticated multipart requests without content-length before body parsing", async () => {
+    const resolveAuthenticatedUserId = vi.fn(async () => "user_demo");
+    const resolveValidatedImagePath = vi.fn();
+    const submitPost = vi.fn();
+    const handler = createSharedBetaPostRouteHandler({
+      resolveAuthenticatedUserId,
+      resolveValidatedImagePath,
+      resolveBoundary() {
+        return { submitPost };
+      }
+    });
+
+    const response = await handler(
+      new Request("http://localhost/api/shared-beta/posts", {
+        method: "POST",
+        body: makeMultipartFormData()
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(411);
+    expect(body).toMatchObject({ ok: false, error: { code: "invalid_request_body" } });
+    expect(resolveAuthenticatedUserId).toHaveBeenCalledOnce();
+    expect(resolveValidatedImagePath).not.toHaveBeenCalled();
+    expect(submitPost).not.toHaveBeenCalled();
+  });
+
+  it("rejects malformed multipart content-length before body parsing", async () => {
+    const resolveAuthenticatedUserId = vi.fn(async () => "user_demo");
+    const resolveValidatedImagePath = vi.fn();
+    const submitPost = vi.fn();
+    const handler = createSharedBetaPostRouteHandler({
+      resolveAuthenticatedUserId,
+      resolveValidatedImagePath,
+      resolveBoundary() {
+        return { submitPost };
+      }
+    });
+
+    const response = await handler(
+      new Request("http://localhost/api/shared-beta/posts", {
+        method: "POST",
+        headers: {
+          "content-length": "1024 bytes"
+        },
+        body: makeMultipartFormData()
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body).toMatchObject({ ok: false, error: { code: "invalid_request_body" } });
+    expect(resolveAuthenticatedUserId).toHaveBeenCalledOnce();
+    expect(resolveValidatedImagePath).not.toHaveBeenCalled();
+    expect(submitPost).not.toHaveBeenCalled();
+  });
+
+  it("rejects oversized multipart requests after auth but before body parsing", async () => {
+    const resolveAuthenticatedUserId = vi.fn(async () => "user_demo");
+    const resolveValidatedImagePath = vi.fn();
+    const submitPost = vi.fn();
+    const handler = createSharedBetaPostRouteHandler({
+      resolveAuthenticatedUserId,
+      resolveValidatedImagePath,
+      resolveBoundary() {
+        return { submitPost };
+      }
+    });
+
+    const response = await handler(
+      new Request("http://localhost/api/shared-beta/posts", {
+        method: "POST",
+        headers: {
+          "content-length": String(11 * 1024 * 1024)
+        },
+        body: makeMultipartFormData()
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(413);
+    expect(body).toMatchObject({ ok: false, error: { code: "invalid_request_body" } });
+    expect(resolveAuthenticatedUserId).toHaveBeenCalledOnce();
+    expect(resolveValidatedImagePath).not.toHaveBeenCalled();
+    expect(submitPost).not.toHaveBeenCalled();
+  });
+
   it("does not invoke the post boundary when server upload verification finds no image", async () => {
     const submitPost = vi.fn();
     const handler = createSharedBetaPostRouteHandler({
@@ -177,3 +360,13 @@ describe("shared beta post HTTP route boundary", () => {
     expect(submitPost).not.toHaveBeenCalled();
   });
 });
+
+function makeMultipartFormData(): FormData {
+  const formData = new FormData();
+  formData.set("userId", "user_demo");
+  formData.set("groupId", "group_first");
+  formData.set("themeId", "theme_cycle_group_first_2026-05-20_1");
+  formData.set("caption", "shared beta post");
+  formData.set("image", new File([new Uint8Array([1, 2, 3])], "photo.webp", { type: "image/webp" }));
+  return formData;
+}

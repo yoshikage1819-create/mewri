@@ -2,59 +2,61 @@
 
 更新日: 2026-06-02
 
-## 現行の正本
+## 現行�E正本
 
-新しい作業を始めるときは、目的に応じて次だけを先に読む。
+新しい作業を始めるとき�E、目皁E��応じて次だけを先に読む、E
 
-| 用途 | 文書 | 扱い |
+| 用送E| 斁E�� | 扱ぁE|
 | --- | --- | --- |
-| 現在地と次の作業 | `mewri_chatgpt_handoff_current.md` | 実装スライス完了時に更新する現行 status |
-| 製品原則と対象範囲 | `mewri_requirements_definition_v0_3.md` | 主ループと対象外の正本 |
-| 恒久的な判断 | `mewri_decision_log.md` | 方針を変える場合のみ追記する |
-| repository 契約 | `mewri_repository_contract_v0_4.md` | `packages/data` の契約変更前に読む |
-| closed shared beta | `mewri_v0_10_closed_shared_beta_foundation.md` | Auth / RLS / Storage / Supabase 境界の正本 |
-| staging refusal verification | `mewri_supabase_staging_refusal_verification_plan_v0_10.md` | Supabase staging migration 適用前の拒否検証計画 |
-| staging RPC migration approval | `mewri_supabase_staging_rpc_migration_approval_checklist_v0_10.md` | RPC migration 適用前のオーナー承認チェックリスト |
-| Storage RLS local check | `mewri_storage_rls_local_read_check_instructions.md` | staging Storage read 境界を実ログインで確認する local-only 手順 |
-| AI 開発運用 | `mewri_ai_workbench_setup.md` | Codex CLI / Cline / モデル選択の正本 |
-| PC を軽くする開発の置き場所 | `mewri_owner_local_dev_disk_setup.md` | OneDrive 外の推奨パスと移行手順 |
-| AI 並列・fallback 実装設計 | `mewri_ai_parallel_fallback_execution_design.md` | Codex と Cursor の並列実装、token 枯渇時の作業継続設計 |
-| Cursor fallback PR 文案 | `mewri_cursor_fallback_pr_draft.md` | `cursor/parallel-local-ui-docs` 用の PR 説明ドラフト（オーナー/Codex が開く・編集する） |
-| Cursor fallback 最終棚卸し | `mewri_cursor_fallback_final_inventory.md` | 変更ファイル一覧・安全境界・Codex レビュー用の事実記録 |
-| ローカルデモの確認（非技術者） | `runbooks/local-demo-review-guide.md` | 安全に触って感想を伝える手順（コード・本番・秘密情報は触らない） |
+| 現在地と次の作業 | `mewri_chatgpt_handoff_current.md` | 実裁E��ライス完亁E��に更新する現衁Estatus |
+| 製品原剁E��対象篁E�� | `mewri_requirements_definition_v0_3.md` | 主ループと対象外�E正本 |
+| 恒乁E��な判断 | `mewri_decision_log.md` | 方針を変える場合�Eみ追記すめE|
+| repository 契紁E| `mewri_repository_contract_v0_4.md` | `packages/data` の契紁E��更前に読む |
+| closed shared beta | `mewri_v0_10_closed_shared_beta_foundation.md` | Auth / RLS / Storage / Supabase 墁E��の正本 |
+| staging refusal verification | `mewri_supabase_staging_refusal_verification_plan_v0_10.md` | Supabase staging migration 適用前�E拒否検証計画 |
+| staging RPC migration approval | `mewri_supabase_staging_rpc_migration_approval_checklist_v0_10.md` | RPC migration 適用前�Eオーナ�E承認チェチE��リスチE|
+| Storage RLS local check | `mewri_storage_rls_local_read_check_instructions.md` | staging Storage read 墁E��を実ログインで確認すめElocal-only 手頁E|
+| AI 開発運用 | `mewri_ai_workbench_setup.md` | Codex CLI / Cline / モチE��選択�E正本 |
+| PC を軽くする開発の置き場所 | `mewri_owner_local_dev_disk_setup.md` | OneDrive 外�E推奨パスと移行手頁E|
+| AI 並列�Efallback 実裁E��訁E| `mewri_ai_parallel_fallback_execution_design.md` | Codex と Cursor の並列実裁E��token 枯渁E��の作業継続設訁E|
+| Cursor fallback PR 斁E��E| `mewri_cursor_fallback_pr_draft.md` | `cursor/parallel-local-ui-docs` 用の PR 説明ドラフト�E�オーナ�E/Codex が開く�E編雁E��る！E|
+| Cursor fallback 最終棚卸ぁE| `mewri_cursor_fallback_final_inventory.md` | 変更ファイル一覧・安�E墁E��・Codex レビュー用の事実記録 |
+| ローカルチE��の確認（非技術老E��E| `runbooks/local-demo-review-guide.md` | 安�Eに触って感想を伝える手頁E��コード�E本番・秘寁E��報は触らなぁE��E|
+| AI memory pack | `mewri_memory_pack.md` and `../memory/` | Compact canonical memory for selective Codex/Cursor/ChatGPT context injection |
+| Obsidian memory vault | `mewri_obsidian_memory_vault_setup.md` | ローカル Obsidian vault の開き方と安�Eルール |
 
-## 根拠・参考資料
+## 根拠・参老E��E��
 
-`deep-research-report.md` は Codex の活用方法を検討するための調査資料として
-保持する。これは Mewri の製品要件や実装 status の正本ではないが、
-`AGENTS.md`、Skill、検証・レビュー運用を改善するときの根拠資料として使う。
+`deep-research-report.md` は Codex の活用方法を検討するため�E調査賁E��として
+保持する。これ�E Mewri の製品要件めE��裁Estatus の正本ではなぁE��、E
+`AGENTS.md`、Skill、検証・レビュー運用を改喁E��るとき�E根拠賁E��として使ぁE��E
 
-## 現在の実装フェーズ
+## 現在の実裁E��ェーズ
 
 ```text
 v0.9 browser-local demo: 動作中
-v0.10 closed shared beta foundation: 実装準備・安全境界のコード化中
+v0.10 closed shared beta foundation: 実裁E��備・安�E墁E��のコード化中
 Supabase staging / migration 適用: 未実施
-shared mode: 未有効化
+shared mode: 未有効匁E
 ```
 
-直近では、shared-beta 投稿について次が追加済みである。
+直近では、shared-beta 投稿につぁE��次が追加済みである、E
 
-- SQL 草案は、検証済み server write / upload 経路の完成まで client の
-  post insert と画像 upload を許可しない。
-- `packages/data` に、未認証、なりすまし、非メンバー、他 group /
-  inactive theme、不正または server 未検証の private image path を拒否する
-  投稿 command service と route/application 境界がある。
-- HTTP request は `validatedImagePath` / `imageUrl` を受け付けず、将来の
+- SQL 草案�E、検証済み server write / upload 経路の完�Eまで client の
+  post insert と画僁Eupload を許可しなぁE��E
+- `packages/data` に、未認証、なりすまし、E��メンバ�E、仁Egroup /
+  inactive theme、不正また�E server 未検証の private image path を拒否する
+  投稿 command service と route/application 墁E��がある、E
+- HTTP request は `validatedImagePath` / `imageUrl` を受け付けず、封E��の
   server-side upload / Storage lookup が検証済み path を供給するまで
-  shared-beta 投稿を実行しない。
-- `apps/web` の追加 API route は、実認証・実 adapter の接続前は
-  `503 shared_beta_route_unavailable` として閉じたままである。
+  shared-beta 投稿を実行しなぁE��E
+- `apps/web` の追加 API route は、実認証・宁Eadapter の接続前は
+  `503 shared_beta_route_unavailable` として閉じたままである、E
 
-## 履歴として残す文書
+## 履歴として残す斁E��
 
-次は完了した過去スライス、β検証、検討資料であり、通常の実装開始時には
-読まない。過去判断の確認や UI 回帰の背景確認に限って参照する。
+次は完亁E��た過去スライス、β検証、検討賁E��であり、E��常の実裁E��始時には
+読まなぁE��過去判断の確認や UI 回帰の背景確認に限って参�Eする、E
 
 ```text
 mewri_data_model_v0_3.md
@@ -83,10 +85,17 @@ mewri_v0_9_7_cognitive_load_refinement.md
 mewri_student_pack_development_setup.md
 ```
 
-## 整理方針
+## 整琁E��釁E
 
-- 正本に吸収済みで、文字化けのため参照価値を失った旧初期計画は削除する。
-- モデル選択と Cline/Codex 運用は `mewri_ai_workbench_setup.md` に一本化する。
-- Codex 活用の調査レポートは参考資料として保持し、製品の source of truth
-  とは区別する。
-- 過去の読める β記録は、製品判断や回帰確認に役立つため履歴として維持する。
+- 正本に吸収済みで、文字化け�Eため参�E価値を失った旧初期計画は削除する、E
+- モチE��選択と Cline/Codex 運用は `mewri_ai_workbench_setup.md` に一本化する、E
+- Codex 活用の調査レポ�Eト�E参老E��E��として保持し、製品�E source of truth
+  とは区別する、E
+- 過去の読める β記録は、製品判断めE��帰確認に役立つため履歴として維持する、E
+
+## AI Memory Pack
+
+- `mewri_memory_pack.md` explains the Phase 1 repo-local memory pack.
+- `../memory/` is the canonical compact memory source for selective
+  Codex/Cursor/ChatGPT context injection.
+- Do not inject all memory files by default; select only relevant files.

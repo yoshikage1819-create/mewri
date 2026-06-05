@@ -159,9 +159,21 @@ Codex app は司令塔、Codex CLI は作業者 + 検証者として使う。ト
 通常の比率は次を目安にする。
 
 ```text
+Normal:
 Codex CLI: 70-85%
 Codex app: 5-20%
-Cursor / Cline fallback: 5-20%
+Cursor / Cline: 0-15%
+
+Parallel:
+Codex CLI: 55-75%
+Codex app: 5-15%
+Cursor / Cline: 15-35%
+
+Codex-token fallback:
+Cursor / Cline: 80-90%
+ChatGPT: 10-20%
+Codex CLI: 0% until reset
+Codex app: 0% until reset
 ```
 
 1. Codex app で、次の一片について目的、非対象、受け入れ条件、
@@ -384,3 +396,51 @@ AI は調査、設計案、実装、テスト、匿名化された指標の分�
   https://developers.openai.com/api/docs/models/compare
 - Codex use cases:
   https://developers.openai.com/codex/explore/
+
+## 2026-06-03 Codex-Token Fallback Routing
+
+Use these mode boundaries when coordinating AI execution:
+
+```text
+Normal mode:
+Codex CLI: 70-85%
+Codex app: 5-20%
+Cursor / Cline: 0-15%
+
+Parallel mode:
+Codex CLI: 55-75%
+Codex app: 5-15%
+Cursor / Cline: 15-35%
+
+Codex-token fallback mode:
+Cursor / Cline: 80-90%
+ChatGPT: 10-20%
+Codex CLI: 0% until reset
+Codex app: 0% until reset
+
+Codex reset / review mode:
+Codex CLI returns as implementer/verifier/reviewer for security-sensitive work.
+Codex app returns as planning command center after reset.
+```
+
+Codex-token fallback means both Codex CLI and Codex app are unavailable until
+reset. Cursor is the primary implementer in the dedicated Cursor worktree for
+safe UI, docs, local-demo helpers/tests, local-only feedback UI, ZINE preview,
+fixtures, and handoff cleanup. ChatGPT may act only as the owner command center:
+choose the next safe Cursor task from the documented queue, rewrite a selected
+task as a Cursor prompt, interpret short non-secret validation logs, and format
+handoff summaries.
+
+ChatGPT is not a code executor, is not a replacement for Codex diff review, and
+must not approve auth, RLS, Storage, migration, API security, secrets, deploy,
+staging activation, or production work as merge-ready.
+
+During fallback, do not paste secrets, tokens, service_role keys, DB passwords,
+JWT secrets, access tokens, refresh tokens, magic links, env files, or production
+data into ChatGPT. If Cursor is unsure about UI, docs, or local-demo tests, ask
+ChatGPT for task clarification. If Cursor is unsure about auth, RLS, Storage,
+migration, server route security, secrets, deploy, staging activation,
+production, or shared-beta backend code, stop and queue a handoff for Codex after
+reset. Cursor may fix and rerun validation for UI/docs/local-demo failures; for
+shared-beta/security/backend validation failures, Cursor stops and writes a
+handoff.

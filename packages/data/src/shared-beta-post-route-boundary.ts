@@ -1,12 +1,13 @@
 import type { ID, Post } from "@mewri/core";
 import type { SubmitPostCommand } from "./mewri-app-service";
-import type { MewriRepository } from "./repository";
 import {
-  assertSharedBetaPostSubmissionAllowed,
+  assertSharedBetaPostAuthorizationSourceResult,
+  assertSharedBetaPostServerContextAndImageAllowed,
   SharedBetaPostAuthorizationError,
   type SharedBetaPostAuthorizationFailure,
   type SharedBetaPostAuthorizationOptions
 } from "./shared-beta-post-authorization";
+import type { SharedBetaPostAuthorizationSource } from "./shared-beta-post-authorization-source";
 
 export interface SharedBetaPostRouteActor {
   authenticatedUserId?: ID;
@@ -45,7 +46,7 @@ export interface SharedBetaPostRouteBoundary {
 }
 
 export interface SharedBetaPostRouteBoundaryDependencies {
-  repository: MewriRepository;
+  authorizationSource: SharedBetaPostAuthorizationSource;
   postCommandService: {
     submitPost(command: SubmitPostCommand): Post | Promise<Post>;
   };
@@ -62,7 +63,7 @@ export function createSharedBetaPostRouteBoundary(
   dependencies: SharedBetaPostRouteBoundaryDependencies
 ): SharedBetaPostRouteBoundary {
   return {
-    submitPost(input) {
+    async submitPost(input) {
       const authenticatedUserId = input.actor.authenticatedUserId;
       if (!authenticatedUserId) {
         return deny("authentication_required", 401, "Shared beta posting requires an authenticated user.");
@@ -95,7 +96,13 @@ export function createSharedBetaPostRouteBoundary(
       };
 
       try {
-        assertSharedBetaPostSubmissionAllowed(dependencies.repository, command, dependencies.authorization);
+        const authorization = await dependencies.authorizationSource.canCreatePost({
+          authenticatedUserId,
+          groupId: input.post.groupId,
+          themeId: input.post.themeId
+        });
+        assertSharedBetaPostAuthorizationSourceResult(authorization);
+        assertSharedBetaPostServerContextAndImageAllowed(command, dependencies.authorization);
       } catch (error) {
         if (error instanceof SharedBetaPostAuthorizationError) {
           return deny(error.code, statusForAuthorizationFailure(error.code), error.message);
@@ -103,18 +110,10 @@ export function createSharedBetaPostRouteBoundary(
         throw error;
       }
 
-      const submittedPost = dependencies.postCommandService.submitPost(command);
-      if (isPromiseLike(submittedPost)) {
-        return submittedPost.then((post) => ({ ok: true, post }));
-      }
-
-      return { ok: true, post: submittedPost };
+      const post = await dependencies.postCommandService.submitPost(command);
+      return { ok: true, post };
     }
   };
-}
-
-function isPromiseLike(value: Post | Promise<Post>): value is Promise<Post> {
-  return typeof (value as Promise<Post>).then === "function";
 }
 
 function statusForAuthorizationFailure(code: SharedBetaPostAuthorizationFailure): number {

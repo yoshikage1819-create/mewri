@@ -5,8 +5,8 @@ Use this text when opening or updating a GitHub PR. Owner or Codex should decide
 | Field | Value |
 | --- | --- |
 | Head branch | `cursor/parallel-local-ui-docs` |
-| Suggested base | `main` at `f336e0a` (rebase or update base to current `main` before merge) |
-| Branch tip | `8816188` (docs-only handoff update) |
+| Suggested base | current `main` / `origin/main` after memory pack commit (`845bab6` at merge time) |
+| Latest pre-merge Cursor docs tip | `f8a05f8` |
 | App / UI work tip | `dcfcb48` (local demo safety + feedback accessibility) |
 | Worktree | `C:\dev\mewri\ph-cursor` |
 
@@ -39,9 +39,11 @@ Low-risk **local demo UI, tests, and documentation** from the Cursor fallback qu
 - Local dev disk migration: `.onedriveignore`, owner doc, resume script with dirty-worktree guard.
 - Handoff: canonical **Codex reset: Cursor branch summary** in `mewri_chatgpt_handoff_current.md`; this PR draft.
 
-Commits since `f336e0a` on the branch (app + docs; tip may include `8816188`):
+Cursor fallback commits before latest `origin/main` merge:
 
 ```text
+f8a05f8 Add final Cursor fallback inventory
+100100d Add Cursor fallback PR draft and inventory link
 8816188 Update Codex handoff summary for Cursor fallback branch
 dcfcb48 Improve local demo safety and feedback accessibility.
 394d2f0 Align local demo user-facing copy across UI and docs.
@@ -54,7 +56,7 @@ fe8aff4 Merge main and extract local demo sample image helper.
 3d5fa98 Align owner and handoff docs with C:\dev worktree design.
 ```
 
-Older branch commits (before `f336e0a`) include PR #1-era migration and local-demo polish; see `git log origin/main..HEAD` in `ph-cursor`.
+Older branch commits (before `f336e0a`) include PR #1-era migration and local-demo polish. After the branch is merged/rebased onto current `main`, use `git diff origin/main...HEAD` in `ph-cursor` for the final PR file list.
 
 ---
 
@@ -75,10 +77,10 @@ No production data and no private beta participant data were used for this work.
 
 | Check | Result |
 | --- | --- |
-| `npm.cmd test` | **Pass** — 161 tests (validated on app tip `dcfcb48`) |
+| `npm.cmd test` | **Pass** - 161 tests before latest main merge; rerun after conflict resolution |
 | `npm.cmd run typecheck` | Pass (spot-checked during slices) |
 | `npm.cmd run build` | Pass (spot-checked during slices) |
-| `npm.cmd run lint` | **Known failure** — pre-existing: `next lint` treats `lint` as a directory under `apps/web`; not introduced by this branch |
+| `npm.cmd run lint` | **Known failure**  Epre-existing: `next lint` treats `lint` as a directory under `apps/web`; not introduced by this branch |
 
 ---
 
@@ -109,12 +111,12 @@ No production data and no private beta participant data were used for this work.
 
 ## Codex review checklist
 
-1. `git fetch` and checkout `cursor/parallel-local-ui-docs` at `8816188` (or latest push).
-2. `git diff f336e0a..dcfcb48` — confirm app diff is UI/docs/tests only; read `8816188` for handoff-only delta.
+1. `git fetch` and checkout latest `cursor/parallel-local-ui-docs`.
+2. Review `origin/main...HEAD`; for the focused app slice, `f336e0a..dcfcb48` remains the UI/docs/tests-only range.
 3. Skim `local-demo-ui.ts` and demo components for imports from shared-beta or env-dependent code.
 4. Confirm feedback note has no submit handler and no new API routes.
 5. Compare user-facing copy to `local-demo-review-guide.md`.
-6. Decide PR title/body edits, rebase onto current `main`, and merge policy (Codex/owner — not Cursor).
+6. Decide PR title/body edits, rebase onto current `main`, and merge policy (Codex/owner  Enot Cursor).
 
 ---
 
@@ -133,4 +135,5 @@ No production data and no private beta participant data were used for this work.
 
 ## Suggested labels (optional)
 
-`documentation`, `ui`, `no-backend`
+`documentation`, `ui`,
+o-backend`
