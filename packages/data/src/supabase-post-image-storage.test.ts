@@ -10,7 +10,11 @@ import {
 describe("supabase post image storage boundary", () => {
   it("uploads an allowed image to a private group/user object path", async () => {
     const storage: SharedBetaPostImageStorageClient = {
-      uploadObject: vi.fn(async () => ({ ok: true }))
+      uploadObject: vi.fn(async (input: { bucket: string; objectPath: string }) => ({
+        ok: true,
+        bucket: input.bucket,
+        objectPath: input.objectPath
+      }))
     };
 
     const result = await uploadSharedBetaPostImage({
@@ -49,7 +53,7 @@ describe("supabase post image storage boundary", () => {
     }
   ])("rejects $name before upload", async ({ expectedCode, file }) => {
     const storage: SharedBetaPostImageStorageClient = {
-      uploadObject: vi.fn(async () => ({ ok: true }))
+      uploadObject: vi.fn()
     };
 
     const result = await uploadSharedBetaPostImage({
@@ -66,7 +70,7 @@ describe("supabase post image storage boundary", () => {
 
   it("rejects unsafe generated filenames", async () => {
     const storage: SharedBetaPostImageStorageClient = {
-      uploadObject: vi.fn(async () => ({ ok: true }))
+      uploadObject: vi.fn()
     };
 
     const result = await uploadSharedBetaPostImage({
@@ -79,6 +83,62 @@ describe("supabase post image storage boundary", () => {
     });
 
     expect(result).toMatchObject({ ok: false, code: "invalid_image_filename" });
+    expect(storage.uploadObject).not.toHaveBeenCalled();
+  });
+
+  it("rejects upload success when storage returns a different bucket or object path", async () => {
+    const storage: SharedBetaPostImageStorageClient = {
+      uploadObject: vi.fn(async () => ({
+        ok: true,
+        bucket: "other-bucket",
+        objectPath: "group_first/user_demo/photo.webp"
+      }))
+    };
+
+    const result = await uploadSharedBetaPostImage({
+      storage,
+      bucket: "post-images",
+      groupId: "group_first",
+      userId: "user_demo",
+      file: makeFile({ name: "photo.webp", type: "image/webp", size: 12 }),
+      generateFilename: () => "photo.webp"
+    });
+
+    expect(result).toMatchObject({ ok: false, code: "storage_upload_failed" });
+    expect(storage.uploadObject).toHaveBeenCalledOnce();
+  });
+
+  it("fails closed when the file read or storage upload throws", async () => {
+    const throwingStorage: SharedBetaPostImageStorageClient = {
+      uploadObject: vi.fn(async () => {
+        throw new Error("network unavailable");
+      })
+    };
+
+    await expect(
+      uploadSharedBetaPostImage({
+        storage: throwingStorage,
+        bucket: "post-images",
+        groupId: "group_first",
+        userId: "user_demo",
+        file: makeFile({ name: "photo.webp", type: "image/webp", size: 12 }),
+        generateFilename: () => "photo.webp"
+      })
+    ).resolves.toMatchObject({ ok: false, code: "storage_upload_failed" });
+
+    const storage: SharedBetaPostImageStorageClient = {
+      uploadObject: vi.fn()
+    };
+    await expect(
+      uploadSharedBetaPostImage({
+        storage,
+        bucket: "post-images",
+        groupId: "group_first",
+        userId: "user_demo",
+        file: makeFile({ name: "photo.webp", type: "image/webp", size: 12, throwRead: true }),
+        generateFilename: () => "photo.webp"
+      })
+    ).resolves.toMatchObject({ ok: false, code: "storage_upload_failed" });
     expect(storage.uploadObject).not.toHaveBeenCalled();
   });
 
@@ -113,6 +173,25 @@ describe("supabase post image storage boundary", () => {
     ).toMatchObject({ ok: false, code: "private_image_path_required" });
   });
 
+  it("fails closed when object existence verification throws", async () => {
+    const storage: SharedBetaPostImageStorageClient = {
+      uploadObject: vi.fn(),
+      objectExists: vi.fn(async () => {
+        throw new Error("storage list denied");
+      })
+    };
+
+    await expect(
+      verifySharedBetaPostImageObjectPath({
+        storage,
+        bucket: "post-images",
+        imagePath: "post-images/group_first/user_demo/photo.webp",
+        groupId: "group_first",
+        userId: "user_demo"
+      })
+    ).resolves.toMatchObject({ ok: false, code: "storage_object_not_found" });
+  });
+
   it("maps a full private image path to the bucket object path", () => {
     expect(
       toSharedBetaPostImageObjectPath(
@@ -125,10 +204,14 @@ describe("supabase post image storage boundary", () => {
   });
 });
 
-function makeFile(input: { name: string; type: string; size: number }): SharedBetaPostImageFile {
+function makeFile(input: { name: string; type: string; size: number; throwRead?: boolean }): SharedBetaPostImageFile {
   return {
     ...input,
     async arrayBuffer() {
+      if (input.throwRead) {
+        throw new Error("file read failed");
+      }
+
       return new ArrayBuffer(input.size);
     }
   };

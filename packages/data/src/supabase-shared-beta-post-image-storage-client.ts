@@ -42,7 +42,7 @@ export function createSupabaseSharedBetaPostImageStorageClient(
 
   return {
     async uploadObject({ bucket, objectPath, body, contentType }) {
-      const { error } = await supabase.storage.from(bucket).upload(objectPath, body, {
+      const { data, error } = await supabase.storage.from(bucket).upload(objectPath, body, {
         contentType,
         upsert: false
       });
@@ -51,7 +51,12 @@ export function createSupabaseSharedBetaPostImageStorageClient(
         return { ok: false, error };
       }
 
-      return { ok: true };
+      const uploadedObjectPath = asUploadedObjectPath(data);
+      if (uploadedObjectPath !== objectPath) {
+        return { ok: false, error: new Error("Supabase Storage returned an unexpected uploaded object path.") };
+      }
+
+      return { ok: true, bucket, objectPath: uploadedObjectPath };
     },
 
     async objectExists({ bucket, objectPath }) {
@@ -92,6 +97,15 @@ function assertStorageClientInput(input: CreateSupabaseSharedBetaPostImageStorag
       "Shared beta post image storage client must not use a service role key as the access token."
     );
   }
+}
+
+function asUploadedObjectPath(data: unknown): string | undefined {
+  if (typeof data !== "object" || data === null || !("path" in data)) {
+    return undefined;
+  }
+
+  const path = (data as { path?: unknown }).path;
+  return typeof path === "string" ? path : undefined;
 }
 
 function splitStorageObjectPath(objectPath: string): { folder: string; filename: string } {

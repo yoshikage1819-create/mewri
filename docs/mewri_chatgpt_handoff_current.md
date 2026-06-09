@@ -744,3 +744,13 @@ ode_modules` is missing.
 - Confirmed `docs/mewri_friend_main_deck*`, `docs/mewri_friend_one_page_overview*`, `docs/mewri_friend_pitch_deck.html`, `docs/scripts/`, and `outputs/` are absent in the current worktree.
 - `pptxgenjs` had no remaining references outside package manifests after the deck generator deletion. It was removed from `devDependencies`; `vitest`, package scripts, and lint config were left unchanged.
 - C-5 Supabase authorization source work remains the active main slice. Route defaults remain fail-closed, and no Supabase live connection, env value, service-role key, migration, shared mode, deployment, or production resource was used.
+
+
+## 2026-06-09 C-6 Storage upload confirmation contract slice
+
+- Tightened the fakeable shared-beta image Storage upload contract so a successful upload must return the exact bucket and object path that were stored. The higher-level upload boundary now fails closed if Storage reports success for a different bucket/path or does not confirm the expected object path.
+- Updated the Supabase Storage adapter to require Supabase upload `data.path` to match the requested object path before returning success. The adapter still uses the caller/member access token with the public anon/publishable key shape and does not use service-role credentials.
+- Added fake-client tests for upload failure and mismatched upload confirmation stopping before RPC, plus Storage-boundary tests for returned bucket/path mismatch and adapter tests for missing/mismatched Supabase upload paths.
+- Route defaults remain fail-closed. No live Supabase connection, real env value, service-role key, migration, Storage policy, shared mode, deployment, or production resource was used.
+- This remains code-contract preparation only. Live staging activation still needs an approved Storage upload policy/RPC/edge mechanism and explicit trusted staging adapter wiring before any credentials or shared mode are used.
+- Manual local review found and fixed one fail-closed gap: thrown file-read, upload, or object-existence errors are now converted to closed Storage failures instead of escaping the route boundary.

@@ -18,7 +18,7 @@ export interface SharedBetaPostImageStorageClient {
     objectPath: string;
     body: ArrayBuffer;
     contentType: SharedBetaPostImageMimeType;
-  }): Promise<{ ok: true } | { ok: false; error?: unknown }>;
+  }): Promise<{ ok: true; bucket: string; objectPath: string } | { ok: false; error?: unknown }>;
   objectExists?(input: { bucket: string; objectPath: string }): Promise<boolean>;
 }
 
@@ -76,15 +76,27 @@ export async function uploadSharedBetaPostImage(
   }
 
   const objectPath = `${options.groupId}/${options.userId}/${filename}`;
-  const upload = await options.storage.uploadObject({
-    bucket: options.bucket,
-    objectPath,
-    body: await file.arrayBuffer(),
-    contentType
-  });
+  let body: ArrayBuffer;
+  let upload: Awaited<ReturnType<SharedBetaPostImageStorageClient["uploadObject"]>>;
+
+  try {
+    body = await file.arrayBuffer();
+    upload = await options.storage.uploadObject({
+      bucket: options.bucket,
+      objectPath,
+      body,
+      contentType
+    });
+  } catch {
+    return deny("storage_upload_failed", "Shared beta post image upload failed.");
+  }
 
   if (!upload.ok) {
     return deny("storage_upload_failed", "Shared beta post image upload failed.");
+  }
+
+  if (upload.bucket !== options.bucket || upload.objectPath !== objectPath) {
+    return deny("storage_upload_failed", "Shared beta post image upload returned an unexpected object path.");
   }
 
   return {
@@ -108,7 +120,16 @@ export async function verifySharedBetaPostImageObjectPath(input: {
     );
   }
 
-  if (!input.storage.objectExists || !(await input.storage.objectExists({ bucket: input.bucket, objectPath }))) {
+  let objectExists = false;
+  try {
+    objectExists = input.storage.objectExists
+      ? await input.storage.objectExists({ bucket: input.bucket, objectPath })
+      : false;
+  } catch {
+    objectExists = false;
+  }
+
+  if (!objectExists) {
     return deny("storage_object_not_found", "Shared beta post image object could not be verified.");
   }
 

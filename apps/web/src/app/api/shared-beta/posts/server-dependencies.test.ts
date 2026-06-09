@@ -33,6 +33,8 @@ const STAGING_ROUTE_ENVIRONMENT = {
   SUPABASE_POST_IMAGE_BUCKET: "post-images"
 };
 
+type UploadConfirmationInput = { bucket: string; objectPath: string };
+
 describe("resolveStagingSharedBetaPostRouteEnvironment", () => {
   it("requires an explicit staging route gate before returning public Supabase config", () => {
     expect(
@@ -109,7 +111,7 @@ describe("shared beta post server dependency factory", () => {
     const handler = createSharedBetaPostRouteHandler(
       createSharedBetaPostServerDependenciesFromEnvironment(STAGING_ROUTE_ENVIRONMENT, {
         authClient: { getUser: vi.fn(async () => ({ data: { user: { id: "user_demo" } } })) },
-        imageStorageClient: { uploadObject: vi.fn(async () => ({ ok: true })) },
+        imageStorageClient: { uploadObject: vi.fn(async (input: UploadConfirmationInput) => confirmUpload(input)) },
         postGatewayClient: { rpc: vi.fn() }
       })
     );
@@ -217,6 +219,52 @@ describe("shared beta post server dependency factory", () => {
 
     expect(response.status).toBe(403);
     expect(body).toMatchObject({ ok: false, error: { code: "validated_image_required" } });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("fails closed when server image upload fails and does not call RPC", async () => {
+    const uploadObject = vi.fn(async () => ({ ok: false as const, error: new Error("storage denied") }));
+    const rpc = vi.fn();
+    const handler = createSharedBetaPostRouteHandler(
+      createSharedBetaPostServerDependenciesFromEnvironment(STAGING_ROUTE_ENVIRONMENT, {
+        ...makeCompleteOptions({
+          imageStorageClient: { uploadObject },
+          postGatewayClient: { rpc }
+        })
+      })
+    );
+
+    const response = await handler(makeJsonRequest({ authorization: "Bearer token_a" }));
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body).toMatchObject({ ok: false, error: { code: "validated_image_required" } });
+    expect(uploadObject).toHaveBeenCalledOnce();
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("fails closed when server image upload returns a mismatched bucket or path", async () => {
+    const uploadObject = vi.fn(async (input: UploadConfirmationInput) => ({
+      ok: true as const,
+      bucket: "other-bucket",
+      objectPath: input.objectPath
+    }));
+    const rpc = vi.fn();
+    const handler = createSharedBetaPostRouteHandler(
+      createSharedBetaPostServerDependenciesFromEnvironment(STAGING_ROUTE_ENVIRONMENT, {
+        ...makeCompleteOptions({
+          imageStorageClient: { uploadObject },
+          postGatewayClient: { rpc }
+        })
+      })
+    );
+
+    const response = await handler(makeJsonRequest({ authorization: "Bearer token_a" }));
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body).toMatchObject({ ok: false, error: { code: "validated_image_required" } });
+    expect(uploadObject).toHaveBeenCalledOnce();
     expect(rpc).not.toHaveBeenCalled();
   });
 
@@ -356,7 +404,7 @@ describe("shared beta post server dependency factory", () => {
   });
 
   it("wires auth, server image upload, authorization, and the atomic post gateway", async () => {
-    const uploadObject = vi.fn(async () => ({ ok: true as const }));
+    const uploadObject = vi.fn(async (input: UploadConfirmationInput) => confirmUpload(input));
     const rpc = vi.fn(async () => ({
       error: null,
       data: [
@@ -418,7 +466,7 @@ describe("shared beta post server dependency factory", () => {
   });
 
   it("creates member-scoped storage and RPC clients from the request access token", async () => {
-    const uploadObject = vi.fn(async () => ({ ok: true as const }));
+    const uploadObject = vi.fn(async (input: UploadConfirmationInput) => confirmUpload(input));
     const rpc = vi.fn(async () => ({
       error: null,
       data: [
@@ -460,7 +508,7 @@ describe("shared beta post server dependency factory", () => {
   });
 
   it("uses the multipart image file when no injected image resolver is provided", async () => {
-    const uploadObject = vi.fn(async () => ({ ok: true as const }));
+    const uploadObject = vi.fn(async (input: UploadConfirmationInput) => confirmUpload(input));
     const rpc = vi.fn(async () => ({
       error: null,
       data: [
@@ -511,7 +559,7 @@ function makeCompleteOptions(
       getUser: vi.fn(async () => ({ data: { user: { id: "user_demo" } } }))
     },
     imageStorageClient: {
-      uploadObject: vi.fn(async () => ({ ok: true }))
+      uploadObject: vi.fn(async (input: UploadConfirmationInput) => confirmUpload(input))
     },
     postGatewayClient: {
       rpc: vi.fn()
@@ -583,6 +631,14 @@ function makeFile(input: { name: string; type: string; size: number }): SharedBe
     async arrayBuffer() {
       return new ArrayBuffer(input.size);
     }
+  };
+}
+
+function confirmUpload(input: UploadConfirmationInput) {
+  return {
+    ok: true as const,
+    bucket: input.bucket,
+    objectPath: input.objectPath
   };
 }
 

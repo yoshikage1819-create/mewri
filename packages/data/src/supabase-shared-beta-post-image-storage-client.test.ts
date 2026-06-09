@@ -78,7 +78,12 @@ describe("createSupabaseSharedBetaPostImageStorageClient", () => {
   });
 
   it("uploads to the private group/user object path with the member JWT", async () => {
-    uploadMock.mockResolvedValue({ error: null });
+    uploadMock.mockResolvedValue({
+      data: {
+        path: "group_staging_a/00000000-0000-0000-0000-000000000001/photo.webp"
+      },
+      error: null
+    });
     const body = new ArrayBuffer(8);
 
     const storage = createSupabaseSharedBetaPostImageStorageClient({
@@ -114,7 +119,11 @@ describe("createSupabaseSharedBetaPostImageStorageClient", () => {
         upsert: false
       }
     );
-    expect(result).toEqual({ ok: true });
+    expect(result).toEqual({
+      ok: true,
+      bucket: "post-images",
+      objectPath: "group_staging_a/00000000-0000-0000-0000-000000000001/photo.webp"
+    });
   });
 
   it("returns upload failure without throwing", async () => {
@@ -134,6 +143,40 @@ describe("createSupabaseSharedBetaPostImageStorageClient", () => {
     });
 
     expect(result).toEqual({ ok: false, error: expect.any(Error) });
+  });
+
+  it("fails closed when Supabase does not confirm the uploaded object path", async () => {
+    uploadMock.mockResolvedValue({
+      data: {
+        path: "group_staging_a/00000000-0000-0000-0000-000000000001/other.webp"
+      },
+      error: null
+    });
+
+    const storage = createSupabaseSharedBetaPostImageStorageClient({
+      projectUrl: "https://project.supabase.co",
+      anonKey: ANON_KEY,
+      accessToken: "member-access-token"
+    });
+
+    const result = await storage.uploadObject({
+      bucket: "post-images",
+      objectPath: "group_staging_a/00000000-0000-0000-0000-000000000001/photo.webp",
+      body: new ArrayBuffer(4),
+      contentType: "image/webp"
+    });
+
+    expect(result).toEqual({ ok: false, error: expect.any(Error) });
+
+    uploadMock.mockResolvedValue({ data: null, error: null });
+    await expect(
+      storage.uploadObject({
+        bucket: "post-images",
+        objectPath: "group_staging_a/00000000-0000-0000-0000-000000000001/photo.webp",
+        body: new ArrayBuffer(4),
+        contentType: "image/webp"
+      })
+    ).resolves.toEqual({ ok: false, error: expect.any(Error) });
   });
 
   it("checks object existence via storage list in the object folder", async () => {
