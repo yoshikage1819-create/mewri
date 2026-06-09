@@ -705,3 +705,42 @@ ode_modules` is missing.
 - No Obsidian Sync, plugin, Mem0, selector tooling, app runtime dependency,
   Supabase connection, env values, migration, shared mode, deploy, production
   resource, or secret handling was added.
+
+## 2026-06-05 C-5 Supabase authorization source adapter slice
+
+- Added `packages/data/src/supabase-shared-beta-post-authorization-source.ts`,
+  a narrow fakeable Supabase read adapter for `SharedBetaPostAuthorizationSource`.
+  It answers only whether authenticated user X can create a post in group Y for
+  theme Z.
+- The adapter checks exactly one `group_members` match before checking exactly
+  one same-group active `themes` row. It returns existing denial codes:
+  `group_membership_required` and `active_group_theme_required`.
+- It fails closed on Supabase read errors, thrown read errors, missing rows,
+  multiple rows, malformed rows, and mismatched rows. It does not expose
+  `MewriState`, raw rows, table clients, Storage clients, or full repository
+  access to the route/UI.
+- Added fake-client tests for member success, non-member denial, missing /
+  other-group / inactive themes, read errors, ambiguity, malformed rows, and
+  no raw-row/state exposure.
+- Added a route dependency test proving an injected Supabase-backed
+  authorization denial stops before image resolution, Storage upload, client
+  factory creation, or RPC.
+- Route defaults remain fail-closed. No live Supabase connection, env values,
+  service-role key, migrations, Storage policies, shared mode, deploy, or
+  production resources were used.
+- Validation: `npm.cmd run typecheck` passed; `npm.cmd test` passed with 200
+  tests; `npm.cmd run build` passed; `git diff --check` returned only CRLF
+  normalization warnings.
+- Independent review: standard `codex.cmd review --uncommitted` timed out
+  without findings; full-access rerun reported no discrete correctness or
+  security issue.
+- Remaining blocker/next gate: live staging activation still needs approved
+  Storage upload mechanism/policy and explicit trusted staging adapter wiring.
+  Stop before credentials, migrations, shared mode, deployment, or production.
+
+## 2026-06-09 friend-deck cleanup and C-5 preservation
+
+- Owner deleted the friend deck / PPTX / PDF / script / output artifacts and kept only `docs/mewri_friend_onboarding_invitation.md` and `docs/mewri_friend_first_week_guide.md`.
+- Confirmed `docs/mewri_friend_main_deck*`, `docs/mewri_friend_one_page_overview*`, `docs/mewri_friend_pitch_deck.html`, `docs/scripts/`, and `outputs/` are absent in the current worktree.
+- `pptxgenjs` had no remaining references outside package manifests after the deck generator deletion. It was removed from `devDependencies`; `vitest`, package scripts, and lint config were left unchanged.
+- C-5 Supabase authorization source work remains the active main slice. Route defaults remain fail-closed, and no Supabase live connection, env value, service-role key, migration, shared mode, deployment, or production resource was used.

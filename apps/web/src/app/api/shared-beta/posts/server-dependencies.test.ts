@@ -9,6 +9,10 @@ import type {
   SharedBetaPostImageFile,
   SharedBetaPostImageStorageClient
 } from "@mewri/data/src/supabase-post-image-storage";
+import {
+  createSupabaseSharedBetaPostAuthorizationSource,
+  type SupabaseSharedBetaPostAuthorizationReadClient
+} from "@mewri/data/src/supabase-shared-beta-post-authorization-source";
 import { describe, expect, it, vi } from "vitest";
 import { createSharedBetaPostRouteHandler } from "./route-boundary";
 import {
@@ -285,6 +289,65 @@ describe("shared beta post server dependency factory", () => {
 
     expect(response.status).toBe(403);
     expect(body).toMatchObject({ ok: false, error: { code: "validated_image_required" } });
+    expect(resolveImageFile).not.toHaveBeenCalled();
+    expect(imageStorageClientFactory).not.toHaveBeenCalled();
+    expect(postGatewayClientFactory).not.toHaveBeenCalled();
+    expect(uploadObject).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("keeps Supabase-backed authorization denial before upload and RPC", async () => {
+    const uploadObject = vi.fn();
+    const rpc = vi.fn();
+    const imageStorageClientFactory = vi.fn(() => ({ uploadObject }));
+    const postGatewayClientFactory = vi.fn(() => ({ rpc }));
+    const resolveImageFile = vi.fn(async () => makeFile({ name: "photo.webp", type: "image/webp", size: 12 }));
+    const authorizationClient: SupabaseSharedBetaPostAuthorizationReadClient = {
+      selectGroupMembership: vi.fn(async () => ({ data: [], error: null })),
+      selectTheme: vi.fn(async () => ({
+        data: [
+          {
+            id: "theme_other_active",
+            group_id: "group_other",
+            status: "active"
+          }
+        ],
+        error: null
+      }))
+    };
+    const handler = createSharedBetaPostRouteHandler(
+      createSharedBetaPostServerDependenciesFromEnvironment(STAGING_ROUTE_ENVIRONMENT, {
+        ...makeCompleteOptions({
+          authorizationSource: createSupabaseSharedBetaPostAuthorizationSource(authorizationClient),
+          imageStorageClient: undefined,
+          imageStorageClientFactory,
+          postGatewayClient: undefined,
+          postGatewayClientFactory,
+          resolveImageFile
+        })
+      })
+    );
+
+    const response = await handler(
+      makeJsonRequest({
+        authorization: "Bearer token_a",
+        body: {
+          userId: "user_demo",
+          groupId: "group_other",
+          themeId: "theme_other_active",
+          caption: "shared beta post"
+        }
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body).toMatchObject({ ok: false, error: { code: "validated_image_required" } });
+    expect(authorizationClient.selectGroupMembership).toHaveBeenCalledWith({
+      groupId: "group_other",
+      userId: "user_demo"
+    });
+    expect(authorizationClient.selectTheme).not.toHaveBeenCalled();
     expect(resolveImageFile).not.toHaveBeenCalled();
     expect(imageStorageClientFactory).not.toHaveBeenCalled();
     expect(postGatewayClientFactory).not.toHaveBeenCalled();

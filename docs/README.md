@@ -22,6 +22,8 @@
 | Cursor fallback PR 譁・｡・| `mewri_cursor_fallback_pr_draft.md` | `cursor/parallel-local-ui-docs` 逕ｨ縺ｮ PR 隱ｬ譏弱ラ繝ｩ繝輔ヨ・医が繝ｼ繝翫・/Codex 縺碁幕縺上・邱ｨ髮・☆繧具ｼ・|
 | Cursor fallback 譛邨よ｣壼査縺・| `mewri_cursor_fallback_final_inventory.md` | 螟画峩繝輔ぃ繧､繝ｫ荳隕ｧ繝ｻ螳牙・蠅・阜繝ｻCodex 繝ｬ繝薙Η繝ｼ逕ｨ縺ｮ莠句ｮ溯ｨ倬鹸 |
 | 繝ｭ繝ｼ繧ｫ繝ｫ繝・Δ縺ｮ遒ｺ隱搾ｼ磯撼謚陦楢・ｼ・| `runbooks/local-demo-review-guide.md` | 螳牙・縺ｫ隗ｦ縺｣縺ｦ諢滓Φ繧剃ｼ昴∴繧区焔鬆・ｼ医さ繝ｼ繝峨・譛ｬ逡ｪ繝ｻ遘伜ｯ・ュ蝣ｱ縺ｯ隗ｦ繧峨↑縺・ｼ・|
+| 友人向け最初の1週間ガイド | `mewri_friend_first_week_guide.md` | 参加合意後に友人が最初の1週間で見ること・出す感想・続け方 |
+| 友人向けオンボーディング招待文 | `mewri_friend_onboarding_invitation.md` | 非技術者の友人が、Mewriの理由・関わり方・安全境界を理解するための招待文 |
 | AI memory pack | `mewri_memory_pack.md` and `../memory/` | Compact canonical memory for selective Codex/Cursor/ChatGPT context injection |
 | Obsidian memory vault | `mewri_obsidian_memory_vault_setup.md` | 繝ｭ繝ｼ繧ｫ繝ｫ Obsidian vault 縺ｮ髢九″譁ｹ縺ｨ螳牙・繝ｫ繝ｼ繝ｫ |
 
