@@ -754,3 +754,11 @@ ode_modules` is missing.
 - Route defaults remain fail-closed. No live Supabase connection, real env value, service-role key, migration, Storage policy, shared mode, deployment, or production resource was used.
 - This remains code-contract preparation only. Live staging activation still needs an approved Storage upload policy/RPC/edge mechanism and explicit trusted staging adapter wiring before any credentials or shared mode are used.
 - Manual local review found and fixed one fail-closed gap: thrown file-read, upload, or object-existence errors are now converted to closed Storage failures instead of escaping the route boundary.
+
+## 2026-06-09 C-7 Storage upload mechanism design
+
+- Added `docs/mewri_c7_storage_upload_mechanism_design.md` as a docs-only comparison of safe shared-beta image upload mechanisms for staging.
+- Compared authenticated JWT direct Storage insert policy, narrow RPC/database-mediated registration, Edge Function/server-side upload broker, and direct service-role server upload.
+- Recommended the Edge Function / server-side upload broker path for the next slice because it avoids broad browser direct Storage insert while preserving the C-6 fail-closed upload confirmation contract.
+- No app code, `packages/data`, Supabase migration, env value, credential, shared mode, deployment, live Supabase connection, or production resource was changed.
+- Next gate: owner review and approval of the broker shape, staging-only activation gate, and any privileged credential policy before C-8.
