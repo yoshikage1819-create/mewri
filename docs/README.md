@@ -19,6 +19,7 @@
 | C-7 Storage upload mechanism design | `mewri_c7_storage_upload_mechanism_design.md` | Compare safe shared-beta image upload mechanisms and choose the recommended next slice |
 | C-8a Storage upload broker owner approval card | `mewri_c8a_storage_upload_broker_owner_approval_card.md` | Non-technical owner approval card before code-only broker interface work |
 | C-8c staging upload broker config plan | `mewri_c8c_staging_upload_broker_config_verification_plan.md` | Docs-only staging broker config and verification plan before live activation |
+| C-8e live staging upload broker verification approval | `mewri_c8e_live_staging_upload_broker_verification_approval.md` | Owner approval card and non-secret runbook before live staging broker verification |
 | Deep Research AI development reorg prompt | `mewri_deep_research_ai_development_reorg_prompt.md` | Prompt pack for researching a safer non-technical-owner AI development operating model |
 | AI development operating model v2 | `mewri_ai_development_operating_model_v2.md` | Zero-capital AI development workflow for non-technical owner, Codex, Cursor, ChatGPT, and approval gates |
 | AI 開発運用 | `mewri_ai_workbench_setup.md` | Codex CLI / Cline / モチE��選択�E正本 |

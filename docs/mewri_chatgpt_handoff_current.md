@@ -829,3 +829,10 @@ ode_modules` is missing.
 - Validation after C-8d implementation: `git status --short --branch` run; `npm.cmd run typecheck` passed; `npm.cmd test` passed with 222 tests; `npm.cmd run build` passed; `git diff --check` returned only CRLF normalization warnings.
 - Local review result: reviewed the auth/storage/API diff for accidental route availability, broker construction before auth/authorization, package-root export leakage, and live Supabase client construction. No additional code issue found after removing one trailing blank line caught by `git diff --check`.
 - Remaining blocker/next gate: C-8e must be an owner-approved live staging verification slice. Stop before real env values, service-role key handling, live upload requests, migration/deploy/shared mode activation, production, or beta-user communication.
+
+## 2026-06-10 C-8e live staging upload broker verification approval card
+
+- Added `docs/mewri_c8e_live_staging_upload_broker_verification_approval.md` as a docs-only owner approval card and non-secret runbook for future live staging upload broker verification.
+- The card defines the minimum knowledge explanation, forbidden secret handling, pre-flight checklist, verification matrix, evidence capture template, future owner approval text, and C-8e execution prompt.
+- This does not approve or perform live staging verification. No real env values, credentials, service-role keys, Supabase requests, migrations, shared mode, deployment, beta-user communication, spending, or production access were used.
+- Current recommendation: review/commit the approval card first, then decide separately whether the live staging verification risk is worth taking now.
