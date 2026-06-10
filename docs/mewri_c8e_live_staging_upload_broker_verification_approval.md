@@ -16,6 +16,10 @@ This document is not approval to run the live test. It defines what the owner
 must understand, what must stay secret, what evidence must be captured, and
 where the process must stop.
 
+For the non-technical, screen-by-screen pre-flight checklist, read
+`docs/mewri_c8e_non_technical_live_check_guide.md` before any live staging
+step.
+
 ## Minimum Knowledge Card
 
 ### What changes

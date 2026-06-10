@@ -20,9 +20,11 @@
 | C-8a Storage upload broker owner approval card | `mewri_c8a_storage_upload_broker_owner_approval_card.md` | Non-technical owner approval card before code-only broker interface work |
 | C-8c staging upload broker config plan | `mewri_c8c_staging_upload_broker_config_verification_plan.md` | Docs-only staging broker config and verification plan before live activation |
 | C-8e live staging upload broker verification approval | `mewri_c8e_live_staging_upload_broker_verification_approval.md` | Owner approval card and non-secret runbook before live staging broker verification |
+| C-8e non-technical live check guide | `mewri_c8e_non_technical_live_check_guide.md` | Japanese step-by-step owner checklist before any live staging verification |
 | Deep Research AI development reorg prompt | `mewri_deep_research_ai_development_reorg_prompt.md` | Prompt pack for researching a safer non-technical-owner AI development operating model |
 | AI development operating model v2 | `mewri_ai_development_operating_model_v2.md` | Zero-capital AI development workflow for non-technical owner, Codex, Cursor, ChatGPT, and approval gates |
 | Codex CLI goal loop protocol | `mewri_codex_cli_goal_loop_protocol.md` | Goal-setting, safe implementation loops, stop gates, and CLI prompt template for code changes |
+| ChatGPT director project brief | `mewri_director_project_brief_for_chatgpt.md` | Non-technical director learning brief for understanding product, safety, AI roles, and approval gates |
 | AI 開発運用 | `mewri_ai_workbench_setup.md` | Codex CLI / Cline / モチE��選択�E正本 |
 | PC を軽くする開発の置き場所 | `mewri_owner_local_dev_disk_setup.md` | OneDrive 外�E推奨パスと移行手頁E|
 | AI 並列�Efallback 実裁E��訁E| `mewri_ai_parallel_fallback_execution_design.md` | Codex と Cursor の並列実裁E��token 枯渁E��の作業継続設訁E|

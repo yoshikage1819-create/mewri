@@ -842,3 +842,11 @@ ode_modules` is missing.
 - Added `docs/mewri_codex_cli_goal_loop_protocol.md` as a docs-only protocol for making Codex CLI code changes with Plan-Mode-style goal setting, safe implementation loops, validation, review, stop conditions, and handoff format.
 - The protocol keeps live staging verification as a separate Red-gate action requiring the existing C-8e owner approval card. No real Supabase request, credential, service-role key, migration, deploy, shared mode, production resource, or beta-user communication was performed.
 - Codex app remains the command center; Codex CLI remains the primary implementer/reviewer for risky code; Cursor remains limited to documented safe lanes during parallel or fallback work.
+
+## 2026-06-10 C-8e non-technical live staging pre-flight guide
+
+- Added `docs/mewri_c8e_non_technical_live_check_guide.md` as a Japanese, step-by-step owner checklist before any live staging verification.
+- The guide tells the owner to start from the Supabase project list, confirm `mewri-staging`, avoid production, never paste keys/tokens/env values/screenshots with secrets, stop before secret/env/live route steps, record only safe evidence, and use the existing C-8e approval text before execution.
+- Linked the guide from `docs/README.md` and `docs/mewri_c8e_live_staging_upload_broker_verification_approval.md`.
+- Added docs/mewri_director_project_brief_for_chatgpt.md as a non-technical ChatGPT learning brief for the owner/director covering product purpose, current gates, safe AI roles, and approval questions before risky work.
+- No real Supabase connection, credential, service-role key, env value, migration, deploy, shared mode activation, live staging verification, production access, generated file, or app/package code change was made.
