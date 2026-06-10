@@ -836,3 +836,9 @@ ode_modules` is missing.
 - The card defines the minimum knowledge explanation, forbidden secret handling, pre-flight checklist, verification matrix, evidence capture template, future owner approval text, and C-8e execution prompt.
 - This does not approve or perform live staging verification. No real env values, credentials, service-role keys, Supabase requests, migrations, shared mode, deployment, beta-user communication, spending, or production access were used.
 - Current recommendation: review/commit the approval card first, then decide separately whether the live staging verification risk is worth taking now.
+
+## 2026-06-10 Codex CLI goal loop protocol
+
+- Added `docs/mewri_codex_cli_goal_loop_protocol.md` as a docs-only protocol for making Codex CLI code changes with Plan-Mode-style goal setting, safe implementation loops, validation, review, stop conditions, and handoff format.
+- The protocol keeps live staging verification as a separate Red-gate action requiring the existing C-8e owner approval card. No real Supabase request, credential, service-role key, migration, deploy, shared mode, production resource, or beta-user communication was performed.
+- Codex app remains the command center; Codex CLI remains the primary implementer/reviewer for risky code; Cursor remains limited to documented safe lanes during parallel or fallback work.
