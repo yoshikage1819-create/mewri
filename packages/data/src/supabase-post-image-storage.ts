@@ -1,4 +1,5 @@
 import type { ID } from "@mewri/core";
+import type { SharedBetaPostImageUploadBroker } from "./shared-beta-post-image-upload-broker";
 
 export const SHARED_BETA_POST_IMAGE_MAX_BYTES = 10 * 1024 * 1024;
 export const SHARED_BETA_POST_IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
@@ -43,7 +44,11 @@ export type SharedBetaPostImageResult =
     };
 
 export interface SharedBetaPostImageUploadOptions {
-  storage: SharedBetaPostImageStorageClient;
+  broker: SharedBetaPostImageUploadBroker;
+  authContext: {
+    authenticatedUserId?: ID;
+    accessToken?: string;
+  };
   bucket: string;
   groupId: ID;
   userId: ID;
@@ -59,7 +64,7 @@ export async function uploadSharedBetaPostImage(
     return deny("image_required", "Shared beta posting requires an image file.");
   }
 
-  const contentType = normalizeAllowedImageType(file.type);
+  const contentType = normalizeSharedBetaPostImageMimeType(file.type);
   if (!contentType) {
     return deny("unsupported_image_type", "Shared beta post images must be JPEG, PNG, or WebP.");
   }
@@ -71,21 +76,20 @@ export async function uploadSharedBetaPostImage(
   const filename =
     options.generateFilename?.({ contentType, originalName: file.name }) ??
     `${defaultRandomId()}.${extensionForContentType(contentType)}`;
-  if (!isSafeObjectFilename(filename)) {
+  if (!isSafeSharedBetaPostImageObjectFilename(filename)) {
     return deny("invalid_image_filename", "Shared beta post image filenames must be storage-safe.");
   }
 
   const objectPath = `${options.groupId}/${options.userId}/${filename}`;
-  let body: ArrayBuffer;
-  let upload: Awaited<ReturnType<SharedBetaPostImageStorageClient["uploadObject"]>>;
-
+  let upload: Awaited<ReturnType<SharedBetaPostImageUploadBroker["uploadPostImage"]>>;
   try {
-    body = await file.arrayBuffer();
-    upload = await options.storage.uploadObject({
+    upload = await options.broker.uploadPostImage({
+      authContext: options.authContext,
       bucket: options.bucket,
+      groupId: options.groupId,
+      userId: options.userId,
       objectPath,
-      body,
-      contentType
+      file
     });
   } catch {
     return deny("storage_upload_failed", "Shared beta post image upload failed.");
@@ -151,7 +155,7 @@ export function toSharedBetaPostImageObjectPath(
     segments[0] !== bucket ||
     segments[1] !== groupId ||
     segments[2] !== userId ||
-    !isSafeObjectFilename(segments[3])
+    !isSafeSharedBetaPostImageObjectFilename(segments[3])
   ) {
     return undefined;
   }
@@ -159,7 +163,7 @@ export function toSharedBetaPostImageObjectPath(
   return `${segments[1]}/${segments[2]}/${segments[3]}`;
 }
 
-function normalizeAllowedImageType(contentType: string): SharedBetaPostImageMimeType | undefined {
+export function normalizeSharedBetaPostImageMimeType(contentType: string): SharedBetaPostImageMimeType | undefined {
   return SHARED_BETA_POST_IMAGE_MIME_TYPES.find((allowed) => allowed === contentType.trim().toLowerCase());
 }
 
@@ -174,7 +178,7 @@ function extensionForContentType(contentType: SharedBetaPostImageMimeType): stri
   }
 }
 
-function isSafeObjectFilename(filename: string): boolean {
+export function isSafeSharedBetaPostImageObjectFilename(filename: string): boolean {
   return /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(filename) && filename !== "." && filename !== "..";
 }
 

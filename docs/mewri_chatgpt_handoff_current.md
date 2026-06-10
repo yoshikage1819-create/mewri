@@ -762,3 +762,70 @@ ode_modules` is missing.
 - Recommended the Edge Function / server-side upload broker path for the next slice because it avoids broad browser direct Storage insert while preserving the C-6 fail-closed upload confirmation contract.
 - No app code, `packages/data`, Supabase migration, env value, credential, shared mode, deployment, live Supabase connection, or production resource was changed.
 - Next gate: owner review and approval of the broker shape, staging-only activation gate, and any privileged credential policy before C-8.
+
+## 2026-06-10 AI development operating model v2
+
+- Added `docs/mewri_ai_development_operating_model_v2.md` as a docs-only zero-capital operating model for a non-technical owner without hired engineering support.
+- Converted the Deep Research recommendation for a Head of AI Product & Engineering into a virtual role split across Codex app, Codex CLI, Cursor, ChatGPT, GitHub, repo docs, and explicit owner approval gates.
+- Added Cursor risk tiers: Green, Yellow, Orange, and Red. Cursor may take more Green/Yellow work, may draft Orange work for Codex review, and must stop on Red surfaces such as auth, RLS, Storage, migrations, env/secrets, deployment, shared mode, and production.
+- Added a minimum knowledge card template for owner approvals so risky decisions are explained in plain language before action.
+- No code, Supabase, env value, credential, migration, shared mode, deployment, live service, or production resource was changed.
+
+## 2026-06-10 C-8a Storage upload broker owner approval card
+
+- Added `docs/mewri_c8a_storage_upload_broker_owner_approval_card.md` as a docs-only non-technical approval card for the C-7 recommended server-side upload broker direction.
+- The card approves only a future C-8b code-only fake-client broker interface/test slice. It does not approve live Supabase credentials, service-role key use, migrations, shared mode, staging activation, deployment, production changes, or beta-user communication.
+- The card records the plain-language risk, architecture flow, owner approval statement, forbidden owner actions, rollback, and a ready-to-use C-8b CLI prompt.
+- No code, Supabase, env value, credential, migration, shared mode, deployment, live service, or production resource was changed.
+
+## 2026-06-10 C-8b code-only fake-client upload broker interface
+
+- Added `packages/data/src/shared-beta-post-image-upload-broker.ts` as a
+  fakeable server-side shared-beta post image upload broker contract. The
+  broker rejects missing auth context, identity mismatch, unsafe object paths,
+  bad MIME types, oversized images, thrown file reads, thrown uploads, and
+  mismatched bucket/object-path confirmations.
+- Updated the existing shared-beta post image upload boundary to call a broker
+  instead of exposing raw Storage as the trusted route dependency. Successful
+  upload still returns only the confirmed private bucket/object path, and post
+  creation still requires the server-validated private image path.
+- Updated the shared-beta post route dependency factory so the route remains
+  `503 shared_beta_route_unavailable` unless explicit trusted auth,
+  authorization, broker, and RPC dependencies are injected. Tests prove auth
+  and authorization failures stop before broker upload and RPC.
+- Added fake-client tests for broker rejection/success, mismatched confirmation
+  fail-closed behavior, thrown read/upload fail-closed behavior, missing broker
+  route unavailability, happy path `{ ok: true, post }` response shape, and no
+  full `MewriState` response.
+- No live Supabase connection, real env value, service-role key, migration,
+  shared mode, route-gate activation outside tests, deployment, production
+  resource, or beta-user communication was used.
+- Validation after C-8b implementation: `npm.cmd run typecheck` passed;
+  `npm.cmd test` passed with 217 tests; `npm.cmd run build` passed;
+  `git diff --check` returned only CRLF normalization warnings.
+- Review result: external `codex.cmd review --uncommitted` could not be used
+  because sandbox escalation for transmitting uncommitted diff content was
+  rejected. A separate local review pass over the diff found one fail-closed
+  gap: a throwing injected broker could escape `uploadSharedBetaPostImage`.
+  Fixed by catching broker throws and adding a regression test.
+- Remaining blocker/next gate: C-8c should be a staging-only config/verification
+  plan with no real values. Stop before credentials, service-role key use,
+  migrations, shared mode, deployment, or production.
+
+## 2026-06-10 C-8c staging upload broker config and verification plan
+
+- Added `docs/mewri_c8c_staging_upload_broker_config_verification_plan.md` as a docs-only plan for future staging-only upload broker configuration and verification.
+- The plan defines placeholder config names, forbidden public/secret config shapes, pre-activation checks, staging verification matrix, evidence capture, rollback, Cursor limits, and the owner approval statement required before C-8d.
+- The plan recommends the first staging path as a Next.js server-only broker adapter before adding an Edge Function deployment surface.
+- No code, Supabase connection, real env value, credential, service-role key, migration, shared mode, deployment, staging activation, beta-user communication, or production resource was changed by C-8c.
+
+## 2026-06-10 C-8d code-only server-only staging upload broker wiring
+
+- Added fail-closed staging upload broker config parsing to the shared-beta post route dependency factory. The route now requires both `MEWRI_ENABLE_STAGING_SHARED_BETA_POST_ROUTE=true` and `MEWRI_ENABLE_STAGING_SHARED_BETA_UPLOAD_BROKER=true`, `SUPABASE_UPLOAD_BROKER_MODE=server`, the default `post-images` bucket, valid public Supabase URL/anon key shape, and a server-only broker credential placeholder before injected trusted dependencies can make the route available.
+- Kept the exported `POST /api/shared-beta/posts` route closed by default because `route.ts` still calls the dependency factory without live auth, authorization, broker, or RPC adapters. No live broker/client is constructed from `process.env`.
+- Updated route dependency tests for no route gate, route gate without broker gate, broker gate with incomplete server-only config, public-key-slot service-role rejection, no broker/RPC construction before auth or authorization, and fake-only happy path returning `{ ok: true, post }`.
+- Added a package-root export guard proving `packages/data/src/shared-beta-post-image-upload-broker.ts` is not exported through `packages/data/src/index.ts`; broker use remains a direct server subpath import.
+- No real env values, live Supabase request, service-role key access, migration, deploy, shared mode activation, live staging activation, production touch, or beta-user communication was performed.
+- Validation after C-8d implementation: `git status --short --branch` run; `npm.cmd run typecheck` passed; `npm.cmd test` passed with 222 tests; `npm.cmd run build` passed; `git diff --check` returned only CRLF normalization warnings.
+- Local review result: reviewed the auth/storage/API diff for accidental route availability, broker construction before auth/authorization, package-root export leakage, and live Supabase client construction. No additional code issue found after removing one trailing blank line caught by `git diff --check`.
+- Remaining blocker/next gate: C-8e must be an owner-approved live staging verification slice. Stop before real env values, service-role key handling, live upload requests, migration/deploy/shared mode activation, production, or beta-user communication.

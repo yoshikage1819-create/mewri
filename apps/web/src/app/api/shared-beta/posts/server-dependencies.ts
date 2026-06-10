@@ -10,16 +10,17 @@ import {
   resolveSupabaseAuthenticatedUserIdFromRequest,
   type SupabaseAuthSessionClient
 } from "@mewri/data/src/supabase-auth-session";
+import type { SharedBetaPostImageUploadBroker } from "@mewri/data/src/shared-beta-post-image-upload-broker";
 import {
   toSharedBetaPostImageObjectPath,
   uploadSharedBetaPostImage,
-  type SharedBetaPostImageFile,
-  type SharedBetaPostImageStorageClient
+  type SharedBetaPostImageFile
 } from "@mewri/data/src/supabase-post-image-storage";
 import {
   resolveStagingSupabaseSharedBetaPostRpcEnvironment,
   type SupabaseSharedBetaPostRpcEnvironment
 } from "@mewri/data/src/supabase-shared-beta-post-rpc-client";
+import { isPublicAnonKey } from "@mewri/data/src/supabase-public-config";
 import {
   createSupabaseSharedBetaPostGateway,
   type SupabaseSharedBetaPostRpcClient
@@ -30,15 +31,25 @@ import {
 } from "./route-boundary";
 
 export const STAGING_SHARED_BETA_POST_ROUTE_GATE = "MEWRI_ENABLE_STAGING_SHARED_BETA_POST_ROUTE";
+export const STAGING_SHARED_BETA_UPLOAD_BROKER_GATE = "MEWRI_ENABLE_STAGING_SHARED_BETA_UPLOAD_BROKER";
+export const STAGING_SHARED_BETA_UPLOAD_BROKER_MODE = "SUPABASE_UPLOAD_BROKER_MODE";
 
 export interface StagingSharedBetaPostRouteEnvironment extends SupabaseSharedBetaPostRpcEnvironment {
   postImageBucket: string;
 }
 
+export interface StagingSharedBetaUploadBrokerEnvironment extends StagingSharedBetaPostRouteEnvironment {
+  uploadBrokerMode: "server";
+  serviceRoleKey: string;
+}
+
 export interface SharedBetaPostServerDependencyFactoryOptions {
   authClient?: SupabaseAuthSessionClient;
-  imageStorageClient?: SharedBetaPostImageStorageClient;
-  imageStorageClientFactory?: (input: { accessToken: string }) => SharedBetaPostImageStorageClient;
+  imageUploadBroker?: SharedBetaPostImageUploadBroker;
+  imageUploadBrokerFactory?: (input: {
+    accessToken: string;
+    environment: StagingSharedBetaUploadBrokerEnvironment;
+  }) => SharedBetaPostImageUploadBroker;
   postGatewayClient?: SupabaseSharedBetaPostRpcClient;
   postGatewayClientFactory?: (input: { accessToken: string }) => SupabaseSharedBetaPostRpcClient;
   authorizationSource?: SharedBetaPostAuthorizationSource;
@@ -65,10 +76,15 @@ export function createSharedBetaPostServerDependenciesFromEnvironment(
     return defaultSharedBetaPostRouteDependencies;
   }
 
+  const uploadBrokerEnvironment = resolveStagingSharedBetaUploadBrokerEnvironment(environment, routeEnvironment);
+  if (!uploadBrokerEnvironment) {
+    return defaultSharedBetaPostRouteDependencies;
+  }
+
   if (
     !options.authClient ||
     !options.authorizationSource ||
-    (!options.imageStorageClient && !options.imageStorageClientFactory) ||
+    (!options.imageUploadBroker && !options.imageUploadBrokerFactory) ||
     (!options.postGatewayClient && !options.postGatewayClientFactory)
   ) {
     return defaultSharedBetaPostRouteDependencies;
@@ -101,13 +117,17 @@ export function createSharedBetaPostServerDependenciesFromEnvironment(
 
       const file = await resolveImageFile(input);
       const accessToken = resolveAccessTokenFromRequest(input.request);
-      const storage = resolveImageStorageClient(options, accessToken);
-      if (!storage) {
+      const broker = resolveImageUploadBroker(options, accessToken, uploadBrokerEnvironment);
+      if (!broker) {
         return undefined;
       }
 
       const upload = await uploadSharedBetaPostImage({
-        storage,
+        broker,
+        authContext: {
+          authenticatedUserId: input.authenticatedUserId,
+          accessToken
+        },
         bucket: postImageBucket,
         groupId: input.post.groupId,
         userId: input.authenticatedUserId,
@@ -174,19 +194,52 @@ export function resolveStagingSharedBetaPostRouteEnvironment(
   };
 }
 
-function resolveImageStorageClient(
+export function resolveStagingSharedBetaUploadBrokerEnvironment(
+  environment: MewriRuntimeEnvironment,
+  routeEnvironment = resolveStagingSharedBetaPostRouteEnvironment(environment)
+): StagingSharedBetaUploadBrokerEnvironment | undefined {
+  if (!routeEnvironment) {
+    return undefined;
+  }
+
+  if (environment[STAGING_SHARED_BETA_UPLOAD_BROKER_GATE]?.trim().toLowerCase() !== "true") {
+    return undefined;
+  }
+
+  if (environment[STAGING_SHARED_BETA_UPLOAD_BROKER_MODE]?.trim().toLowerCase() !== "server") {
+    return undefined;
+  }
+
+  const serviceRoleKey = environment.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  if (!serviceRoleKey) {
+    return undefined;
+  }
+
+  if (isPublicAnonKey(serviceRoleKey)) {
+    return undefined;
+  }
+
+  return {
+    ...routeEnvironment,
+    uploadBrokerMode: "server",
+    serviceRoleKey
+  };
+}
+
+function resolveImageUploadBroker(
   options: SharedBetaPostServerDependencyFactoryOptions,
-  accessToken: string | undefined
-): SharedBetaPostImageStorageClient | undefined {
-  if (options.imageStorageClient) {
-    return options.imageStorageClient;
+  accessToken: string | undefined,
+  environment: StagingSharedBetaUploadBrokerEnvironment
+): SharedBetaPostImageUploadBroker | undefined {
+  if (options.imageUploadBroker) {
+    return options.imageUploadBroker;
   }
 
   if (!accessToken) {
     return undefined;
   }
 
-  return options.imageStorageClientFactory?.({ accessToken });
+  return options.imageUploadBrokerFactory?.({ accessToken, environment });
 }
 
 function resolvePostGatewayClient(

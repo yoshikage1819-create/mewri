@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { createStorageSharedBetaPostImageUploadBroker } from "./shared-beta-post-image-upload-broker";
 import {
   toSharedBetaPostImageObjectPath,
   uploadSharedBetaPostImage,
@@ -18,7 +19,8 @@ describe("supabase post image storage boundary", () => {
     };
 
     const result = await uploadSharedBetaPostImage({
-      storage,
+      broker: createStorageSharedBetaPostImageUploadBroker(storage),
+      authContext: { authenticatedUserId: "user_demo" },
       bucket: "post-images",
       groupId: "group_first",
       userId: "user_demo",
@@ -51,13 +53,14 @@ describe("supabase post image storage boundary", () => {
       expectedCode: "image_too_large",
       file: makeFile({ name: "photo.webp", type: "image/webp", size: 10 * 1024 * 1024 + 1 })
     }
-  ])("rejects $name before upload", async ({ expectedCode, file }) => {
-    const storage: SharedBetaPostImageStorageClient = {
-      uploadObject: vi.fn()
+  ])("rejects $name before broker upload", async ({ expectedCode, file }) => {
+    const broker = {
+      uploadPostImage: vi.fn()
     };
 
     const result = await uploadSharedBetaPostImage({
-      storage,
+      broker,
+      authContext: { authenticatedUserId: "user_demo" },
       bucket: "post-images",
       groupId: "group_first",
       userId: "user_demo",
@@ -65,16 +68,17 @@ describe("supabase post image storage boundary", () => {
     });
 
     expect(result).toMatchObject({ ok: false, code: expectedCode });
-    expect(storage.uploadObject).not.toHaveBeenCalled();
+    expect(broker.uploadPostImage).not.toHaveBeenCalled();
   });
 
   it("rejects unsafe generated filenames", async () => {
-    const storage: SharedBetaPostImageStorageClient = {
-      uploadObject: vi.fn()
+    const broker = {
+      uploadPostImage: vi.fn()
     };
 
     const result = await uploadSharedBetaPostImage({
-      storage,
+      broker,
+      authContext: { authenticatedUserId: "user_demo" },
       bucket: "post-images",
       groupId: "group_first",
       userId: "user_demo",
@@ -83,7 +87,7 @@ describe("supabase post image storage boundary", () => {
     });
 
     expect(result).toMatchObject({ ok: false, code: "invalid_image_filename" });
-    expect(storage.uploadObject).not.toHaveBeenCalled();
+    expect(broker.uploadPostImage).not.toHaveBeenCalled();
   });
 
   it("rejects upload success when storage returns a different bucket or object path", async () => {
@@ -96,7 +100,8 @@ describe("supabase post image storage boundary", () => {
     };
 
     const result = await uploadSharedBetaPostImage({
-      storage,
+      broker: createStorageSharedBetaPostImageUploadBroker(storage),
+      authContext: { authenticatedUserId: "user_demo" },
       bucket: "post-images",
       groupId: "group_first",
       userId: "user_demo",
@@ -117,7 +122,8 @@ describe("supabase post image storage boundary", () => {
 
     await expect(
       uploadSharedBetaPostImage({
-        storage: throwingStorage,
+        broker: createStorageSharedBetaPostImageUploadBroker(throwingStorage),
+        authContext: { authenticatedUserId: "user_demo" },
         bucket: "post-images",
         groupId: "group_first",
         userId: "user_demo",
@@ -131,7 +137,8 @@ describe("supabase post image storage boundary", () => {
     };
     await expect(
       uploadSharedBetaPostImage({
-        storage,
+        broker: createStorageSharedBetaPostImageUploadBroker(storage),
+        authContext: { authenticatedUserId: "user_demo" },
         bucket: "post-images",
         groupId: "group_first",
         userId: "user_demo",
@@ -140,6 +147,27 @@ describe("supabase post image storage boundary", () => {
       })
     ).resolves.toMatchObject({ ok: false, code: "storage_upload_failed" });
     expect(storage.uploadObject).not.toHaveBeenCalled();
+  });
+
+  it("fails closed when an injected upload broker throws", async () => {
+    const broker = {
+      uploadPostImage: vi.fn(async () => {
+        throw new Error("broker unavailable");
+      })
+    };
+
+    await expect(
+      uploadSharedBetaPostImage({
+        broker,
+        authContext: { authenticatedUserId: "user_demo" },
+        bucket: "post-images",
+        groupId: "group_first",
+        userId: "user_demo",
+        file: makeFile({ name: "photo.webp", type: "image/webp", size: 12 }),
+        generateFilename: () => "photo.webp"
+      })
+    ).resolves.toMatchObject({ ok: false, code: "storage_upload_failed" });
+    expect(broker.uploadPostImage).toHaveBeenCalledOnce();
   });
 
   it("verifies only matching private post image paths", async () => {

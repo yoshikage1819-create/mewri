@@ -17,6 +17,10 @@
 | staging RPC migration approval | `mewri_supabase_staging_rpc_migration_approval_checklist_v0_10.md` | RPC migration 適用前�Eオーナ�E承認チェチE��リスチE|
 | Storage RLS local check | `mewri_storage_rls_local_read_check_instructions.md` | staging Storage read 墁E��を実ログインで確認すめElocal-only 手頁E|
 | C-7 Storage upload mechanism design | `mewri_c7_storage_upload_mechanism_design.md` | Compare safe shared-beta image upload mechanisms and choose the recommended next slice |
+| C-8a Storage upload broker owner approval card | `mewri_c8a_storage_upload_broker_owner_approval_card.md` | Non-technical owner approval card before code-only broker interface work |
+| C-8c staging upload broker config plan | `mewri_c8c_staging_upload_broker_config_verification_plan.md` | Docs-only staging broker config and verification plan before live activation |
+| Deep Research AI development reorg prompt | `mewri_deep_research_ai_development_reorg_prompt.md` | Prompt pack for researching a safer non-technical-owner AI development operating model |
+| AI development operating model v2 | `mewri_ai_development_operating_model_v2.md` | Zero-capital AI development workflow for non-technical owner, Codex, Cursor, ChatGPT, and approval gates |
 | AI 開発運用 | `mewri_ai_workbench_setup.md` | Codex CLI / Cline / モチE��選択�E正本 |
 | PC を軽くする開発の置き場所 | `mewri_owner_local_dev_disk_setup.md` | OneDrive 外�E推奨パスと移行手頁E|
 | AI 並列�Efallback 実裁E��訁E| `mewri_ai_parallel_fallback_execution_design.md` | Codex と Cursor の並列実裁E��token 枯渁E��の作業継続設訁E|

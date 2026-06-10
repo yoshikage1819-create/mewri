@@ -5,6 +5,10 @@ import {
   createSeedState
 } from "@mewri/data";
 import type { SupabaseAuthSessionClient } from "@mewri/data/src/supabase-auth-session";
+import {
+  createStorageSharedBetaPostImageUploadBroker,
+  type SharedBetaPostImageUploadBroker
+} from "@mewri/data/src/shared-beta-post-image-upload-broker";
 import type {
   SharedBetaPostImageFile,
   SharedBetaPostImageStorageClient
@@ -17,7 +21,10 @@ import { describe, expect, it, vi } from "vitest";
 import { createSharedBetaPostRouteHandler } from "./route-boundary";
 import {
   createSharedBetaPostServerDependenciesFromEnvironment,
+  resolveStagingSharedBetaUploadBrokerEnvironment,
   resolveStagingSharedBetaPostRouteEnvironment,
+  STAGING_SHARED_BETA_UPLOAD_BROKER_GATE,
+  STAGING_SHARED_BETA_UPLOAD_BROKER_MODE,
   STAGING_SHARED_BETA_POST_ROUTE_GATE,
   type SharedBetaPostServerDependencyFactoryOptions
 } from "./server-dependencies";
@@ -25,12 +32,20 @@ import {
 const ANON_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYW5vbiJ9.signature";
 const SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.signature";
 const SECRET_KEY = "sb_secret_test_key";
+const FAKE_SERVER_ONLY_BROKER_SECRET = "fake-server-only-broker-secret";
 
 const STAGING_ROUTE_ENVIRONMENT = {
   [STAGING_SHARED_BETA_POST_ROUTE_GATE]: "true",
   SUPABASE_URL: "https://project.supabase.co",
   SUPABASE_ANON_KEY: ANON_KEY,
   SUPABASE_POST_IMAGE_BUCKET: "post-images"
+};
+
+const COMPLETE_STAGING_ROUTE_ENVIRONMENT = {
+  ...STAGING_ROUTE_ENVIRONMENT,
+  [STAGING_SHARED_BETA_UPLOAD_BROKER_GATE]: "true",
+  [STAGING_SHARED_BETA_UPLOAD_BROKER_MODE]: "server",
+  SUPABASE_SERVICE_ROLE_KEY: FAKE_SERVER_ONLY_BROKER_SECRET
 };
 
 type UploadConfirmationInput = { bucket: string; objectPath: string };
@@ -84,6 +99,52 @@ describe("resolveStagingSharedBetaPostRouteEnvironment", () => {
   });
 });
 
+describe("resolveStagingSharedBetaUploadBrokerEnvironment", () => {
+  it("requires the explicit broker gate, server mode, and server-only credential placeholder", () => {
+    expect(resolveStagingSharedBetaUploadBrokerEnvironment(STAGING_ROUTE_ENVIRONMENT)).toBeUndefined();
+
+    expect(
+      resolveStagingSharedBetaUploadBrokerEnvironment({
+        ...STAGING_ROUTE_ENVIRONMENT,
+        [STAGING_SHARED_BETA_UPLOAD_BROKER_GATE]: "true",
+        SUPABASE_SERVICE_ROLE_KEY: FAKE_SERVER_ONLY_BROKER_SECRET
+      })
+    ).toBeUndefined();
+
+    expect(
+      resolveStagingSharedBetaUploadBrokerEnvironment({
+        ...STAGING_ROUTE_ENVIRONMENT,
+        [STAGING_SHARED_BETA_UPLOAD_BROKER_GATE]: "true",
+        [STAGING_SHARED_BETA_UPLOAD_BROKER_MODE]: "server"
+      })
+    ).toBeUndefined();
+
+    expect(resolveStagingSharedBetaUploadBrokerEnvironment(COMPLETE_STAGING_ROUTE_ENVIRONMENT)).toEqual({
+      projectUrl: "https://project.supabase.co",
+      anonKey: ANON_KEY,
+      postImageBucket: "post-images",
+      uploadBrokerMode: "server",
+      serviceRoleKey: FAKE_SERVER_ONLY_BROKER_SECRET
+    });
+  });
+
+  it("rejects public keys in the server-only broker credential slot", () => {
+    expect(
+      resolveStagingSharedBetaUploadBrokerEnvironment({
+        ...COMPLETE_STAGING_ROUTE_ENVIRONMENT,
+        SUPABASE_SERVICE_ROLE_KEY: ANON_KEY
+      })
+    ).toBeUndefined();
+
+    expect(
+      resolveStagingSharedBetaUploadBrokerEnvironment({
+        ...COMPLETE_STAGING_ROUTE_ENVIRONMENT,
+        SUPABASE_SERVICE_ROLE_KEY: "sb_publishable_test_key"
+      })
+    ).toBeUndefined();
+  });
+});
+
 describe("shared beta post server dependency factory", () => {
   it("keeps the route unavailable when the explicit staging gate is missing", async () => {
     const authClient: SupabaseAuthSessionClient = {
@@ -107,11 +168,53 @@ describe("shared beta post server dependency factory", () => {
     expect(authClient.getUser).not.toHaveBeenCalled();
   });
 
+  it("keeps the route unavailable when the staging route gate is set without the broker gate", async () => {
+    const authClient: SupabaseAuthSessionClient = {
+      getUser: vi.fn(async () => ({ data: { user: { id: "user_demo" } } }))
+    };
+    const handler = createSharedBetaPostRouteHandler(
+      createSharedBetaPostServerDependenciesFromEnvironment(
+        STAGING_ROUTE_ENVIRONMENT,
+        { ...makeCompleteOptions({ authClient }) }
+      )
+    );
+
+    const response = await handler(makeJsonRequest({ authorization: "Bearer token_a" }));
+    const body = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(body).toMatchObject({ ok: false, error: { code: "shared_beta_route_unavailable" } });
+    expect(authClient.getUser).not.toHaveBeenCalled();
+  });
+
+  it("keeps the route unavailable when the broker gate lacks complete server-only config", async () => {
+    const authClient: SupabaseAuthSessionClient = {
+      getUser: vi.fn(async () => ({ data: { user: { id: "user_demo" } } }))
+    };
+    const handler = createSharedBetaPostRouteHandler(
+      createSharedBetaPostServerDependenciesFromEnvironment(
+        {
+          ...STAGING_ROUTE_ENVIRONMENT,
+          [STAGING_SHARED_BETA_UPLOAD_BROKER_GATE]: "true",
+          [STAGING_SHARED_BETA_UPLOAD_BROKER_MODE]: "server"
+        },
+        { ...makeCompleteOptions({ authClient }) }
+      )
+    );
+
+    const response = await handler(makeJsonRequest({ authorization: "Bearer token_a" }));
+    const body = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(body).toMatchObject({ ok: false, error: { code: "shared_beta_route_unavailable" } });
+    expect(authClient.getUser).not.toHaveBeenCalled();
+  });
+
   it("keeps the route unavailable when public staging config lacks a trusted authorization source", async () => {
     const handler = createSharedBetaPostRouteHandler(
-      createSharedBetaPostServerDependenciesFromEnvironment(STAGING_ROUTE_ENVIRONMENT, {
+      createSharedBetaPostServerDependenciesFromEnvironment(COMPLETE_STAGING_ROUTE_ENVIRONMENT, {
         authClient: { getUser: vi.fn(async () => ({ data: { user: { id: "user_demo" } } })) },
-        imageStorageClient: { uploadObject: vi.fn(async (input: UploadConfirmationInput) => confirmUpload(input)) },
+        imageUploadBroker: makeBroker(vi.fn(async (input: UploadConfirmationInput) => confirmUpload(input))),
         postGatewayClient: { rpc: vi.fn() }
       })
     );
@@ -129,9 +232,30 @@ describe("shared beta post server dependency factory", () => {
     };
     const repository = createMemoryRepository(createSeedState(new Date("2026-05-20T09:00:00.000Z")));
     const handler = createSharedBetaPostRouteHandler(
-      createSharedBetaPostServerDependenciesFromEnvironment(STAGING_ROUTE_ENVIRONMENT, {
+      createSharedBetaPostServerDependenciesFromEnvironment(COMPLETE_STAGING_ROUTE_ENVIRONMENT, {
         authClient,
         authorizationSource: createRepositorySharedBetaPostAuthorizationSource(repository)
+      })
+    );
+
+    const response = await handler(makeJsonRequest({ authorization: "Bearer token_a" }));
+    const body = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(body).toMatchObject({ ok: false, error: { code: "shared_beta_route_unavailable" } });
+    expect(authClient.getUser).not.toHaveBeenCalled();
+  });
+
+  it("keeps the route unavailable without explicit trusted broker wiring", async () => {
+    const authClient: SupabaseAuthSessionClient = {
+      getUser: vi.fn(async () => ({ data: { user: { id: "user_demo" } } }))
+    };
+    const repository = createMemoryRepository(createSeedState(new Date("2026-05-20T09:00:00.000Z")));
+    const handler = createSharedBetaPostRouteHandler(
+      createSharedBetaPostServerDependenciesFromEnvironment(COMPLETE_STAGING_ROUTE_ENVIRONMENT, {
+        authClient,
+        authorizationSource: createRepositorySharedBetaPostAuthorizationSource(repository),
+        postGatewayClient: { rpc: vi.fn() }
       })
     );
 
@@ -146,14 +270,14 @@ describe("shared beta post server dependency factory", () => {
   it("rejects missing or invalid sessions before image upload and post creation", async () => {
     const uploadObject = vi.fn();
     const rpc = vi.fn();
-    const imageStorageClientFactory = vi.fn(() => ({ uploadObject }));
+    const imageUploadBrokerFactory = vi.fn(() => makeBroker(uploadObject));
     const postGatewayClientFactory = vi.fn(() => ({ rpc }));
     const handler = createSharedBetaPostRouteHandler(
-      createSharedBetaPostServerDependenciesFromEnvironment(STAGING_ROUTE_ENVIRONMENT, {
+      createSharedBetaPostServerDependenciesFromEnvironment(COMPLETE_STAGING_ROUTE_ENVIRONMENT, {
         ...makeCompleteOptions({
           authClient: { getUser: vi.fn(async () => ({ error: new Error("invalid token") })) },
-          imageStorageClient: undefined,
-          imageStorageClientFactory,
+          imageUploadBroker: undefined,
+          imageUploadBrokerFactory,
           postGatewayClient: undefined,
           postGatewayClientFactory
         })
@@ -165,7 +289,7 @@ describe("shared beta post server dependency factory", () => {
 
     expect(response.status).toBe(401);
     expect(body).toMatchObject({ ok: false, error: { code: "authentication_required" } });
-    expect(imageStorageClientFactory).not.toHaveBeenCalled();
+    expect(imageUploadBrokerFactory).not.toHaveBeenCalled();
     expect(postGatewayClientFactory).not.toHaveBeenCalled();
     expect(uploadObject).not.toHaveBeenCalled();
     expect(rpc).not.toHaveBeenCalled();
@@ -174,18 +298,18 @@ describe("shared beta post server dependency factory", () => {
   it("treats thrown auth-client errors as authentication failures", async () => {
     const uploadObject = vi.fn();
     const rpc = vi.fn();
-    const imageStorageClientFactory = vi.fn(() => ({ uploadObject }));
+    const imageUploadBrokerFactory = vi.fn(() => makeBroker(uploadObject));
     const postGatewayClientFactory = vi.fn(() => ({ rpc }));
     const handler = createSharedBetaPostRouteHandler(
-      createSharedBetaPostServerDependenciesFromEnvironment(STAGING_ROUTE_ENVIRONMENT, {
+      createSharedBetaPostServerDependenciesFromEnvironment(COMPLETE_STAGING_ROUTE_ENVIRONMENT, {
         ...makeCompleteOptions({
           authClient: {
             getUser: vi.fn(async () => {
               throw new Error("malformed token");
             })
           },
-          imageStorageClient: undefined,
-          imageStorageClientFactory,
+          imageUploadBroker: undefined,
+          imageUploadBrokerFactory,
           postGatewayClient: undefined,
           postGatewayClientFactory
         })
@@ -197,7 +321,7 @@ describe("shared beta post server dependency factory", () => {
 
     expect(response.status).toBe(401);
     expect(body).toMatchObject({ ok: false, error: { code: "authentication_required" } });
-    expect(imageStorageClientFactory).not.toHaveBeenCalled();
+    expect(imageUploadBrokerFactory).not.toHaveBeenCalled();
     expect(postGatewayClientFactory).not.toHaveBeenCalled();
     expect(uploadObject).not.toHaveBeenCalled();
     expect(rpc).not.toHaveBeenCalled();
@@ -206,7 +330,7 @@ describe("shared beta post server dependency factory", () => {
   it("rejects bad image MIME types before post creation", async () => {
     const rpc = vi.fn();
     const handler = createSharedBetaPostRouteHandler(
-      createSharedBetaPostServerDependenciesFromEnvironment(STAGING_ROUTE_ENVIRONMENT, {
+      createSharedBetaPostServerDependenciesFromEnvironment(COMPLETE_STAGING_ROUTE_ENVIRONMENT, {
         ...makeCompleteOptions({
           postGatewayClient: { rpc },
           resolveImageFile: async () => makeFile({ name: "photo.gif", type: "image/gif", size: 12 })
@@ -226,9 +350,9 @@ describe("shared beta post server dependency factory", () => {
     const uploadObject = vi.fn(async () => ({ ok: false as const, error: new Error("storage denied") }));
     const rpc = vi.fn();
     const handler = createSharedBetaPostRouteHandler(
-      createSharedBetaPostServerDependenciesFromEnvironment(STAGING_ROUTE_ENVIRONMENT, {
+      createSharedBetaPostServerDependenciesFromEnvironment(COMPLETE_STAGING_ROUTE_ENVIRONMENT, {
         ...makeCompleteOptions({
-          imageStorageClient: { uploadObject },
+          imageUploadBroker: makeBroker(uploadObject),
           postGatewayClient: { rpc }
         })
       })
@@ -251,9 +375,9 @@ describe("shared beta post server dependency factory", () => {
     }));
     const rpc = vi.fn();
     const handler = createSharedBetaPostRouteHandler(
-      createSharedBetaPostServerDependenciesFromEnvironment(STAGING_ROUTE_ENVIRONMENT, {
+      createSharedBetaPostServerDependenciesFromEnvironment(COMPLETE_STAGING_ROUTE_ENVIRONMENT, {
         ...makeCompleteOptions({
-          imageStorageClient: { uploadObject },
+          imageUploadBroker: makeBroker(uploadObject),
           postGatewayClient: { rpc }
         })
       })
@@ -276,9 +400,9 @@ describe("shared beta post server dependency factory", () => {
     const uploadObject = vi.fn();
     const rpc = vi.fn();
     const handler = createSharedBetaPostRouteHandler(
-      createSharedBetaPostServerDependenciesFromEnvironment(STAGING_ROUTE_ENVIRONMENT, {
+      createSharedBetaPostServerDependenciesFromEnvironment(COMPLETE_STAGING_ROUTE_ENVIRONMENT, {
         ...makeCompleteOptions({
-          imageStorageClient: { uploadObject },
+          imageUploadBroker: makeBroker(uploadObject),
           postGatewayClient: { rpc },
           resolveImageFile: undefined
         })
@@ -297,14 +421,14 @@ describe("shared beta post server dependency factory", () => {
   it("does not upload before membership and active-theme authorization passes", async () => {
     const uploadObject = vi.fn();
     const rpc = vi.fn();
-    const imageStorageClientFactory = vi.fn(() => ({ uploadObject }));
+    const imageUploadBrokerFactory = vi.fn(() => makeBroker(uploadObject));
     const postGatewayClientFactory = vi.fn(() => ({ rpc }));
     const resolveImageFile = vi.fn(async () => makeFile({ name: "photo.webp", type: "image/webp", size: 12 }));
     const otherGroup = makeOtherGroup();
     const otherTheme = makeOtherTheme(otherGroup);
     const seedState = createSeedState(new Date("2026-05-20T09:00:00.000Z"));
     const handler = createSharedBetaPostRouteHandler(
-      createSharedBetaPostServerDependenciesFromEnvironment(STAGING_ROUTE_ENVIRONMENT, {
+      createSharedBetaPostServerDependenciesFromEnvironment(COMPLETE_STAGING_ROUTE_ENVIRONMENT, {
         ...makeCompleteOptions({
           authorizationSource: createRepositorySharedBetaPostAuthorizationSource(
             createMemoryRepository({
@@ -313,8 +437,8 @@ describe("shared beta post server dependency factory", () => {
               themes: [...seedState.themes, otherTheme]
             })
           ),
-          imageStorageClient: undefined,
-          imageStorageClientFactory,
+          imageUploadBroker: undefined,
+          imageUploadBrokerFactory,
           postGatewayClient: undefined,
           postGatewayClientFactory,
           resolveImageFile
@@ -338,7 +462,7 @@ describe("shared beta post server dependency factory", () => {
     expect(response.status).toBe(403);
     expect(body).toMatchObject({ ok: false, error: { code: "validated_image_required" } });
     expect(resolveImageFile).not.toHaveBeenCalled();
-    expect(imageStorageClientFactory).not.toHaveBeenCalled();
+    expect(imageUploadBrokerFactory).not.toHaveBeenCalled();
     expect(postGatewayClientFactory).not.toHaveBeenCalled();
     expect(uploadObject).not.toHaveBeenCalled();
     expect(rpc).not.toHaveBeenCalled();
@@ -347,7 +471,7 @@ describe("shared beta post server dependency factory", () => {
   it("keeps Supabase-backed authorization denial before upload and RPC", async () => {
     const uploadObject = vi.fn();
     const rpc = vi.fn();
-    const imageStorageClientFactory = vi.fn(() => ({ uploadObject }));
+    const imageUploadBrokerFactory = vi.fn(() => makeBroker(uploadObject));
     const postGatewayClientFactory = vi.fn(() => ({ rpc }));
     const resolveImageFile = vi.fn(async () => makeFile({ name: "photo.webp", type: "image/webp", size: 12 }));
     const authorizationClient: SupabaseSharedBetaPostAuthorizationReadClient = {
@@ -364,11 +488,11 @@ describe("shared beta post server dependency factory", () => {
       }))
     };
     const handler = createSharedBetaPostRouteHandler(
-      createSharedBetaPostServerDependenciesFromEnvironment(STAGING_ROUTE_ENVIRONMENT, {
+      createSharedBetaPostServerDependenciesFromEnvironment(COMPLETE_STAGING_ROUTE_ENVIRONMENT, {
         ...makeCompleteOptions({
           authorizationSource: createSupabaseSharedBetaPostAuthorizationSource(authorizationClient),
-          imageStorageClient: undefined,
-          imageStorageClientFactory,
+          imageUploadBroker: undefined,
+          imageUploadBrokerFactory,
           postGatewayClient: undefined,
           postGatewayClientFactory,
           resolveImageFile
@@ -397,7 +521,7 @@ describe("shared beta post server dependency factory", () => {
     });
     expect(authorizationClient.selectTheme).not.toHaveBeenCalled();
     expect(resolveImageFile).not.toHaveBeenCalled();
-    expect(imageStorageClientFactory).not.toHaveBeenCalled();
+    expect(imageUploadBrokerFactory).not.toHaveBeenCalled();
     expect(postGatewayClientFactory).not.toHaveBeenCalled();
     expect(uploadObject).not.toHaveBeenCalled();
     expect(rpc).not.toHaveBeenCalled();
@@ -422,9 +546,9 @@ describe("shared beta post server dependency factory", () => {
       ]
     }));
     const handler = createSharedBetaPostRouteHandler(
-      createSharedBetaPostServerDependenciesFromEnvironment(STAGING_ROUTE_ENVIRONMENT, {
+      createSharedBetaPostServerDependenciesFromEnvironment(COMPLETE_STAGING_ROUTE_ENVIRONMENT, {
         ...makeCompleteOptions({
-          imageStorageClient: { uploadObject },
+          imageUploadBroker: makeBroker(uploadObject),
           postGatewayClient: { rpc }
         })
       })
@@ -465,7 +589,7 @@ describe("shared beta post server dependency factory", () => {
     });
   });
 
-  it("creates member-scoped storage and RPC clients from the request access token", async () => {
+  it("creates member-scoped broker and RPC clients from the request access token", async () => {
     const uploadObject = vi.fn(async (input: UploadConfirmationInput) => confirmUpload(input));
     const rpc = vi.fn(async () => ({
       error: null,
@@ -483,13 +607,13 @@ describe("shared beta post server dependency factory", () => {
         }
       ]
     }));
-    const imageStorageClientFactory = vi.fn(() => ({ uploadObject }));
+    const imageUploadBrokerFactory = vi.fn(() => makeBroker(uploadObject));
     const postGatewayClientFactory = vi.fn(() => ({ rpc }));
     const handler = createSharedBetaPostRouteHandler(
-      createSharedBetaPostServerDependenciesFromEnvironment(STAGING_ROUTE_ENVIRONMENT, {
+      createSharedBetaPostServerDependenciesFromEnvironment(COMPLETE_STAGING_ROUTE_ENVIRONMENT, {
         ...makeCompleteOptions({
-          imageStorageClient: undefined,
-          imageStorageClientFactory,
+          imageUploadBroker: undefined,
+          imageUploadBrokerFactory,
           postGatewayClient: undefined,
           postGatewayClientFactory
         })
@@ -501,7 +625,16 @@ describe("shared beta post server dependency factory", () => {
 
     expect(response.status).toBe(200);
     expect(body).toMatchObject({ ok: true, post: { id: "post_shared_beta_created" } });
-    expect(imageStorageClientFactory).toHaveBeenCalledWith({ accessToken: "member_request_token" });
+    expect(imageUploadBrokerFactory).toHaveBeenCalledWith({
+      accessToken: "member_request_token",
+      environment: {
+        projectUrl: "https://project.supabase.co",
+        anonKey: ANON_KEY,
+        postImageBucket: "post-images",
+        uploadBrokerMode: "server",
+        serviceRoleKey: FAKE_SERVER_ONLY_BROKER_SECRET
+      }
+    });
     expect(postGatewayClientFactory).toHaveBeenCalledWith({ accessToken: "member_request_token" });
     expect(uploadObject).toHaveBeenCalledOnce();
     expect(rpc).toHaveBeenCalledOnce();
@@ -526,9 +659,9 @@ describe("shared beta post server dependency factory", () => {
       ]
     }));
     const handler = createSharedBetaPostRouteHandler(
-      createSharedBetaPostServerDependenciesFromEnvironment(STAGING_ROUTE_ENVIRONMENT, {
+      createSharedBetaPostServerDependenciesFromEnvironment(COMPLETE_STAGING_ROUTE_ENVIRONMENT, {
         ...makeCompleteOptions({
-          imageStorageClient: { uploadObject },
+          imageUploadBroker: makeBroker(uploadObject),
           postGatewayClient: { rpc },
           resolveImageFile: undefined,
           generateImageFilename: () => "from-form.webp"
@@ -558,9 +691,7 @@ function makeCompleteOptions(
     authClient: {
       getUser: vi.fn(async () => ({ data: { user: { id: "user_demo" } } }))
     },
-    imageStorageClient: {
-      uploadObject: vi.fn(async (input: UploadConfirmationInput) => confirmUpload(input))
-    },
+    imageUploadBroker: makeBroker(vi.fn(async (input: UploadConfirmationInput) => confirmUpload(input))),
     postGatewayClient: {
       rpc: vi.fn()
     },
@@ -633,13 +764,16 @@ function makeFile(input: { name: string; type: string; size: number }): SharedBe
     }
   };
 }
-
 function confirmUpload(input: UploadConfirmationInput) {
   return {
     ok: true as const,
     bucket: input.bucket,
     objectPath: input.objectPath
   };
+}
+
+function makeBroker(uploadObject: SharedBetaPostImageStorageClient["uploadObject"]): SharedBetaPostImageUploadBroker {
+  return createStorageSharedBetaPostImageUploadBroker({ uploadObject });
 }
 
 function makeOtherGroup(): Group {
