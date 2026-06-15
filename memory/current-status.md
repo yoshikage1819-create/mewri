@@ -6,7 +6,7 @@ tags:
   - status
   - worktrees
   - shared-beta
-last_verified: 2026-06-05
+last_verified: 2026-06-16
 read_for:
   - starting a new work session
   - handoff updates
@@ -20,6 +20,11 @@ read_for:
 - Shared mode is disabled.
 - The staging shared-beta route must remain fail-closed unless explicitly
   approved dependencies and gates are present.
+- For the next 30 days, optimize for two outcomes only:
+  1. complete the minimum safe C-8e staging upload-broker verification gate;
+  2. learn from 3-5 real people whether the local/demo loop is worth returning to.
+- Do not expand the AI organization, memory system, tool stack, or product surface unless
+  it directly supports those two outcomes.
 
 ## Active Worktrees
 
