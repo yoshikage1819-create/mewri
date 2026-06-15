@@ -1,9 +1,12 @@
 import type { ID } from "@mewri/core";
+import { createClient } from "@supabase/supabase-js";
 import type {
   SharedBetaPostAuthorizationSource,
   SharedBetaPostAuthorizationSourceFailure,
   SharedBetaPostAuthorizationSourceResult
 } from "./shared-beta-post-authorization-source";
+import type { CreateSupabaseSharedBetaPostRpcClientInput } from "./supabase-shared-beta-post-rpc-client";
+import { isPublicAnonKey, isValidSupabaseProjectUrl } from "./supabase-public-config";
 
 export interface SupabaseSharedBetaPostAuthorizationReadResult<Row> {
   data: Row[] | null;
@@ -32,6 +35,9 @@ export interface SupabaseSharedBetaPostAuthorizationReadClient {
   }): Promise<SupabaseSharedBetaPostAuthorizationReadResult<SupabaseSharedBetaPostAuthorizationThemeRow>>;
 }
 
+export type CreateSupabaseSharedBetaPostAuthorizationReadClientInput =
+  CreateSupabaseSharedBetaPostRpcClientInput;
+
 export function createSupabaseSharedBetaPostAuthorizationSource(
   client: SupabaseSharedBetaPostAuthorizationReadClient
 ): SharedBetaPostAuthorizationSource {
@@ -48,6 +54,60 @@ export function createSupabaseSharedBetaPostAuthorizationSource(
       }
 
       return { ok: true };
+    }
+  };
+}
+
+/**
+ * Narrow Supabase read client for shared-beta post authorization only.
+ * Uses the caller's member JWT so RLS applies to the authenticated session.
+ */
+export function createSupabaseSharedBetaPostAuthorizationReadClient(
+  input: CreateSupabaseSharedBetaPostAuthorizationReadClientInput
+): SupabaseSharedBetaPostAuthorizationReadClient {
+  assertAuthorizationReadClientInput(input);
+
+  const supabase = createClient(input.projectUrl, input.anonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false
+    },
+    global: {
+      headers: {
+        Authorization: `Bearer ${input.accessToken}`
+      }
+    }
+  });
+
+  return {
+    async selectGroupMembership({ groupId, userId }) {
+      const { data, error } = await supabase
+        .from("group_members")
+        .select("group_id,user_id")
+        .eq("group_id", groupId)
+        .eq("user_id", userId)
+        .limit(2);
+
+      return {
+        data: (data as SupabaseSharedBetaPostAuthorizationGroupMemberRow[] | null) ?? null,
+        error
+      };
+    },
+
+    async selectTheme({ groupId, themeId }) {
+      const { data, error } = await supabase
+        .from("themes")
+        .select("id,group_id,status")
+        .eq("id", themeId)
+        .eq("group_id", groupId)
+        .eq("status", "active")
+        .limit(2);
+
+      return {
+        data: (data as SupabaseSharedBetaPostAuthorizationThemeRow[] | null) ?? null,
+        error
+      };
     }
   };
 }
@@ -91,6 +151,32 @@ async function readActiveGroupTheme(
     return row?.id === input.themeId && row.group_id === input.groupId && row.status === "active";
   } catch {
     return false;
+  }
+}
+
+function assertAuthorizationReadClientInput(
+  input: CreateSupabaseSharedBetaPostAuthorizationReadClientInput
+): void {
+  if (!isValidSupabaseProjectUrl(input.projectUrl)) {
+    throw new Error(
+      "Shared beta authorization read client requires a valid https://<ref>.supabase.co project URL."
+    );
+  }
+
+  if (!isPublicAnonKey(input.anonKey)) {
+    throw new Error(
+      "Shared beta authorization read client requires a public anon or publishable key, not a service role or secret key."
+    );
+  }
+
+  if (!input.accessToken.trim()) {
+    throw new Error("Shared beta authorization read client requires an authenticated access token.");
+  }
+
+  if (/service[_-]?role/i.test(input.accessToken)) {
+    throw new Error(
+      "Shared beta authorization read client must not use a service role key as the access token."
+    );
   }
 }
 

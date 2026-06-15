@@ -20,7 +20,6 @@ import {
   resolveStagingSupabaseSharedBetaPostRpcEnvironment,
   type SupabaseSharedBetaPostRpcEnvironment
 } from "@mewri/data/src/supabase-shared-beta-post-rpc-client";
-import { isPublicAnonKey } from "@mewri/data/src/supabase-public-config";
 import {
   createSupabaseSharedBetaPostGateway,
   type SupabaseSharedBetaPostRpcClient
@@ -40,7 +39,6 @@ export interface StagingSharedBetaPostRouteEnvironment extends SupabaseSharedBet
 
 export interface StagingSharedBetaUploadBrokerEnvironment extends StagingSharedBetaPostRouteEnvironment {
   uploadBrokerMode: "server";
-  serviceRoleKey: string;
 }
 
 export interface SharedBetaPostServerDependencyFactoryOptions {
@@ -53,6 +51,7 @@ export interface SharedBetaPostServerDependencyFactoryOptions {
   postGatewayClient?: SupabaseSharedBetaPostRpcClient;
   postGatewayClientFactory?: (input: { accessToken: string }) => SupabaseSharedBetaPostRpcClient;
   authorizationSource?: SharedBetaPostAuthorizationSource;
+  authorizationSourceFactory?: (input: { accessToken: string }) => SharedBetaPostAuthorizationSource;
   resolveImageFile?: (input: {
     request: Request;
     authenticatedUserId: ID;
@@ -83,7 +82,7 @@ export function createSharedBetaPostServerDependenciesFromEnvironment(
 
   if (
     !options.authClient ||
-    !options.authorizationSource ||
+    (!options.authorizationSource && !options.authorizationSourceFactory) ||
     (!options.imageUploadBroker && !options.imageUploadBrokerFactory) ||
     (!options.postGatewayClient && !options.postGatewayClientFactory)
   ) {
@@ -106,7 +105,13 @@ export function createSharedBetaPostServerDependenciesFromEnvironment(
       }
     },
     async resolveValidatedImagePath(input) {
-      const authorization = await options.authorizationSource!.canCreatePost({
+      const accessToken = resolveAccessTokenFromRequest(input.request);
+      const authorizationSource = resolveAuthorizationSource(options, accessToken);
+      if (!authorizationSource) {
+        return undefined;
+      }
+
+      const authorization = await authorizationSource.canCreatePost({
         authenticatedUserId: input.authenticatedUserId,
         groupId: input.post.groupId,
         themeId: input.post.themeId
@@ -116,7 +121,6 @@ export function createSharedBetaPostServerDependenciesFromEnvironment(
       }
 
       const file = await resolveImageFile(input);
-      const accessToken = resolveAccessTokenFromRequest(input.request);
       const broker = resolveImageUploadBroker(options, accessToken, uploadBrokerEnvironment);
       if (!broker) {
         return undefined;
@@ -144,6 +148,11 @@ export function createSharedBetaPostServerDependenciesFromEnvironment(
     },
     resolveBoundary(input) {
       const accessToken = input ? resolveAccessTokenFromRequest(input.request) : undefined;
+      const authorizationSource = resolveAuthorizationSource(options, accessToken);
+      if (!authorizationSource) {
+        return undefined;
+      }
+
       const postGatewayClient = resolvePostGatewayClient(options, accessToken);
       if (!postGatewayClient) {
         return undefined;
@@ -151,7 +160,7 @@ export function createSharedBetaPostServerDependenciesFromEnvironment(
 
       const postGateway = createSupabaseSharedBetaPostGateway(postGatewayClient);
       return createSharedBetaPostRouteBoundary({
-        authorizationSource: options.authorizationSource!,
+        authorizationSource,
         postCommandService: postGateway,
         authorization: {
           postImageBucket,
@@ -210,20 +219,25 @@ export function resolveStagingSharedBetaUploadBrokerEnvironment(
     return undefined;
   }
 
-  const serviceRoleKey = environment.SUPABASE_SERVICE_ROLE_KEY?.trim();
-  if (!serviceRoleKey) {
-    return undefined;
-  }
-
-  if (isPublicAnonKey(serviceRoleKey)) {
-    return undefined;
-  }
-
   return {
     ...routeEnvironment,
-    uploadBrokerMode: "server",
-    serviceRoleKey
+    uploadBrokerMode: "server"
   };
+}
+
+function resolveAuthorizationSource(
+  options: SharedBetaPostServerDependencyFactoryOptions,
+  accessToken: string | undefined
+): SharedBetaPostAuthorizationSource | undefined {
+  if (options.authorizationSource) {
+    return options.authorizationSource;
+  }
+
+  if (!accessToken) {
+    return undefined;
+  }
+
+  return options.authorizationSourceFactory?.({ accessToken });
 }
 
 function resolveImageUploadBroker(

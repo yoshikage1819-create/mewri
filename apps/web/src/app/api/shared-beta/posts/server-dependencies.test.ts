@@ -32,7 +32,6 @@ import {
 const ANON_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYW5vbiJ9.signature";
 const SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.signature";
 const SECRET_KEY = "sb_secret_test_key";
-const FAKE_SERVER_ONLY_BROKER_SECRET = "fake-server-only-broker-secret";
 
 const STAGING_ROUTE_ENVIRONMENT = {
   [STAGING_SHARED_BETA_POST_ROUTE_GATE]: "true",
@@ -44,8 +43,7 @@ const STAGING_ROUTE_ENVIRONMENT = {
 const COMPLETE_STAGING_ROUTE_ENVIRONMENT = {
   ...STAGING_ROUTE_ENVIRONMENT,
   [STAGING_SHARED_BETA_UPLOAD_BROKER_GATE]: "true",
-  [STAGING_SHARED_BETA_UPLOAD_BROKER_MODE]: "server",
-  SUPABASE_SERVICE_ROLE_KEY: FAKE_SERVER_ONLY_BROKER_SECRET
+  [STAGING_SHARED_BETA_UPLOAD_BROKER_MODE]: "server"
 };
 
 type UploadConfirmationInput = { bucket: string; objectPath: string };
@@ -100,22 +98,13 @@ describe("resolveStagingSharedBetaPostRouteEnvironment", () => {
 });
 
 describe("resolveStagingSharedBetaUploadBrokerEnvironment", () => {
-  it("requires the explicit broker gate, server mode, and server-only credential placeholder", () => {
+  it("requires the explicit broker gate and server mode, but no unused service-role key", () => {
     expect(resolveStagingSharedBetaUploadBrokerEnvironment(STAGING_ROUTE_ENVIRONMENT)).toBeUndefined();
 
     expect(
       resolveStagingSharedBetaUploadBrokerEnvironment({
         ...STAGING_ROUTE_ENVIRONMENT,
-        [STAGING_SHARED_BETA_UPLOAD_BROKER_GATE]: "true",
-        SUPABASE_SERVICE_ROLE_KEY: FAKE_SERVER_ONLY_BROKER_SECRET
-      })
-    ).toBeUndefined();
-
-    expect(
-      resolveStagingSharedBetaUploadBrokerEnvironment({
-        ...STAGING_ROUTE_ENVIRONMENT,
-        [STAGING_SHARED_BETA_UPLOAD_BROKER_GATE]: "true",
-        [STAGING_SHARED_BETA_UPLOAD_BROKER_MODE]: "server"
+        [STAGING_SHARED_BETA_UPLOAD_BROKER_GATE]: "true"
       })
     ).toBeUndefined();
 
@@ -123,25 +112,20 @@ describe("resolveStagingSharedBetaUploadBrokerEnvironment", () => {
       projectUrl: "https://project.supabase.co",
       anonKey: ANON_KEY,
       postImageBucket: "post-images",
-      uploadBrokerMode: "server",
-      serviceRoleKey: FAKE_SERVER_ONLY_BROKER_SECRET
+      uploadBrokerMode: "server"
     });
-  });
-
-  it("rejects public keys in the server-only broker credential slot", () => {
-    expect(
-      resolveStagingSharedBetaUploadBrokerEnvironment({
-        ...COMPLETE_STAGING_ROUTE_ENVIRONMENT,
-        SUPABASE_SERVICE_ROLE_KEY: ANON_KEY
-      })
-    ).toBeUndefined();
 
     expect(
       resolveStagingSharedBetaUploadBrokerEnvironment({
         ...COMPLETE_STAGING_ROUTE_ENVIRONMENT,
-        SUPABASE_SERVICE_ROLE_KEY: "sb_publishable_test_key"
+        SUPABASE_SERVICE_ROLE_KEY: SERVICE_ROLE_KEY
       })
-    ).toBeUndefined();
+    ).toEqual({
+      projectUrl: "https://project.supabase.co",
+      anonKey: ANON_KEY,
+      postImageBucket: "post-images",
+      uploadBrokerMode: "server"
+    });
   });
 });
 
@@ -187,7 +171,7 @@ describe("shared beta post server dependency factory", () => {
     expect(authClient.getUser).not.toHaveBeenCalled();
   });
 
-  it("keeps the route unavailable when the broker gate lacks complete server-only config", async () => {
+  it("keeps the route unavailable when the broker gate lacks server mode", async () => {
     const authClient: SupabaseAuthSessionClient = {
       getUser: vi.fn(async () => ({ data: { user: { id: "user_demo" } } }))
     };
@@ -195,8 +179,7 @@ describe("shared beta post server dependency factory", () => {
       createSharedBetaPostServerDependenciesFromEnvironment(
         {
           ...STAGING_ROUTE_ENVIRONMENT,
-          [STAGING_SHARED_BETA_UPLOAD_BROKER_GATE]: "true",
-          [STAGING_SHARED_BETA_UPLOAD_BROKER_MODE]: "server"
+          [STAGING_SHARED_BETA_UPLOAD_BROKER_GATE]: "true"
         },
         { ...makeCompleteOptions({ authClient }) }
       )
@@ -631,13 +614,91 @@ describe("shared beta post server dependency factory", () => {
         projectUrl: "https://project.supabase.co",
         anonKey: ANON_KEY,
         postImageBucket: "post-images",
-        uploadBrokerMode: "server",
-        serviceRoleKey: FAKE_SERVER_ONLY_BROKER_SECRET
+        uploadBrokerMode: "server"
       }
     });
     expect(postGatewayClientFactory).toHaveBeenCalledWith({ accessToken: "member_request_token" });
     expect(uploadObject).toHaveBeenCalledOnce();
     expect(rpc).toHaveBeenCalledOnce();
+  });
+
+  it("creates token-scoped authorization before broker and RPC factories", async () => {
+    const events: string[] = [];
+    const uploadObject = vi.fn(async (input: UploadConfirmationInput) => {
+      events.push("upload");
+      return confirmUpload(input);
+    });
+    const rpc = vi.fn(async () => {
+      events.push("rpc");
+      return {
+        error: null,
+        data: [
+          {
+            id: "post_shared_beta_created",
+            user_id: "user_demo",
+            group_id: "group_first",
+            theme_id: "theme_cycle_group_first_2026-05-20_1",
+            image_url: "post-images/group_first/user_demo/photo.webp",
+            caption: "shared beta post",
+            visibility: "group_only" as const,
+            created_at: "2026-05-20T09:00:00.000Z",
+            updated_at: "2026-05-20T09:00:00.000Z"
+          }
+        ]
+      };
+    });
+    const authorizationSourceFactory = vi.fn(({ accessToken }: { accessToken: string }) => {
+      events.push(`authorizationFactory:${accessToken}`);
+      return {
+        async canCreatePost() {
+          events.push("authorization");
+          return { ok: true as const };
+        }
+      };
+    });
+    const imageUploadBrokerFactory = vi.fn(({ accessToken }: { accessToken: string }) => {
+      events.push(`brokerFactory:${accessToken}`);
+      return makeBroker(uploadObject);
+    });
+    const postGatewayClientFactory = vi.fn(({ accessToken }: { accessToken: string }) => {
+      events.push(`rpcFactory:${accessToken}`);
+      return { rpc };
+    });
+    const handler = createSharedBetaPostRouteHandler(
+      createSharedBetaPostServerDependenciesFromEnvironment(COMPLETE_STAGING_ROUTE_ENVIRONMENT, {
+        ...makeCompleteOptions({
+          authorizationSource: undefined,
+          authorizationSourceFactory,
+          imageUploadBroker: undefined,
+          imageUploadBrokerFactory,
+          postGatewayClient: undefined,
+          postGatewayClientFactory
+        })
+      })
+    );
+
+    const response = await handler(makeJsonRequest({ authorization: "Bearer member_request_token" }));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({ ok: true, post: { id: "post_shared_beta_created" } });
+    expect(authorizationSourceFactory).toHaveBeenCalledWith({ accessToken: "member_request_token" });
+    expect(imageUploadBrokerFactory).toHaveBeenCalledWith({
+      accessToken: "member_request_token",
+      environment: {
+        projectUrl: "https://project.supabase.co",
+        anonKey: ANON_KEY,
+        postImageBucket: "post-images",
+        uploadBrokerMode: "server"
+      }
+    });
+    expect(postGatewayClientFactory).toHaveBeenCalledWith({ accessToken: "member_request_token" });
+    expect(events.indexOf("authorization")).toBeLessThan(events.indexOf("brokerFactory:member_request_token"));
+    expect(events.indexOf("brokerFactory:member_request_token")).toBeLessThan(
+      events.indexOf("rpcFactory:member_request_token")
+    );
+    expect(events).not.toContain(`brokerFactory:${SERVICE_ROLE_KEY}`);
+    expect(events).not.toContain(`rpcFactory:${SERVICE_ROLE_KEY}`);
   });
 
   it("uses the multipart image file when no injected image resolver is provided", async () => {

@@ -1,10 +1,24 @@
-import { describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  createSupabaseSharedBetaPostAuthorizationReadClient,
   createSupabaseSharedBetaPostAuthorizationSource,
   type SupabaseSharedBetaPostAuthorizationGroupMemberRow,
   type SupabaseSharedBetaPostAuthorizationReadClient,
   type SupabaseSharedBetaPostAuthorizationThemeRow
 } from "./supabase-shared-beta-post-authorization-source";
+
+const { createClientMock } = vi.hoisted(() => ({
+  createClientMock: vi.fn()
+}));
+
+const ANON_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYW5vbiJ9.signature";
+const SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.signature";
+const SECRET_KEY = "sb_secret_test_key";
+
+vi.mock("@supabase/supabase-js", () => ({
+  createClient: createClientMock
+}));
 
 const INPUT = {
   authenticatedUserId: "user_demo",
@@ -160,6 +174,89 @@ describe("supabase shared beta post authorization source", () => {
   });
 });
 
+describe("supabase shared beta post authorization read client", () => {
+  beforeEach(() => {
+    createClientMock.mockReset();
+  });
+
+  it("reads membership and active theme through narrow table queries", async () => {
+    const fromMock = vi.fn((table: string) => makeSupabaseTable(table));
+    createClientMock.mockReturnValue({ from: fromMock });
+    const client = createSupabaseSharedBetaPostAuthorizationReadClient({
+      projectUrl: "https://project.supabase.co",
+      anonKey: ANON_KEY,
+      accessToken: "member-access-token"
+    });
+
+    await expect(
+      client.selectGroupMembership({ groupId: "group_first", userId: "user_demo" })
+    ).resolves.toEqual({
+      data: [makeMembershipRow()],
+      error: null
+    });
+    await expect(client.selectTheme({ groupId: "group_first", themeId: "theme_first_active" })).resolves.toEqual({
+      data: [makeThemeRow()],
+      error: null
+    });
+
+    expect(createClientMock).toHaveBeenCalledWith("https://project.supabase.co", ANON_KEY, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false
+      },
+      global: {
+        headers: {
+          Authorization: "Bearer member-access-token"
+        }
+      }
+    });
+    expect(fromMock).toHaveBeenCalledWith("group_members");
+    expect(fromMock).toHaveBeenCalledWith("themes");
+  });
+
+  it("rejects invalid public config and service-role-looking member tokens", () => {
+    expect(() =>
+      createSupabaseSharedBetaPostAuthorizationReadClient({
+        projectUrl: "http://project.supabase.co",
+        anonKey: ANON_KEY,
+        accessToken: "member-access-token"
+      })
+    ).toThrow("valid https://<ref>.supabase.co project URL");
+
+    expect(() =>
+      createSupabaseSharedBetaPostAuthorizationReadClient({
+        projectUrl: "https://project.supabase.co",
+        anonKey: SERVICE_ROLE_KEY,
+        accessToken: "member-access-token"
+      })
+    ).toThrow("public anon or publishable key");
+
+    expect(() =>
+      createSupabaseSharedBetaPostAuthorizationReadClient({
+        projectUrl: "https://project.supabase.co",
+        anonKey: SECRET_KEY,
+        accessToken: "member-access-token"
+      })
+    ).toThrow("public anon or publishable key");
+
+    expect(() =>
+      createSupabaseSharedBetaPostAuthorizationReadClient({
+        projectUrl: "https://project.supabase.co",
+        anonKey: ANON_KEY,
+        accessToken: "service_role_token"
+      })
+    ).toThrow("service role");
+  });
+
+  it("is not exported through the package root used by browser-facing imports", () => {
+    const packageRootIndex = readFileSync(new URL("./index.ts", import.meta.url), "utf8");
+
+    expect(packageRootIndex).not.toContain("supabase-shared-beta-post-authorization-source");
+    expect(packageRootIndex).not.toContain("createSupabaseSharedBetaPostAuthorizationReadClient");
+  });
+});
+
 function makeClient(
   options: {
     membershipRows?: SupabaseSharedBetaPostAuthorizationGroupMemberRow[];
@@ -192,6 +289,25 @@ function makeClient(
       };
     })
   };
+}
+
+function makeSupabaseTable(table: string) {
+  const query = {
+    select: vi.fn(() => query),
+    eq: vi.fn(() => query),
+    limit: vi.fn(async () => {
+      if (table === "group_members") {
+        return { data: [makeMembershipRow()], error: null };
+      }
+
+      if (table === "themes") {
+        return { data: [makeThemeRow()], error: null };
+      }
+
+      return { data: [], error: new Error(`Unexpected table: ${table}`) };
+    })
+  };
+  return query;
 }
 
 function makeMembershipRow(
