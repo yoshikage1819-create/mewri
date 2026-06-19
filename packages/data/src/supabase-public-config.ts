@@ -21,6 +21,16 @@ export function isPublicAnonKey(anonKey: string): boolean {
   return payload?.role === "anon";
 }
 
+export function isPrivilegedSupabaseCredential(credential: string): boolean {
+  const key = credential.trim();
+  if (key.startsWith("sb_secret_")) {
+    return true;
+  }
+
+  const payload = decodeJwtPayload(key);
+  return payload?.role === "service_role";
+}
+
 function decodeJwtPayload(token: string): { role?: unknown } | undefined {
   const [, payload] = token.split(".");
   if (!payload) {
