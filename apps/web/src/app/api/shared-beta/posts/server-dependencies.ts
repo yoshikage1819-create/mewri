@@ -12,6 +12,10 @@ import {
 } from "@mewri/data/src/supabase-auth-session";
 import type { SharedBetaPostImageUploadBroker } from "@mewri/data/src/shared-beta-post-image-upload-broker";
 import {
+  resolveStagingSupabasePrivilegedSharedBetaPostImageUploadBrokerEnvironment,
+  type SupabasePrivilegedSharedBetaPostImageUploadBrokerEnvironment
+} from "@mewri/data/src/supabase-privileged-shared-beta-post-image-upload-broker";
+import {
   toSharedBetaPostImageObjectPath,
   uploadSharedBetaPostImage,
   type SharedBetaPostImageFile
@@ -37,7 +41,9 @@ export interface StagingSharedBetaPostRouteEnvironment extends SupabaseSharedBet
   postImageBucket: string;
 }
 
-export interface StagingSharedBetaUploadBrokerEnvironment extends StagingSharedBetaPostRouteEnvironment {
+export interface StagingSharedBetaUploadBrokerEnvironment
+  extends StagingSharedBetaPostRouteEnvironment,
+    SupabasePrivilegedSharedBetaPostImageUploadBrokerEnvironment {
   uploadBrokerMode: "server";
 }
 
@@ -219,8 +225,18 @@ export function resolveStagingSharedBetaUploadBrokerEnvironment(
     return undefined;
   }
 
+  const privilegedBrokerEnvironment =
+    resolveStagingSupabasePrivilegedSharedBetaPostImageUploadBrokerEnvironment(
+      environment,
+      routeEnvironment
+    );
+  if (!privilegedBrokerEnvironment) {
+    return undefined;
+  }
+
   return {
     ...routeEnvironment,
+    privilegedKey: privilegedBrokerEnvironment.privilegedKey,
     uploadBrokerMode: "server"
   };
 }
@@ -253,7 +269,11 @@ function resolveImageUploadBroker(
     return undefined;
   }
 
-  return options.imageUploadBrokerFactory?.({ accessToken, environment });
+  try {
+    return options.imageUploadBrokerFactory?.({ accessToken, environment });
+  } catch {
+    return undefined;
+  }
 }
 
 function resolvePostGatewayClient(
