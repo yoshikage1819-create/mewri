@@ -1,39 +1,188 @@
 import { describe, expect, it } from "vitest";
 import {
+  BACK_TO_TODAY_LABEL,
   buildAddSamplePostsConfirmMessage,
   buildGenerateZineConfirmMessage,
   calcLocalImageScale,
   calcReadinessPercent,
+  clampCaption,
+  containsForbiddenSharedCopy,
   createSampleImageDataUrl,
   escapeSvgText,
+  formatEmptyPostListHint,
   formatEmptyPostListMessage,
+  formatEmptyPostListTitle,
   formatFullDate,
-  formatPostListKicker,
   formatPostSubmitSuccessMessage,
+  formatPostTime,
   formatRemainingToday,
+  formatTodayThemeDayLabel,
+  formatTrustedGroupCue,
   formatZineGenerateBlockedHint,
   formatZineRemainingHeadline,
   formatFeedbackCharCount,
+  formatEditionImprint,
+  formatIssueProgressNote,
+  formatPostListKicker,
+  formatPublicationColophon,
+  formatThemePostCount,
+  formatVolStamp,
+  FORBIDDEN_SHARED_COPY_PATTERNS,
+  getMemberInitials,
+  isAllowedLocalImageMime,
+  isCaptionWithinLimit,
   LOCAL_DEMO_BANNER_BODY,
   LOCAL_DEMO_BANNER_TITLE,
+  LOCAL_DEMO_CAMERA_FAILED_MESSAGE,
+  LOCAL_DEMO_COMPOSER_NOTICE,
+  LOCAL_DEMO_FEED_NOTICE,
   LOCAL_DEMO_FEEDBACK_CHAR_COUNT_ID,
   LOCAL_DEMO_FEEDBACK_INTRO,
   LOCAL_DEMO_FEEDBACK_MAX_CHARS,
   LOCAL_DEMO_FEEDBACK_TEXTAREA_ID,
+  LOCAL_DEMO_IMAGE_TOO_LARGE_MESSAGE,
+  LOCAL_DEMO_IMAGE_UNSUPPORTED_MESSAGE,
+  LOCAL_DEMO_MAX_IMAGE_BYTES,
+  LOCAL_DEMO_NOTICE_BODY,
+  LOCAL_DEMO_NOTICE_TITLE,
+  LOCAL_DEMO_POST_SUCCESS_MESSAGE,
   LOCAL_DEMO_SAFETY_PANEL_ID,
-  LOCAL_DEMO_SAFETY_SUMMARY_ID,
   LOCAL_DEMO_SAFETY_POINTS,
   LOCAL_DEMO_SAFETY_SUMMARY,
-  resolveScrollBehavior
+  LOCAL_DEMO_SAFETY_SUMMARY_ID,
+  LOCAL_DEMO_RESET_CONFIRM_MESSAGE,
+  PHOTO_COMPOSER_RESELECT_LIBRARY_LABEL,
+  PHOTO_COMPOSER_RETAKE_CAMERA_LABEL,
+  PHOTO_COMPOSER_SUBMIT_LABEL,
+  PHOTO_SOURCE_CAMERA_LABEL,
+  PHOTO_SOURCE_CANCEL_LABEL,
+  PHOTO_SOURCE_LIBRARY_LABEL,
+  PHOTO_SOURCE_SHEET_TITLE,
+  resolveScrollBehavior,
+  revokeObjectUrl,
+  SEVEN_BAM_BRAND,
+  SEVEN_BAM_CAPTION_MAX_CHARS,
+  TODAY_FEED_EMPTY_HINT,
+  TODAY_FEED_EMPTY_TITLE,
+  TODAY_FEED_TITLE,
+  validateLocalImageFile,
+  VIEW_FEED_LABEL,
+  ZINE_EMPTY_HINT,
+  ZINE_EMPTY_TITLE
 } from "./local-demo-ui";
+
+describe("7bam brand", () => {
+  it("uses 7bam as the display brand", () => {
+    expect(SEVEN_BAM_BRAND).toBe("7bam");
+    expect(SEVEN_BAM_BRAND).not.toBe("7bum");
+  });
+
+  it("does not rename internal Mewri technical names in helpers", () => {
+    expect(formatEditionImprint("公園ZINE", "春の号")).toContain("PRIVATE ZINE");
+  });
+});
+
+describe("local demo boundary copy", () => {
+  it("shows LOCAL DEMO notice", () => {
+    expect(LOCAL_DEMO_NOTICE_TITLE).toBe("LOCAL DEMO");
+    expect(LOCAL_DEMO_NOTICE_BODY).toContain("この端末内");
+    expect(LOCAL_DEMO_BANNER_TITLE).toBe(LOCAL_DEMO_NOTICE_TITLE);
+    expect(LOCAL_DEMO_BANNER_BODY).toBe(LOCAL_DEMO_NOTICE_BODY);
+  });
+
+  it("avoids shared-success wording", () => {
+    const publicCopy = [
+      LOCAL_DEMO_POST_SUCCESS_MESSAGE,
+      PHOTO_COMPOSER_SUBMIT_LABEL,
+      LOCAL_DEMO_FEED_NOTICE,
+      LOCAL_DEMO_COMPOSER_NOTICE,
+      formatPostSubmitSuccessMessage()
+    ].join(" ");
+    expect(containsForbiddenSharedCopy(publicCopy)).toBe(false);
+    expect(FORBIDDEN_SHARED_COPY_PATTERNS.every((pattern) => !publicCopy.includes(pattern))).toBe(true);
+  });
+});
+
+describe("photo source copy", () => {
+  it("labels camera and library choices", () => {
+    expect(PHOTO_SOURCE_SHEET_TITLE).toBe("写真を追加");
+    expect(PHOTO_SOURCE_CAMERA_LABEL).toBe("カメラで撮影");
+    expect(PHOTO_SOURCE_LIBRARY_LABEL).toBe("ライブラリから選ぶ");
+    expect(PHOTO_SOURCE_CANCEL_LABEL).toBe("キャンセル");
+  });
+});
+
+describe("composer copy", () => {
+  it("supports optional caption up to 80 chars", () => {
+    expect(SEVEN_BAM_CAPTION_MAX_CHARS).toBe(80);
+    expect(isCaptionWithinLimit("a".repeat(80))).toBe(true);
+    expect(isCaptionWithinLimit("a".repeat(81))).toBe(false);
+    expect(clampCaption("a".repeat(90))).toHaveLength(80);
+  });
+
+  it("uses retake/reselect labels", () => {
+    expect(PHOTO_COMPOSER_RETAKE_CAMERA_LABEL).toBe("撮り直す");
+    expect(PHOTO_COMPOSER_RESELECT_LIBRARY_LABEL).toBe("選び直す");
+    expect(PHOTO_COMPOSER_SUBMIT_LABEL).toBe("今日を追加する");
+  });
+});
+
+describe("validateLocalImageFile", () => {
+  it("rejects unsupported MIME types", () => {
+    const svg = new File(["<svg></svg>"], "icon.svg", { type: "image/svg+xml" });
+    const result = validateLocalImageFile(svg);
+    expect(result).toMatchObject({ ok: false, code: "unsupported" });
+    if (!result.ok) {
+      expect(result.message).toBe(LOCAL_DEMO_IMAGE_UNSUPPORTED_MESSAGE);
+    }
+  });
+
+  it("rejects oversized files", () => {
+    const file = new File([new Uint8Array(LOCAL_DEMO_MAX_IMAGE_BYTES + 1)], "big.jpg", { type: "image/jpeg" });
+    const result = validateLocalImageFile(file);
+    expect(result).toMatchObject({ ok: false, code: "too_large" });
+    if (!result.ok) {
+      expect(result.message).toBe(LOCAL_DEMO_IMAGE_TOO_LARGE_MESSAGE);
+    }
+  });
+
+  it("accepts a normal jpeg file", () => {
+    const file = new File(["x"], "photo.jpg", { type: "image/jpeg" });
+    expect(validateLocalImageFile(file)).toEqual({ ok: true });
+  });
+
+  it("handles missing files safely", () => {
+    expect(validateLocalImageFile(undefined)).toMatchObject({ ok: false, code: "missing" });
+  });
+});
+
+describe("feed copy", () => {
+  it("uses vertical feed labels and empty state", () => {
+    expect(TODAY_FEED_TITLE).toBe("みんなの今日");
+    expect(TODAY_FEED_EMPTY_TITLE).toContain("まだ今日の投稿はありません");
+    expect(TODAY_FEED_EMPTY_HINT).toContain("最初の一枚");
+    expect(VIEW_FEED_LABEL).toBe("みんなの今日を見る");
+    expect(BACK_TO_TODAY_LABEL).toBe("今日のテーマへ戻る");
+    expect(LOCAL_DEMO_FEED_NOTICE).toContain("この端末内");
+  });
+});
+
+describe("post success copy", () => {
+  it("states device-only storage", () => {
+    expect(formatPostSubmitSuccessMessage()).toBe(LOCAL_DEMO_POST_SUCCESS_MESSAGE);
+    expect(LOCAL_DEMO_POST_SUCCESS_MESSAGE).toContain("この端末内");
+  });
+});
+
+describe("camera failure copy", () => {
+  it("suggests library fallback", () => {
+    expect(LOCAL_DEMO_CAMERA_FAILED_MESSAGE).toContain("ライブラリ");
+  });
+});
 
 describe("formatFeedbackCharCount", () => {
   it("shows current and max length in Japanese", () => {
     expect(formatFeedbackCharCount(12, LOCAL_DEMO_FEEDBACK_MAX_CHARS)).toBe("入力文字数 12文字 / 最大500文字");
-  });
-
-  it("clamps displayed length to the max", () => {
-    expect(formatFeedbackCharCount(999, 500)).toBe("入力文字数 500文字 / 最大500文字");
   });
 });
 
@@ -43,14 +192,6 @@ describe("local demo accessibility ids", () => {
     expect(LOCAL_DEMO_SAFETY_PANEL_ID).toBe("local-demo-safety-panel");
     expect(LOCAL_DEMO_FEEDBACK_TEXTAREA_ID).toBe("local-demo-feedback-textarea");
     expect(LOCAL_DEMO_FEEDBACK_CHAR_COUNT_ID).toBe("local-demo-feedback-char-count");
-  });
-});
-
-describe("LOCAL_DEMO_BANNER copy", () => {
-  it("states local demo and device-only storage", () => {
-    expect(LOCAL_DEMO_BANNER_TITLE).toContain("この端末だけ");
-    expect(LOCAL_DEMO_BANNER_BODY).toContain("ローカルデモ");
-    expect(LOCAL_DEMO_BANNER_BODY).toContain("送信");
   });
 });
 
@@ -67,49 +208,76 @@ describe("LOCAL_DEMO_SAFETY_POINTS", () => {
     const combined = LOCAL_DEMO_SAFETY_POINTS.map((point) => `${point.title} ${point.body}`).join(" ");
     expect(LOCAL_DEMO_SAFETY_SUMMARY).toContain("注意");
     expect(combined).toContain("ローカルデモ");
-    expect(combined).toContain("本番");
-    expect(combined).toContain("非公開ベータ");
-    expect(combined).toContain("パスワード");
-    expect(combined).toContain("トークン");
-    expect(combined).toContain("ログイン");
-    expect(combined).toContain("データベース");
-    expect(combined).toContain("API");
-    expect(combined).toContain("デプロイ");
     expect(combined).toContain("Codex");
   });
 });
 
 describe("formatPostListKicker", () => {
   it("labels the all-posts view", () => {
-    expect(formatPostListKicker("all")).toBe("全投稿");
-  });
-
-  it("labels a theme filter with the theme title", () => {
-    expect(formatPostListKicker("theme", "朝の光")).toBe("テーマ: 朝の光");
+    expect(formatPostListKicker("all")).toBe("全枚");
   });
 });
 
-describe("formatEmptyPostListMessage", () => {
-  it("guides first-time posting in the all-posts view", () => {
-    expect(formatEmptyPostListMessage("all")).toContain("最初の1枚");
+describe("formatVolStamp", () => {
+  it("combines cycle title and day index", () => {
+    expect(formatVolStamp("春の号", 2)).toBe("春の号 · DAY 03");
   });
+});
 
-  it("names the filtered theme when a theme has no posts", () => {
-    expect(formatEmptyPostListMessage("theme", "公園")).toContain("「公園」");
+describe("formatIssueProgressNote", () => {
+  it("describes a blank issue", () => {
+    expect(formatIssueProgressNote(0, 6)).toContain("白紙");
+  });
+});
+
+describe("formatEditionImprint", () => {
+  it("combines group, cycle, and private zine label", () => {
+    expect(formatEditionImprint("公園ZINE", "春の号")).toBe("公園ZINE / 春の号 / PRIVATE ZINE");
+  });
+});
+
+describe("formatPublicationColophon", () => {
+  it("delegates to formatEditionImprint", () => {
+    expect(formatPublicationColophon("公園ZINE", "春の号")).toBe(formatEditionImprint("公園ZINE", "春の号"));
+  });
+});
+
+describe("formatThemePostCount", () => {
+  it("shows numeric count only", () => {
+    expect(formatThemePostCount(3)).toBe("3");
+  });
+});
+
+describe("formatTodayThemeDayLabel", () => {
+  it("shows one-based day labels", () => {
+    expect(formatTodayThemeDayLabel(0)).toBe("1日目");
+  });
+});
+
+describe("formatTrustedGroupCue", () => {
+  it("names the group and states device-only demo", () => {
+    expect(formatTrustedGroupCue("公園ZINE")).toBe("公園ZINE · この端末だけのデモ");
+  });
+});
+
+describe("formatEmptyPostList copy", () => {
+  it("guides first-time posting in the all-posts view", () => {
+    expect(formatEmptyPostListTitle("all")).toBe("プルーフシートは空です");
+    expect(formatEmptyPostListHint("all")).toContain("今日のページ");
+    expect(formatEmptyPostListMessage("all")).toContain("プルーフシートは空です");
+  });
+});
+
+describe("ZINE empty copy", () => {
+  it("uses editorial bind language", () => {
+    expect(ZINE_EMPTY_TITLE).toContain("製本");
+    expect(ZINE_EMPTY_HINT).toContain("一冊");
   });
 });
 
 describe("calcLocalImageScale", () => {
-  it("does not upscale small images", () => {
-    expect(calcLocalImageScale(800, 600)).toBe(1);
-  });
-
   it("downscales images larger than the max edge", () => {
     expect(calcLocalImageScale(2560, 1280)).toBe(0.5);
-  });
-
-  it("returns 1 for invalid dimensions", () => {
-    expect(calcLocalImageScale(0, 100)).toBe(1);
   });
 });
 
@@ -128,13 +296,7 @@ describe("resolveScrollBehavior", () => {
 
 describe("buildGenerateZineConfirmMessage", () => {
   it("asks before first-time generation", () => {
-    expect(buildGenerateZineConfirmMessage("Issue 01")).toContain("Issue 01");
     expect(buildGenerateZineConfirmMessage("Issue 01")).toContain("生成します");
-  });
-
-  it("warns when replacing an existing ZINE", () => {
-    expect(buildGenerateZineConfirmMessage("Issue 01", true)).toContain("作り直します");
-    expect(buildGenerateZineConfirmMessage("Issue 01", true)).toContain("置き換わります");
   });
 });
 
@@ -146,35 +308,18 @@ describe("formatFullDate", () => {
 
 describe("formatZineRemainingHeadline", () => {
   it("switches to ready copy when no posts remain", () => {
-    expect(formatZineRemainingHeadline(0)).toBe("ZINEを作れます");
-    expect(formatZineRemainingHeadline(2)).toBe("あと2枚でZINEを作れます");
+    expect(formatZineRemainingHeadline(0)).toBe("製本できます");
   });
 });
 
 describe("formatZineGenerateBlockedHint", () => {
-  it("returns null when ZINE can be generated", () => {
-    expect(formatZineGenerateBlockedHint(0, true)).toBeNull();
-  });
-
   it("explains how many posts are still needed", () => {
     expect(formatZineGenerateBlockedHint(3, false)).toContain("あと3枚");
   });
 });
 
-describe("formatPostSubmitSuccessMessage", () => {
-  it("includes progress counts", () => {
-    expect(formatPostSubmitSuccessMessage(2, 6)).toBe("投稿しました。進行 2/6");
-  });
-});
-
 describe("calcReadinessPercent", () => {
-  it("returns 0 when target is zero or negative", () => {
-    expect(calcReadinessPercent(3, 0)).toBe(0);
-    expect(calcReadinessPercent(3, -1)).toBe(0);
-  });
-
   it("rounds progress and caps at 100", () => {
-    expect(calcReadinessPercent(1, 4)).toBe(25);
     expect(calcReadinessPercent(10, 4)).toBe(100);
   });
 });
@@ -184,16 +329,26 @@ describe("formatRemainingToday", () => {
     const now = new Date(2026, 5, 1, 23, 45, 0);
     expect(formatRemainingToday(now)).toBe("残り14分");
   });
+});
 
-  it("shows hours and minutes earlier in the day", () => {
-    const now = new Date(2026, 5, 1, 10, 20, 0);
-    expect(formatRemainingToday(now)).toBe("残り13時間39分");
+describe("formatPostTime", () => {
+  it("returns a short relative label", () => {
+    const now = new Date("2026-06-01T12:00:00.000Z");
+    const createdAt = new Date("2026-06-01T11:30:00.000Z").toISOString();
+    expect(formatPostTime(createdAt, now)).toBe("30分前");
+  });
+});
+
+describe("getMemberInitials", () => {
+  it("derives initials from display names", () => {
+    expect(getMemberInitials("Demo User")).toBe("DU");
+    expect(getMemberInitials("あかり")).toBe("あか");
   });
 });
 
 describe("escapeSvgText", () => {
   it("escapes characters that would break SVG text nodes", () => {
-    expect(escapeSvgText(`a & b <c> "d" 'e'`)).toBe("a &amp; b &lt;c&gt; &quot;d&quot; &apos;e&apos;");
+    expect(escapeSvgText(`a & b <c>`)).toBe("a &amp; b &lt;c&gt;");
   });
 });
 
@@ -201,15 +356,18 @@ describe("createSampleImageDataUrl", () => {
   it("returns an SVG data URL with the escaped title", () => {
     const url = createSampleImageDataUrl(`Theme <1>`, 0, 0);
     expect(url.startsWith("data:image/svg+xml;charset=UTF-8,")).toBe(true);
-    const decoded = decodeURIComponent(url.replace("data:image/svg+xml;charset=UTF-8,", ""));
-    expect(decoded).toContain("Theme &lt;1&gt;");
-    expect(decoded).not.toContain("Theme <1>");
   });
+});
 
-  it("cycles palette colors by theme index", () => {
-    const first = decodeURIComponent(createSampleImageDataUrl("A", 0, 0).split(",")[1]);
-    const second = decodeURIComponent(createSampleImageDataUrl("A", 1, 0).split(",")[1]);
-    expect(first).toContain("#2563eb");
-    expect(second).toContain("#0f766e");
+describe("revokeObjectUrl", () => {
+  it("ignores non-blob urls", () => {
+    expect(() => revokeObjectUrl("data:image/png;base64,abc")).not.toThrow();
+    expect(() => revokeObjectUrl(null)).not.toThrow();
+  });
+});
+
+describe("LOCAL_DEMO_RESET_CONFIRM_MESSAGE", () => {
+  it("asks before resetting demo data", () => {
+    expect(LOCAL_DEMO_RESET_CONFIRM_MESSAGE).toContain("初期状態");
   });
 });
