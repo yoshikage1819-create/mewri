@@ -26,7 +26,10 @@
 }
 
 html {
+  height: 100%;
+  margin: 0;
   scroll-behavior: smooth;
+  width: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -38,7 +41,8 @@ html {
   .sevenBamViewPort,
   .sevenBamViewPanel,
   .sevenBamSheet,
-  .sevenBamCameraButton {
+  .sevenBamCameraButton,
+  .appPanel {
     transition: none !important;
     animation: none !important;
   }
@@ -48,9 +52,40 @@ body {
   background: var(--7bam-feed-bg);
   color: var(--7bam-ink);
   font-family: var(--font-ui), "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
+  height: 100%;
   line-height: 1.5;
   margin: 0;
+  overflow: hidden;
+  width: 100%;
+}
+
+.appShell {
+  height: 100dvh;
+  margin: 0 auto;
+  max-width: var(--7bam-shell-max);
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.appPanel {
+  height: 100dvh;
+  min-height: 100dvh;
+  width: 100%;
+}
+
+.feedPanel {
+  background: var(--7bam-feed-bg);
+  height: 100dvh;
   overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding:
+    max(12px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right))
+    max(24px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+  -webkit-overflow-scrolling: touch;
 }
 
 button,
@@ -102,19 +137,27 @@ a {
 }
 
 .sevenBamShell {
-  margin: 0 auto;
-  max-width: var(--7bam-shell-max);
-  min-height: 100dvh;
-  padding:
-    max(12px, env(safe-area-inset-top))
-    max(16px, env(safe-area-inset-right))
-    max(24px, env(safe-area-inset-bottom))
-    max(16px, env(safe-area-inset-left));
-  position: relative;
+  padding: 0;
 }
 
 .sevenBamLoadPanel {
-  padding: 48px 0;
+  padding:
+    max(48px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right))
+    max(24px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+}
+
+.sevenBamFeedTopBar {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--7bam-feed-bg);
+  padding-bottom: 4px;
 }
 
 .sevenBamLoadPanel h1 {
@@ -151,25 +194,34 @@ a {
 }
 
 .sevenBamViewPort {
+  height: 100dvh;
+  overflow: hidden;
   position: relative;
+  width: 100%;
+}
+
+.sevenBamViewPort--profile .sevenBamViewPanel--profile,
+.sevenBamViewPort--groups .sevenBamViewPanel--groups,
+.sevenBamViewPort--today .sevenBamViewPanel--today,
+.sevenBamViewPort--feed .feedPanel {
+  inset: 0;
+  position: absolute;
+  z-index: 10;
 }
 
 .sevenBamViewPort--profile .sevenBamViewPanel--profile,
 .sevenBamViewPort--groups .sevenBamViewPanel--groups {
-  inset: 0;
-  position: fixed;
   z-index: 20;
 }
 
+.sevenBamViewPort--feed .feedPanel {
+  z-index: 12;
+}
+
 .sevenBamViewPort--profile .sevenBamViewPanel--profile,
 .sevenBamViewPort--groups .sevenBamViewPanel--groups {
-  background: var(--7bam-page-bg, #f6f1e8);
   overflow-y: auto;
-  padding:
-    max(12px, env(safe-area-inset-top))
-    max(16px, env(safe-area-inset-right))
-    max(24px, env(safe-area-inset-bottom))
-    max(16px, env(safe-area-inset-left));
+  overscroll-behavior-y: contain;
 }
 
 .sevenBamViewPort--animating {
@@ -180,6 +232,21 @@ a {
   animation: sevenBamPanelIn var(--7bam-panel-transition, 300ms) ease;
 }
 
+.sevenBamViewPanel--today {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sevenBamViewPanel--today .sevenBamGestureGuide {
+  flex-shrink: 0;
+  margin:
+    max(12px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right))
+    0
+    max(16px, env(safe-area-inset-left));
+}
+
 .sevenBamViewPort--profile .sevenBamViewPanel--profile {
   animation-name: sevenBamPanelFromLeft;
 }
@@ -188,8 +255,12 @@ a {
   animation-name: sevenBamPanelFromRight;
 }
 
-.sevenBamViewPort--today .sevenBamViewPanel--todayColumn {
+.sevenBamViewPort--today .sevenBamViewPanel--today {
   animation-name: sevenBamPanelFadeIn;
+}
+
+.sevenBamViewPort--feed .feedPanel {
+  animation-name: sevenBamPanelFromBottom;
 }
 
 @keyframes sevenBamPanelFromLeft {
@@ -223,31 +294,35 @@ a {
   }
 }
 
+@keyframes sevenBamPanelFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sevenBamViewPanel {
     animation: none !important;
   }
 }
 
-.sevenBamTodayColumn {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
 .sevenBamToday {
   background: var(--7bam-yellow);
-  border: 1px solid var(--7bam-rule);
+  border: 0;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  min-height: 100dvh;
+  overflow: hidden;
   padding:
     max(20px, env(safe-area-inset-top))
     max(18px, env(safe-area-inset-right))
     max(24px, env(safe-area-inset-bottom))
     max(18px, env(safe-area-inset-left));
-  scroll-margin-top: 12px;
 }
 
 .sevenBamTodayHeader {
@@ -362,12 +437,11 @@ a {
 
 .sevenBamProfile,
 .sevenBamGroups {
-  background: var(--7bam-white);
-  border: 1px solid var(--7bam-rule);
+  background: var(--7bam-page-bg, #f6f1e8);
+  border: 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  min-height: 100dvh;
   padding:
     max(20px, env(safe-area-inset-top))
     max(18px, env(safe-area-inset-right))
@@ -593,7 +667,6 @@ a {
 }
 
 .sevenBamScrollHint,
-.sevenBamFeedLink,
 .sevenBamBackButton {
   background: transparent;
   border: 1px solid var(--7bam-ink);
@@ -710,12 +783,19 @@ a {
 
 .sevenBamComposer {
   background: var(--7bam-white);
-  border: 1px solid var(--7bam-rule);
+  border: 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  min-height: calc(100dvh - 140px);
-  padding: 18px 16px 24px;
+  height: 100dvh;
+  inset: 0;
+  overflow-y: auto;
+  padding:
+    max(18px, env(safe-area-inset-top))
+    16px
+    max(24px, env(safe-area-inset-bottom));
+  position: absolute;
+  z-index: 40;
 }
 
 .sevenBamComposerHeader {
@@ -790,18 +870,10 @@ a {
   opacity: 0.45;
 }
 
-.sevenBamFeed {
-  background: var(--7bam-feed-bg);
+.sevenBamFeedSection {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  min-height: 100dvh;
-  padding:
-    max(20px, env(safe-area-inset-top))
-    max(18px, env(safe-area-inset-right))
-    max(24px, env(safe-area-inset-bottom))
-    max(18px, env(safe-area-inset-left));
-  scroll-margin-top: 12px;
 }
 
 .sevenBamFeedHeader {
@@ -1031,7 +1103,7 @@ a {
     background: #ecece8;
   }
 
-  .sevenBamShell {
+  .appShell {
     background: var(--7bam-feed-bg);
     border-left: 1px solid var(--7bam-rule);
     border-right: 1px solid var(--7bam-rule);

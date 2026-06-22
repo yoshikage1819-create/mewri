@@ -72,12 +72,16 @@ export const FEED_SECTION_ID = "seven-bam-feed-section";
 
 export const FUTURE_FEATURES_SECTION_LABEL = "今後の機能";
 
-export type HorizontalPanel = "today" | "profile" | "groups";
+export const UNIMPLEMENTED_FEATURES_SECTION_LABEL = "未実装機能";
 
-/** @deprecated use HorizontalPanel */
-export type AppView = HorizontalPanel;
+export type AppPanel = "today" | "profile" | "groups" | "feed";
 
-export type SwipeDirection = "left" | "right" | null;
+export type HorizontalPanel = Exclude<AppPanel, "feed">;
+
+/** @deprecated use AppPanel */
+export type AppView = AppPanel;
+
+export type SwipeDirection = "left" | "right" | "up" | "down" | null;
 
 export const SWIPE_MIN_DISTANCE_PX = 72;
 
@@ -89,7 +93,7 @@ export const PANEL_TRANSITION_MS = 300;
 
 export const GESTURE_GUIDE_DISMISSED_KEY = "7bam.local-demo.gesture-guide-dismissed";
 
-export const GESTURE_GUIDE_TEXT = "左：プロフィール / 右：グループ / 下にスクロール：みんなの今日";
+export const GESTURE_GUIDE_TEXT = "左：プロフィール / 右：グループ / 上スワイプ：みんなの今日";
 
 export const OPEN_PROFILE_LABEL = "プロフィールを開く";
 
@@ -158,62 +162,79 @@ export type SwipeGestureOptions = {
   nearHorizontalEdge?: boolean;
 };
 
-export function formatPanelAnnouncement(panel: HorizontalPanel): string {
+export function formatPanelAnnouncement(panel: AppPanel): string {
   switch (panel) {
     case "profile":
       return "プロフィールを表示しています";
     case "groups":
       return "グループを表示しています";
+    case "feed":
+      return "みんなの今日を表示しています";
     default:
       return "今日のテーマを表示しています";
   }
 }
 
 /** @deprecated use formatPanelAnnouncement */
-export function formatViewAnnouncement(view: HorizontalPanel): string {
+export function formatViewAnnouncement(view: AppPanel): string {
   return formatPanelAnnouncement(view);
 }
 
-export function formatFeedScrollAnnouncement(): string {
+export function formatFeedPanelAnnouncement(): string {
   return "みんなの今日へ移動しました";
 }
 
-export function formatTodayScrollAnnouncement(): string {
+export function formatTodayPanelAnnouncement(): string {
   return "今日のテーマへ戻りました";
 }
 
-export function swipeDirectionOnTodayPanel(direction: SwipeDirection): HorizontalPanel | null {
+/** @deprecated use formatFeedPanelAnnouncement */
+export function formatFeedScrollAnnouncement(): string {
+  return formatFeedPanelAnnouncement();
+}
+
+/** @deprecated use formatTodayPanelAnnouncement */
+export function formatTodayScrollAnnouncement(): string {
+  return formatTodayPanelAnnouncement();
+}
+
+export function swipeDirectionOnTodayPanel(direction: SwipeDirection): AppPanel | null {
   if (direction === "left") return "profile";
   if (direction === "right") return "groups";
+  if (direction === "up") return "feed";
   return null;
 }
 
-export function swipeDirectionOnProfilePanel(direction: SwipeDirection): HorizontalPanel | null {
+export function swipeDirectionOnFeedPanel(direction: SwipeDirection): AppPanel | null {
+  if (direction === "down") return "today";
+  return null;
+}
+
+export function swipeDirectionOnProfilePanel(direction: SwipeDirection): AppPanel | null {
   if (direction === "right") return "today";
   return null;
 }
 
-export function swipeDirectionOnGroupsPanel(direction: SwipeDirection): HorizontalPanel | null {
+export function swipeDirectionOnGroupsPanel(direction: SwipeDirection): AppPanel | null {
   if (direction === "left") return "today";
   return null;
 }
 
-export function resolveSwipeTargetPanel(
-  panel: HorizontalPanel,
-  direction: SwipeDirection
-): HorizontalPanel | null {
+export function resolveSwipeTargetPanel(panel: AppPanel, direction: SwipeDirection): AppPanel | null {
   switch (panel) {
     case "profile":
       return swipeDirectionOnProfilePanel(direction);
     case "groups":
       return swipeDirectionOnGroupsPanel(direction);
+    case "feed":
+      return swipeDirectionOnFeedPanel(direction);
     default:
       return swipeDirectionOnTodayPanel(direction);
   }
 }
 
 /** @deprecated use resolveSwipeTargetPanel */
-export function swipeDirectionToView(direction: SwipeDirection): HorizontalPanel | null {
+export function swipeDirectionToView(direction: SwipeDirection): AppPanel | null {
   return swipeDirectionOnTodayPanel(direction);
 }
 
@@ -250,6 +271,11 @@ export function detectSwipeDirection(sample: SwipePointerSample): SwipeDirection
   if (absX >= SWIPE_MIN_DISTANCE_PX && absX > absY * SWIPE_HORIZONTAL_DOMINANCE_RATIO) {
     if (deltaX < 0) return "left";
     if (deltaX > 0) return "right";
+  }
+
+  if (absY >= SWIPE_MIN_DISTANCE_PX && absY > absX * SWIPE_HORIZONTAL_DOMINANCE_RATIO) {
+    if (deltaY < 0) return "up";
+    if (deltaY > 0) return "down";
   }
 
   return null;

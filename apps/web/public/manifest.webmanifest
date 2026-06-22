@@ -1,0 +1,19 @@
+{
+  "name": "7bam",
+  "short_name": "7bam",
+  "description": "7bam（セブンバム）のブラウザ内ローカルデモ。今日のテーマに写真を追加し、この端末内だけで試せます。",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffe500",
+  "theme_color": "#ffe500",
+  "orientation": "portrait-primary",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

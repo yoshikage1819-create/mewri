@@ -103,7 +103,7 @@ type TodayScreenProps = {
   themeDescription?: string;
   submitNotice: string;
   onOpenPhotoSource: () => void;
-  onScrollToFeed: () => void;
+  onOpenFeed: () => void;
   onOpenProfile: () => void;
   onOpenGroups: () => void;
   gestureDisabled?: boolean;
@@ -119,7 +119,7 @@ export function TodayScreen({
   themeDescription,
   submitNotice,
   onOpenPhotoSource,
-  onScrollToFeed,
+  onOpenFeed,
   onOpenProfile,
   onOpenGroups,
   gestureDisabled = false,
@@ -129,7 +129,7 @@ export function TodayScreen({
   return (
     <section
       id={TODAY_SECTION_ID}
-      className={`sevenBamToday${gestureDisabled ? " sevenBamToday--gestureDisabled" : ""}`}
+      className={`appPanel sevenBamToday${gestureDisabled ? " sevenBamToday--gestureDisabled" : ""}`}
       aria-labelledby="seven-bam-today-theme"
       onPointerDown={gestureHandlers?.onPointerDown}
       onPointerMove={gestureHandlers?.onPointerMove}
@@ -184,12 +184,8 @@ export function TodayScreen({
           <span className="sevenBamCameraLabel">投稿する</span>
         </button>
 
-        <button type="button" className="sevenBamScrollHint" aria-label={VIEW_FEED_LABEL} onClick={onScrollToFeed}>
+        <button type="button" className="sevenBamScrollHint" aria-label={VIEW_FEED_LABEL} onClick={onOpenFeed}>
           {SCROLL_TO_FEED_HINT}
-        </button>
-
-        <button type="button" className="sevenBamFeedLink" aria-label={VIEW_FEED_LABEL} onClick={onScrollToFeed}>
-          {VIEW_FEED_LABEL}
         </button>
       </div>
 
@@ -391,6 +387,34 @@ type PanelBackProps = {
   backButtonRef?: React.RefObject<HTMLButtonElement | null>;
 };
 
+type FeedPanelTopBarProps = {
+  onReset: () => void;
+  onAddSamplePosts?: () => void;
+};
+
+export function FeedPanelTopBar({ onReset, onAddSamplePosts }: FeedPanelTopBarProps) {
+  return (
+    <header className="sevenBamFeedTopBar" role="banner">
+      <span className="sevenBamBrandCompact">{SEVEN_BAM_BRAND}</span>
+      <div className="sevenBamTopTools">
+        {onAddSamplePosts ? (
+          <button
+            className="sevenBamGhostButton compactOnly"
+            type="button"
+            aria-label="各テーマにサンプル投稿を追加"
+            onClick={onAddSamplePosts}
+          >
+            サンプル投入
+          </button>
+        ) : null}
+        <button className="sevenBamGhostButton" type="button" aria-label="デモを初期状態に戻す" onClick={onReset}>
+          リセット
+        </button>
+      </div>
+    </header>
+  );
+}
+
 type TodayFeedProps = PanelBackProps & {
   items: TodayFeedItem[];
   gestureHandlers?: PanelGestureHandlers;
@@ -407,7 +431,7 @@ export function TodayFeed({
   return (
     <section
       id={FEED_SECTION_ID}
-      className={`sevenBamFeed${gestureDisabled ? " sevenBamFeed--gestureDisabled" : ""}`}
+      className={`sevenBamFeedSection${gestureDisabled ? " sevenBamFeedSection--gestureDisabled" : ""}`}
       aria-labelledby="seven-bam-feed-title"
       onPointerDown={gestureHandlers?.onPointerDown}
       onPointerMove={gestureHandlers?.onPointerMove}
@@ -485,7 +509,7 @@ export function ProfilePanel({
 }: ProfilePanelProps) {
   return (
     <section
-      className={`sevenBamProfile${gestureDisabled ? " sevenBamProfile--gestureDisabled" : ""}`}
+      className={`appPanel sevenBamProfile${gestureDisabled ? " sevenBamProfile--gestureDisabled" : ""}`}
       aria-labelledby="seven-bam-profile-title"
       onPointerDown={gestureHandlers?.onPointerDown}
       onPointerMove={gestureHandlers?.onPointerMove}
@@ -594,7 +618,7 @@ export function GroupsPanel({
 
   return (
     <section
-      className={`sevenBamGroups${gestureDisabled ? " sevenBamGroups--gestureDisabled" : ""}`}
+      className={`appPanel sevenBamGroups${gestureDisabled ? " sevenBamGroups--gestureDisabled" : ""}`}
       aria-labelledby="seven-bam-groups-title"
       onPointerDown={gestureHandlers?.onPointerDown}
       onPointerMove={gestureHandlers?.onPointerMove}
