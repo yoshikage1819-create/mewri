@@ -9,11 +9,10 @@ import {
   buildAddSamplePostsConfirmMessage,
   clampCaption,
   createSampleImageDataUrl,
-  FEED_SECTION_ID,
-  formatFeedScrollAnnouncement,
+  formatFeedPanelAnnouncement,
   formatPanelAnnouncement,
   formatPostSubmitSuccessMessage,
-  formatTodayScrollAnnouncement,
+  formatTodayPanelAnnouncement,
   FUTURE_FEATURES_SECTION_LABEL,
   isCaptionWithinLimit,
   isSwipeBlockedStartTarget,
@@ -29,15 +28,15 @@ import {
   resolveSwipeGesture,
   resolveSwipeTargetPanel,
   revokeObjectUrl,
-  scrollToElementById,
   SEVEN_BAM_BRAND,
-  TODAY_SECTION_ID,
-  type HorizontalPanel,
+  UNIMPLEMENTED_FEATURES_SECTION_LABEL,
+  type AppPanel,
   type PhotoPickerSource,
   validateLocalImageFile
 } from "./local-demo-ui";
 import { buildGenerateZineHandler, isZineReadyForCycle, ZineToolsPanel } from "./seven-bam-zine-tools";
 import {
+  FeedPanelTopBar,
   GestureGuide,
   GroupsPanel,
   PhotoComposer,
@@ -53,7 +52,7 @@ const appService: MewriAppService = createBrowserLocalMewriAppService();
 
 export default function HomePage() {
   const [state, setState] = useState<MewriState | null>(null);
-  const [horizontalPanel, setHorizontalPanel] = useState<HorizontalPanel>("today");
+  const [appPanel, setAppPanel] = useState<AppPanel>("today");
   const [sourceSheetOpen, setSourceSheetOpen] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
   const [photoSource, setPhotoSource] = useState<PhotoPickerSource | null>(null);
@@ -69,7 +68,6 @@ export default function HomePage() {
   const [postListMode, setPostListMode] = useState<"all" | "theme">("all");
   const [panelAnimating, setPanelAnimating] = useState(false);
   const [panelAnnouncement, setPanelAnnouncement] = useState("");
-  const [scrollAnnouncement, setScrollAnnouncement] = useState("");
   const [profileNotice, setProfileNotice] = useState("");
   const [groupsSwitchNotice, setGroupsSwitchNotice] = useState("");
   const [gestureGuideVisible, dismissGestureGuide] = useGestureGuideVisible();
@@ -80,7 +78,7 @@ export default function HomePage() {
   const profileBackRef = useRef<HTMLButtonElement>(null);
   const groupsBackRef = useRef<HTMLButtonElement>(null);
   const feedBackRef = useRef<HTMLButtonElement>(null);
-  const savedScrollYRef = useRef(0);
+  const feedPanelRef = useRef<HTMLDivElement>(null);
   const hasNavigatedRef = useRef(false);
   const swipePointerIdRef = useRef<number | null>(null);
   const swipeStartRef = useRef({ x: 0, y: 0 });
@@ -112,20 +110,16 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!hasNavigatedRef.current) {
-      if (horizontalPanel !== "today") hasNavigatedRef.current = true;
+      if (appPanel !== "today") hasNavigatedRef.current = true;
       return;
     }
 
-    setPanelAnnouncement(formatPanelAnnouncement(horizontalPanel));
-    if (horizontalPanel === "profile") profileBackRef.current?.focus();
-    else if (horizontalPanel === "groups") groupsBackRef.current?.focus();
-    else if (horizontalPanel === "today") {
-      requestAnimationFrame(() => {
-        window.scrollTo({ top: savedScrollYRef.current, behavior: "auto" });
-      });
-      cameraButtonRef.current?.focus();
-    }
-  }, [horizontalPanel]);
+    setPanelAnnouncement(formatPanelAnnouncement(appPanel));
+    if (appPanel === "profile") profileBackRef.current?.focus();
+    else if (appPanel === "groups") groupsBackRef.current?.focus();
+    else if (appPanel === "feed") feedBackRef.current?.focus({ preventScroll: true });
+    else if (appPanel === "today") cameraButtonRef.current?.focus();
+  }, [appPanel]);
 
   const activeGroup = state?.groups[0];
   const activeUser = state?.users[0];
@@ -189,16 +183,13 @@ export default function HomePage() {
 
   const gestureBlocked = sourceSheetOpen || composerOpen || panelAnimating;
 
-  function navigateTo(nextPanel: HorizontalPanel) {
-    if (gestureBlocked || nextPanel === horizontalPanel) return;
-    if (horizontalPanel === "today") {
-      savedScrollYRef.current = window.scrollY;
-    }
+  function navigateTo(nextPanel: AppPanel) {
+    if (gestureBlocked || nextPanel === appPanel) return;
     hasNavigatedRef.current = true;
     setProfileNotice("");
     setGroupsSwitchNotice("");
     setPanelAnimating(true);
-    setHorizontalPanel(nextPanel);
+    setAppPanel(nextPanel);
     if (panelTransitionTimerRef.current) clearTimeout(panelTransitionTimerRef.current);
     panelTransitionTimerRef.current = setTimeout(() => {
       setPanelAnimating(false);
@@ -207,18 +198,15 @@ export default function HomePage() {
 
   function goToToday() {
     navigateTo("today");
+    setPanelAnnouncement(formatTodayPanelAnnouncement());
   }
 
-  function scrollToFeed() {
-    scrollToElementById(FEED_SECTION_ID);
-    setScrollAnnouncement(formatFeedScrollAnnouncement());
-    feedBackRef.current?.focus({ preventScroll: true });
-  }
-
-  function scrollToTodaySection() {
-    scrollToElementById(TODAY_SECTION_ID);
-    setScrollAnnouncement(formatTodayScrollAnnouncement());
-    cameraButtonRef.current?.focus({ preventScroll: true });
+  function openFeedPanel() {
+    navigateTo("feed");
+    setPanelAnnouncement(formatFeedPanelAnnouncement());
+    requestAnimationFrame(() => {
+      feedPanelRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    });
   }
 
   function beginSwipePointer(event: React.PointerEvent<HTMLElement>) {
@@ -237,7 +225,7 @@ export default function HomePage() {
     if (swipePointerIdRef.current !== event.pointerId) return;
   }
 
-  function finishSwipePointer(event: React.PointerEvent<HTMLElement>, panel: HorizontalPanel) {
+  function finishSwipePointer(event: React.PointerEvent<HTMLElement>, panel: AppPanel) {
     if (swipePointerIdRef.current !== event.pointerId) return;
     if (gestureBlocked || swipeStartBlockedRef.current) {
       swipePointerIdRef.current = null;
@@ -259,11 +247,25 @@ export default function HomePage() {
     );
     swipePointerIdRef.current = null;
 
+    if (panel === "feed" && direction === "down" && (feedPanelRef.current?.scrollTop ?? 0) > 0) {
+      return;
+    }
+
     const nextPanel = resolveSwipeTargetPanel(panel, direction);
-    if (nextPanel) navigateTo(nextPanel);
+    if (!nextPanel) return;
+
+    if (nextPanel === "feed") {
+      openFeedPanel();
+      return;
+    }
+    if (nextPanel === "today" && panel === "feed") {
+      goToToday();
+      return;
+    }
+    navigateTo(nextPanel);
   }
 
-  function endSwipePointer(event: React.PointerEvent<HTMLElement>, panel: HorizontalPanel) {
+  function endSwipePointer(event: React.PointerEvent<HTMLElement>, panel: AppPanel) {
     finishSwipePointer(event, panel);
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
@@ -281,6 +283,13 @@ export default function HomePage() {
     onPointerDown: beginSwipePointer,
     onPointerMove: moveSwipePointer,
     onPointerUp: (event: React.PointerEvent<HTMLElement>) => endSwipePointer(event, "today"),
+    onPointerCancel: cancelSwipePointer
+  };
+
+  const feedGestureHandlers = {
+    onPointerDown: beginSwipePointer,
+    onPointerMove: moveSwipePointer,
+    onPointerUp: (event: React.PointerEvent<HTMLElement>) => endSwipePointer(event, "feed"),
     onPointerCancel: cancelSwipePointer
   };
 
@@ -366,7 +375,7 @@ export default function HomePage() {
     setCaption("");
     setImageError("");
     setComposerOpen(true);
-    setHorizontalPanel("today");
+    setAppPanel("today");
   }
 
   async function handleSubmitPost() {
@@ -396,7 +405,7 @@ export default function HomePage() {
 
       setState(nextState);
       clearComposerState();
-      setHorizontalPanel("today");
+      setAppPanel("today");
       setSubmitNotice(formatPostSubmitSuccessMessage());
     } catch {
       setImageError(LOCAL_DEMO_IMAGE_LOAD_FAILED_MESSAGE);
@@ -426,7 +435,10 @@ export default function HomePage() {
     setZineGenerateNotice("");
     setProfileNotice("");
     setGroupsSwitchNotice("");
-    setHorizontalPanel("today");
+    setAppPanel("today");
+    requestAnimationFrame(() => {
+      feedPanelRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    });
   }
 
   function addSamplePosts() {
@@ -478,8 +490,8 @@ export default function HomePage() {
 
   if (!state || !activeGroup || !activeCycle || !activeTheme || !activeUser) {
     return (
-      <main className="sevenBamShell">
-        <section className="sevenBamLoadPanel">
+      <main className="appShell sevenBamShell">
+        <section className="appPanel sevenBamLoadPanel">
           <p className="sevenBamBrand">{SEVEN_BAM_BRAND}</p>
           <h1>読み込み中</h1>
           <p role={loadNotice ? "alert" : "status"} aria-live={loadNotice ? "assertive" : "polite"}>
@@ -491,42 +503,27 @@ export default function HomePage() {
   }
 
   return (
-    <main className="sevenBamShell">
+    <main className="appShell sevenBamShell">
       <a className="skipLink" href="#seven-bam-main">
         メインコンテンツへスキップ
       </a>
 
-      <header className="sevenBamTopBar" role="banner">
-        <span className="sevenBamBrandCompact">{SEVEN_BAM_BRAND}</span>
-        <div className="sevenBamTopTools">
-          <button className="sevenBamGhostButton compactOnly" type="button" aria-label="各テーマにサンプル投稿を追加" onClick={addSamplePosts}>
-            サンプル投入
-          </button>
-          <button className="sevenBamGhostButton" type="button" aria-label="デモを初期状態に戻す" onClick={handleReset}>
-            リセット
-          </button>
-        </div>
-      </header>
-
       <p className="srOnly" role="status" aria-live="polite">
         {panelAnnouncement}
-      </p>
-      <p className="srOnly" role="status" aria-live="polite">
-        {scrollAnnouncement}
       </p>
 
       <div
         id="seven-bam-main"
-        className={`sevenBamViewPort sevenBamViewPort--${horizontalPanel}${panelAnimating ? " sevenBamViewPort--animating" : ""}`}
+        className={`sevenBamViewPort sevenBamViewPort--${appPanel}${panelAnimating ? " sevenBamViewPort--animating" : ""}`}
       >
         <div
-          className="sevenBamViewPanel sevenBamViewPanel--todayColumn"
-          hidden={horizontalPanel !== "today" || composerOpen}
-          inert={horizontalPanel !== "today" || composerOpen || undefined}
-          aria-hidden={horizontalPanel !== "today" || composerOpen}
+          className="sevenBamViewPanel sevenBamViewPanel--today"
+          hidden={appPanel !== "today" || composerOpen}
+          inert={appPanel !== "today" || composerOpen || undefined}
+          aria-hidden={appPanel !== "today" || composerOpen}
         >
-          {horizontalPanel === "today" && !composerOpen ? (
-            <div className="sevenBamTodayColumn">
+          {appPanel === "today" && !composerOpen ? (
+            <>
               {gestureGuideVisible ? <GestureGuide onDismiss={dismissGestureGuide} /> : null}
               <TodayScreen
                 currentUser={activeUser}
@@ -536,61 +533,78 @@ export default function HomePage() {
                 themeDescription={activeTheme.description}
                 submitNotice={submitNotice}
                 onOpenPhotoSource={openSourceSheet}
-                onScrollToFeed={scrollToFeed}
+                onOpenFeed={openFeedPanel}
                 onOpenProfile={() => navigateTo("profile")}
                 onOpenGroups={() => navigateTo("groups")}
                 gestureDisabled={gestureBlocked}
                 gestureHandlers={todayGestureHandlers}
                 cameraButtonRef={cameraButtonRef}
               />
+            </>
+          ) : null}
+        </div>
+
+        <div
+          ref={feedPanelRef}
+          className="sevenBamViewPanel feedPanel appPanel--feed"
+          hidden={appPanel !== "feed"}
+          inert={appPanel !== "feed" || undefined}
+          aria-hidden={appPanel !== "feed"}
+          onPointerDown={feedGestureHandlers.onPointerDown}
+          onPointerMove={feedGestureHandlers.onPointerMove}
+          onPointerUp={feedGestureHandlers.onPointerUp}
+          onPointerCancel={feedGestureHandlers.onPointerCancel}
+        >
+          {appPanel === "feed" ? (
+            <>
+              <FeedPanelTopBar onReset={handleReset} onAddSamplePosts={addSamplePosts} />
               <TodayFeed
                 items={todayFeedItems}
-                onBackToToday={scrollToTodaySection}
+                onBackToToday={goToToday}
                 backButtonRef={feedBackRef}
-                gestureHandlers={todayGestureHandlers}
                 gestureDisabled={gestureBlocked}
               />
               <details className="sevenBamFutureFeatures">
-                <summary>{FUTURE_FEATURES_SECTION_LABEL}</summary>
+                <summary>{UNIMPLEMENTED_FEATURES_SECTION_LABEL}</summary>
                 <div className="sevenBamFutureFeaturesBody">
-                  <ZineToolsPanel
-                    state={state}
-                    activeCycle={activeCycle}
-                    activeGroup={activeGroup}
-                    cycleThemes={cycleThemes}
-                    visibleZineThemes={visibleZineThemes}
-                    cyclePosts={cyclePosts}
-                    visiblePosts={visiblePosts}
-                    postListMode={postListMode}
-                    effectiveSelectedThemeId={effectiveSelectedThemeId}
-                    selectedTheme={selectedTheme}
-                    targetPostCount={targetPostCount}
-                    zineReady={zineReady}
-                    publishedZine={publishedZine}
-                    publishedPages={publishedPages}
-                    zineGenerateNotice={zineGenerateNotice}
-                    onSelectTheme={(themeId) => {
-                      setSelectedThemeId(themeId);
-                      setPostListMode("theme");
-                    }}
-                    onShowAllPosts={() => setPostListMode("all")}
-                    onGenerateZine={handleGenerateZine}
-                  />
                   <LocalDemoSafetyNotice />
                 </div>
               </details>
+              <ZineToolsPanel
+                state={state}
+                activeCycle={activeCycle}
+                activeGroup={activeGroup}
+                cycleThemes={cycleThemes}
+                visibleZineThemes={visibleZineThemes}
+                cyclePosts={cyclePosts}
+                visiblePosts={visiblePosts}
+                postListMode={postListMode}
+                effectiveSelectedThemeId={effectiveSelectedThemeId}
+                selectedTheme={selectedTheme}
+                targetPostCount={targetPostCount}
+                zineReady={zineReady}
+                publishedZine={publishedZine}
+                publishedPages={publishedPages}
+                zineGenerateNotice={zineGenerateNotice}
+                onSelectTheme={(themeId) => {
+                  setSelectedThemeId(themeId);
+                  setPostListMode("theme");
+                }}
+                onShowAllPosts={() => setPostListMode("all")}
+                onGenerateZine={handleGenerateZine}
+              />
               <LocalDemoFeedbackNote />
-            </div>
+            </>
           ) : null}
         </div>
 
         <div
           className="sevenBamViewPanel sevenBamViewPanel--profile"
-          hidden={horizontalPanel !== "profile"}
-          inert={horizontalPanel !== "profile" || undefined}
-          aria-hidden={horizontalPanel !== "profile"}
+          hidden={appPanel !== "profile"}
+          inert={appPanel !== "profile" || undefined}
+          aria-hidden={appPanel !== "profile"}
         >
-          {horizontalPanel === "profile" ? (
+          {appPanel === "profile" ? (
             <ProfilePanel
               user={activeUser}
               posts={ownPosts}
@@ -606,11 +620,11 @@ export default function HomePage() {
 
         <div
           className="sevenBamViewPanel sevenBamViewPanel--groups"
-          hidden={horizontalPanel !== "groups"}
-          inert={horizontalPanel !== "groups" || undefined}
-          aria-hidden={horizontalPanel !== "groups"}
+          hidden={appPanel !== "groups"}
+          inert={appPanel !== "groups" || undefined}
+          aria-hidden={appPanel !== "groups"}
         >
-          {horizontalPanel === "groups" ? (
+          {appPanel === "groups" ? (
             <GroupsPanel
               currentGroup={activeGroup}
               currentMemberCount={groupMembers.length}
@@ -639,7 +653,7 @@ export default function HomePage() {
             onRetake={handleRetake}
             onCancel={() => {
               clearComposerState();
-              setHorizontalPanel("today");
+              setAppPanel("today");
               cameraButtonRef.current?.focus();
             }}
           />

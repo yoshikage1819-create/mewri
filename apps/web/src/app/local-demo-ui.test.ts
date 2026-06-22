@@ -20,12 +20,16 @@ import {
   formatTodayThemeDayLabel,
   formatTrustedGroupCue,
   FEED_SECTION_ID,
+  formatFeedPanelAnnouncement,
   formatFeedScrollAnnouncement,
   formatPanelAnnouncement,
+  formatTodayPanelAnnouncement,
   formatTodayScrollAnnouncement,
   FUTURE_FEATURES_SECTION_LABEL,
+  UNIMPLEMENTED_FEATURES_SECTION_LABEL,
   resolveSwipeTargetPanel,
   SCROLL_TO_FEED_HINT,
+  swipeDirectionOnFeedPanel,
   swipeDirectionOnGroupsPanel,
   swipeDirectionOnProfilePanel,
   swipeDirectionOnTodayPanel,
@@ -390,13 +394,21 @@ describe("revokeObjectUrl", () => {
 });
 
 describe("panel navigation helpers", () => {
-  it("maps today-panel swipes to horizontal panels only", () => {
+  it("maps today-panel swipes to profile, groups, and feed", () => {
     expect(swipeDirectionOnTodayPanel("left")).toBe("profile");
     expect(swipeDirectionOnTodayPanel("right")).toBe("groups");
+    expect(swipeDirectionOnTodayPanel("up")).toBe("feed");
     expect(swipeDirectionOnTodayPanel(null)).toBeNull();
     expect(swipeDirectionToView("left")).toBe("profile");
     expect(swipeDirectionToView("right")).toBe("groups");
+    expect(swipeDirectionToView("up")).toBe("feed");
     expect(swipeDirectionToView(null)).toBeNull();
+  });
+
+  it("maps feed down swipe to today", () => {
+    expect(swipeDirectionOnFeedPanel("down")).toBe("today");
+    expect(swipeDirectionOnFeedPanel("up")).toBeNull();
+    expect(resolveSwipeTargetPanel("feed", "down")).toBe("today");
   });
 
   it("maps profile and groups return swipes to today", () => {
@@ -408,6 +420,7 @@ describe("panel navigation helpers", () => {
 
   it("resolves swipe targets per active panel", () => {
     expect(resolveSwipeTargetPanel("today", "left")).toBe("profile");
+    expect(resolveSwipeTargetPanel("today", "up")).toBe("feed");
     expect(resolveSwipeTargetPanel("profile", "right")).toBe("today");
     expect(resolveSwipeTargetPanel("groups", "left")).toBe("today");
   });
@@ -415,15 +428,20 @@ describe("panel navigation helpers", () => {
   it("announces panel changes for screen readers", () => {
     expect(formatPanelAnnouncement("profile")).toContain("プロフィール");
     expect(formatPanelAnnouncement("groups")).toContain("グループ");
+    expect(formatPanelAnnouncement("feed")).toContain("みんなの今日");
     expect(formatPanelAnnouncement("today")).toContain("今日のテーマ");
   });
 
-  it("announces in-page feed scroll helpers", () => {
-    expect(formatFeedScrollAnnouncement()).toContain("みんなの今日");
-    expect(formatTodayScrollAnnouncement()).toContain("今日のテーマ");
-    expect(SCROLL_TO_FEED_HINT).toContain("みんなの今日");
+  it("announces feed and today panel transitions", () => {
+    expect(formatFeedPanelAnnouncement()).toContain("みんなの今日");
+    expect(formatTodayPanelAnnouncement()).toContain("今日のテーマ");
+    expect(formatFeedScrollAnnouncement()).toBe(formatFeedPanelAnnouncement());
+    expect(formatTodayScrollAnnouncement()).toBe(formatTodayPanelAnnouncement());
+    expect(SCROLL_TO_FEED_HINT).toBe("↓ みんなの今日");
+    expect(VIEW_FEED_LABEL).toBe("みんなの今日を見る");
     expect(TODAY_SECTION_ID).toBe("seven-bam-today-section");
     expect(FEED_SECTION_ID).toBe("seven-bam-feed-section");
+    expect(UNIMPLEMENTED_FEATURES_SECTION_LABEL).toBe("未実装機能");
     expect(FUTURE_FEATURES_SECTION_LABEL).toBe("今後の機能");
   });
 });
@@ -445,7 +463,7 @@ describe("swipe detection", () => {
     ).toBe("left");
   });
 
-  it("detects left and right swipes only", () => {
+  it("detects left and right swipes only when horizontal-dominant", () => {
     expect(
       detectSwipeDirection({
         ...base,
@@ -457,9 +475,16 @@ describe("swipe detection", () => {
       detectSwipeDirection({
         ...base,
         endX: base.startX + 4,
+        endY: base.startY - SWIPE_MIN_DISTANCE_PX - 12
+      })
+    ).toBe("up");
+    expect(
+      detectSwipeDirection({
+        ...base,
+        endX: base.startX + 4,
         endY: base.startY + SWIPE_MIN_DISTANCE_PX + 12
       })
-    ).toBeNull();
+    ).toBe("down");
   });
 
   it("ignores small, diagonal, and upward moves", () => {
@@ -520,7 +545,7 @@ describe("profile and groups fixtures", () => {
   it("stores gesture guide dismissal in a dedicated key", () => {
     expect(GESTURE_GUIDE_DISMISSED_KEY).toBe("7bam.local-demo.gesture-guide-dismissed");
     expect(GESTURE_GUIDE_TEXT).toContain("プロフィール");
-    expect(GESTURE_GUIDE_TEXT).toContain("スクロール");
+    expect(GESTURE_GUIDE_TEXT).toContain("上スワイプ");
   });
 });
 
