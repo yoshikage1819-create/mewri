@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./styles.css";
 
 export const metadata: Metadata = {
-  title: "Mewri | 今日のテーマからZINEへ",
-  description: "少人数で写真を持ち寄り、数日分の投稿からZINEを作るブラウザ内デモ。"
+  title: "7bam | 今日のテーマ",
+  description: "7bam（セブンバム）のブラウザ内ローカルデモ。今日のテーマに写真を追加し、この端末内だけで試せます。"
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
