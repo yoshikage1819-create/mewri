@@ -1,46 +1,89 @@
 ﻿"use client";
 
-import { canGenerateZine, type MewriState, type Post, type Theme } from "@mewri/core";
+import { type MewriState } from "@mewri/core";
 import { createBrowserLocalMewriAppService, createEvent, createPost, type MewriAppService } from "@mewri/data";
-import { useEffect, useMemo, useState } from "react";
-import {
-  buildAddSamplePostsConfirmMessage,
-  buildGenerateZineConfirmMessage,
-  calcReadinessPercent,
-  calcLocalImageScale,
-  createSampleImageDataUrl,
-  formatEmptyPostListMessage,
-  formatFullDate,
-  formatPostListKicker,
-  type PostListMode,
-  formatPostSubmitSuccessMessage,
-  LOCAL_DEMO_BANNER_BODY,
-  LOCAL_DEMO_BANNER_TITLE,
-  formatRemainingToday,
-  formatZineGenerateBlockedHint,
-  formatZineRemainingHeadline,
-  LOCAL_DEMO_RESET_CONFIRM_MESSAGE,
-  scrollToElementById
-} from "./local-demo-ui";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { LocalDemoFeedbackNote } from "./local-demo-feedback-note";
 import { LocalDemoSafetyNotice } from "./local-demo-safety-notice";
+import {
+  buildAddSamplePostsConfirmMessage,
+  clampCaption,
+  createSampleImageDataUrl,
+  formatFeedPanelAnnouncement,
+  formatPanelAnnouncement,
+  formatPostSubmitSuccessMessage,
+  formatTodayPanelAnnouncement,
+  FUTURE_FEATURES_SECTION_LABEL,
+  isCaptionWithinLimit,
+  isSwipeBlockedStartTarget,
+  isSwipeStartNearHorizontalEdge,
+  LOCAL_DEMO_CAMERA_FAILED_MESSAGE,
+  LOCAL_DEMO_GROUP_SWITCH_UNAVAILABLE,
+  LOCAL_DEMO_IMAGE_LOAD_FAILED_MESSAGE,
+  LOCAL_DEMO_RESET_CONFIRM_MESSAGE,
+  LOCAL_DEMO_UNAVAILABLE_FEATURE_NOTICE,
+  optimizeLocalImage,
+  prefersReducedMotion,
+  resolvePanelTransitionMs,
+  resolveSwipeGesture,
+  resolveSwipeTargetPanel,
+  revokeObjectUrl,
+  SEVEN_BAM_BRAND,
+  UNIMPLEMENTED_FEATURES_SECTION_LABEL,
+  type AppPanel,
+  type PhotoPickerSource,
+  validateLocalImageFile
+} from "./local-demo-ui";
+import { buildGenerateZineHandler, isZineReadyForCycle, ZineToolsPanel } from "./seven-bam-zine-tools";
+import {
+  FeedPanelTopBar,
+  GestureGuide,
+  GroupsPanel,
+  PhotoComposer,
+  PhotoSourceSheet,
+  ProfilePanel,
+  TodayFeed,
+  type TodayFeedItem,
+  TodayScreen,
+  useGestureGuideVisible
+} from "./seven-bam-ui";
 
 const appService: MewriAppService = createBrowserLocalMewriAppService();
 
-type ActiveSection = "active" | "posts";
 export default function HomePage() {
   const [state, setState] = useState<MewriState | null>(null);
-  const [selectedThemeId, setSelectedThemeId] = useState("");
-  const [postListMode, setPostListMode] = useState<PostListMode>("all");
+  const [appPanel, setAppPanel] = useState<AppPanel>("today");
+  const [sourceSheetOpen, setSourceSheetOpen] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [photoSource, setPhotoSource] = useState<PhotoPickerSource | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
-  const [selectedFileName, setSelectedFileName] = useState("");
-  const [imageNotice, setImageNotice] = useState("");
-  const [showUrlFallback, setShowUrlFallback] = useState(false);
-  const [postSubmitNotice, setPostSubmitNotice] = useState("");
+  const [imageError, setImageError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitNotice, setSubmitNotice] = useState("");
   const [loadNotice, setLoadNotice] = useState("");
   const [zineGenerateNotice, setZineGenerateNotice] = useState("");
-  const [activeSection, setActiveSection] = useState<ActiveSection>("active");
+  const [selectedThemeId, setSelectedThemeId] = useState("");
+  const [postListMode, setPostListMode] = useState<"all" | "theme">("all");
+  const [panelAnimating, setPanelAnimating] = useState(false);
+  const [panelAnnouncement, setPanelAnnouncement] = useState("");
+  const [profileNotice, setProfileNotice] = useState("");
+  const [groupsSwitchNotice, setGroupsSwitchNotice] = useState("");
+  const [gestureGuideVisible, dismissGestureGuide] = useGestureGuideVisible();
+
+  const cameraButtonRef = useRef<HTMLButtonElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const libraryInputRef = useRef<HTMLInputElement>(null);
+  const profileBackRef = useRef<HTMLButtonElement>(null);
+  const groupsBackRef = useRef<HTMLButtonElement>(null);
+  const feedBackRef = useRef<HTMLButtonElement>(null);
+  const feedPanelRef = useRef<HTMLDivElement>(null);
+  const hasNavigatedRef = useRef(false);
+  const swipePointerIdRef = useRef<number | null>(null);
+  const swipeStartRef = useRef({ x: 0, y: 0 });
+  const swipeStartBlockedRef = useRef(false);
+  const panelTransitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     let loaded: MewriState;
@@ -56,22 +99,32 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    function onScroll() {
-      const y = window.scrollY + 140;
-      const active = document.getElementById("active-zine")?.offsetTop ?? 0;
-      const posts = document.getElementById("zine-contents")?.offsetTop ?? 0;
-      if (y >= posts) setActiveSection("posts");
-      else if (y >= active) setActiveSection("active");
+    return () => revokeObjectUrl(previewUrl);
+  }, [previewUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (panelTransitionTimerRef.current) clearTimeout(panelTransitionTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hasNavigatedRef.current) {
+      if (appPanel !== "today") hasNavigatedRef.current = true;
+      return;
     }
 
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    setPanelAnnouncement(formatPanelAnnouncement(appPanel));
+    if (appPanel === "profile") profileBackRef.current?.focus();
+    else if (appPanel === "groups") groupsBackRef.current?.focus();
+    else if (appPanel === "feed") feedBackRef.current?.focus({ preventScroll: true });
+    else if (appPanel === "today") cameraButtonRef.current?.focus();
+  }, [appPanel]);
 
   const activeGroup = state?.groups[0];
   const activeUser = state?.users[0];
   const activeCycle = state?.zineCycles[0];
+  const publishedZine = state?.zines.find((zine) => zine.zineCycleId === activeCycle?.id);
 
   const cycleThemes = useMemo(() => {
     if (!activeCycle) return [];
@@ -82,12 +135,12 @@ export default function HomePage() {
     () => cycleThemes.filter((theme) => theme.status === "active" || theme.status === "closed"),
     [cycleThemes]
   );
+
   const cyclePosts = useMemo(() => {
     const themeIds = new Set(cycleThemes.map((theme) => theme.id));
     return (state?.posts ?? []).filter((post) => themeIds.has(post.themeId));
   }, [cycleThemes, state?.posts]);
 
-  const publishedZine = state?.zines.find((zine) => zine.zineCycleId === activeCycle?.id);
   const publishedPages = useMemo(() => {
     if (!publishedZine || !state) return [];
     return state.zinePages.filter((page) => page.zineId === publishedZine.id).sort((a, b) => a.pageNumber - b.pageNumber);
@@ -101,107 +154,291 @@ export default function HomePage() {
   const selectedTheme = state?.themes.find((theme) => theme.id === effectiveSelectedThemeId) ?? activeTheme;
   const selectedThemePosts = cyclePosts.filter((post) => post.themeId === effectiveSelectedThemeId);
   const visiblePosts = postListMode === "all" ? cyclePosts : selectedThemePosts;
-  const zineReady = canGenerateZine(cyclePosts);
+  const zineReady = isZineReadyForCycle(cyclePosts);
   const targetPostCount = Math.max(4, visibleZineThemes.length * 2);
+
+  const groupMembers = useMemo(() => {
+    if (!state || !activeGroup) return [];
+    const memberIds = new Set(state.groupMembers.filter((member) => member.groupId === activeGroup.id).map((member) => member.userId));
+    return state.users.filter((user) => memberIds.has(user.id));
+  }, [activeGroup, state]);
+
+  const todayFeedItems = useMemo((): TodayFeedItem[] => {
+    if (!state || !activeTheme) return [];
+    return state.posts
+      .filter((post) => post.themeId === activeTheme.id)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .map((post) => ({
+        post,
+        user: state.users.find((user) => user.id === post.userId)
+      }));
+  }, [activeTheme, state]);
+
+  const ownPosts = useMemo(() => {
+    if (!state || !activeUser) return [];
+    return state.posts
+      .filter((post) => post.userId === activeUser.id)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [activeUser, state]);
+
+  const gestureBlocked = sourceSheetOpen || composerOpen || panelAnimating;
+
+  function navigateTo(nextPanel: AppPanel) {
+    if (gestureBlocked || nextPanel === appPanel) return;
+    hasNavigatedRef.current = true;
+    setProfileNotice("");
+    setGroupsSwitchNotice("");
+    setPanelAnimating(true);
+    setAppPanel(nextPanel);
+    if (panelTransitionTimerRef.current) clearTimeout(panelTransitionTimerRef.current);
+    panelTransitionTimerRef.current = setTimeout(() => {
+      setPanelAnimating(false);
+    }, resolvePanelTransitionMs(prefersReducedMotion()));
+  }
+
+  function goToToday() {
+    navigateTo("today");
+    setPanelAnnouncement(formatTodayPanelAnnouncement());
+  }
+
+  function openFeedPanel() {
+    navigateTo("feed");
+    setPanelAnnouncement(formatFeedPanelAnnouncement());
+    requestAnimationFrame(() => {
+      feedPanelRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    });
+  }
+
+  function beginSwipePointer(event: React.PointerEvent<HTMLElement>) {
+    if (gestureBlocked) return;
+    if (isSwipeBlockedStartTarget(event.target)) {
+      swipeStartBlockedRef.current = true;
+      return;
+    }
+    swipeStartBlockedRef.current = false;
+    swipePointerIdRef.current = event.pointerId;
+    swipeStartRef.current = { x: event.clientX, y: event.clientY };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function moveSwipePointer(event: React.PointerEvent<HTMLElement>) {
+    if (swipePointerIdRef.current !== event.pointerId) return;
+  }
+
+  function finishSwipePointer(event: React.PointerEvent<HTMLElement>, panel: AppPanel) {
+    if (swipePointerIdRef.current !== event.pointerId) return;
+    if (gestureBlocked || swipeStartBlockedRef.current) {
+      swipePointerIdRef.current = null;
+      return;
+    }
+
+    const viewportWidth = typeof window !== "undefined" ? window.innerWidth : 0;
+    const direction = resolveSwipeGesture(
+      {
+        startX: swipeStartRef.current.x,
+        startY: swipeStartRef.current.y,
+        endX: event.clientX,
+        endY: event.clientY,
+        viewportWidth
+      },
+      {
+        nearHorizontalEdge: isSwipeStartNearHorizontalEdge(swipeStartRef.current.x, viewportWidth)
+      }
+    );
+    swipePointerIdRef.current = null;
+
+    if (panel === "feed" && direction === "down" && (feedPanelRef.current?.scrollTop ?? 0) > 0) {
+      return;
+    }
+
+    const nextPanel = resolveSwipeTargetPanel(panel, direction);
+    if (!nextPanel) return;
+
+    if (nextPanel === "feed") {
+      openFeedPanel();
+      return;
+    }
+    if (nextPanel === "today" && panel === "feed") {
+      goToToday();
+      return;
+    }
+    navigateTo(nextPanel);
+  }
+
+  function endSwipePointer(event: React.PointerEvent<HTMLElement>, panel: AppPanel) {
+    finishSwipePointer(event, panel);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }
+
+  function cancelSwipePointer(event: React.PointerEvent<HTMLElement>) {
+    swipePointerIdRef.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }
+
+  const todayGestureHandlers = {
+    onPointerDown: beginSwipePointer,
+    onPointerMove: moveSwipePointer,
+    onPointerUp: (event: React.PointerEvent<HTMLElement>) => endSwipePointer(event, "today"),
+    onPointerCancel: cancelSwipePointer
+  };
+
+  const feedGestureHandlers = {
+    onPointerDown: beginSwipePointer,
+    onPointerMove: moveSwipePointer,
+    onPointerUp: (event: React.PointerEvent<HTMLElement>) => endSwipePointer(event, "feed"),
+    onPointerCancel: cancelSwipePointer
+  };
+
+  const profileGestureHandlers = {
+    onPointerDown: beginSwipePointer,
+    onPointerMove: moveSwipePointer,
+    onPointerUp: (event: React.PointerEvent<HTMLElement>) => endSwipePointer(event, "profile"),
+    onPointerCancel: cancelSwipePointer
+  };
+
+  const groupsGestureHandlers = {
+    onPointerDown: beginSwipePointer,
+    onPointerMove: moveSwipePointer,
+    onPointerUp: (event: React.PointerEvent<HTMLElement>) => endSwipePointer(event, "groups"),
+    onPointerCancel: cancelSwipePointer
+  };
+
+  function showProfileUnavailableNotice() {
+    setProfileNotice(LOCAL_DEMO_UNAVAILABLE_FEATURE_NOTICE);
+  }
+
+  function showGroupsUnavailableNotice() {
+    setGroupsSwitchNotice(LOCAL_DEMO_UNAVAILABLE_FEATURE_NOTICE);
+  }
+
+  function showGroupSwitchUnavailableNotice() {
+    setGroupsSwitchNotice(LOCAL_DEMO_GROUP_SWITCH_UNAVAILABLE);
+  }
 
   function persist(nextState: MewriState) {
     setState(appService.demo.replaceState(nextState));
   }
 
-  async function handleSelectFile(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) {
-      setSelectedFileName("");
-      setImageNotice("");
-      return;
-    }
-
-    if (!file.type.startsWith("image/")) {
-      setImageNotice("画像ファイルを選んでください。");
-      return;
-    }
-
-    setImageNotice("写真を準備しています...");
-    try {
-      const optimizedImage = await optimizeLocalImage(file);
-      setImageUrl(optimizedImage);
-      setSelectedFileName(file.name);
-      setPostSubmitNotice("");
-      setImageNotice("この写真を投稿できます。");
-    } catch {
-      setImageUrl("");
-      setSelectedFileName("");
-      setImageNotice("写真を読み込めませんでした。別の画像を試してください。");
-    }
-  }
-
-  function handleSubmitPost(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const todayThemeId = activeTheme?.id ?? "";
-    if (!activeUser || !activeGroup || !todayThemeId || !imageUrl || !activeCycle) return;
-
-    const nextState = appService.commands.submitPost({
-      context: {
-        currentUserId: activeUser.id,
-        requestSource: "browser_demo"
-      },
-      input: {
-        userId: activeUser.id,
-        groupId: activeGroup.id,
-        themeId: todayThemeId,
-        imageUrl,
-        caption
-      }
-    });
-
-    const nextCycleThemeIds = new Set(nextState.themes.filter((theme) => theme.zineCycleId === activeCycle.id).map((theme) => theme.id));
-    const nextCyclePostCount = nextState.posts.filter((post) => nextCycleThemeIds.has(post.themeId)).length;
-
-    setState(nextState);
+  function clearComposerState() {
+    revokeObjectUrl(previewUrl);
+    setPreviewUrl(null);
+    setSelectedFile(null);
+    setPhotoSource(null);
     setCaption("");
-    setImageUrl("");
-    setSelectedFileName("");
-    setImageNotice("");
-    setSelectedThemeId(todayThemeId);
-    setPostListMode("all");
-    setZineGenerateNotice("");
-    setPostSubmitNotice(formatPostSubmitSuccessMessage(nextCyclePostCount, targetPostCount));
+    setImageError("");
+    setComposerOpen(false);
+    cameraInputRef.current && (cameraInputRef.current.value = "");
+    libraryInputRef.current && (libraryInputRef.current.value = "");
   }
 
-  function handleGenerateZine() {
-    if (!activeCycle || !activeGroup || !zineReady) return;
-    if (!window.confirm(buildGenerateZineConfirmMessage(activeCycle.title, Boolean(publishedZine)))) return;
+  function openSourceSheet() {
+    setSourceSheetOpen(true);
+  }
 
-    setState(
-      appService.commands.publishZineForCycle({
+  function closeSourceSheet() {
+    setSourceSheetOpen(false);
+  }
+
+  function triggerCameraInput() {
+    setPhotoSource("camera");
+    closeSourceSheet();
+    cameraInputRef.current?.click();
+  }
+
+  function triggerLibraryInput() {
+    setPhotoSource("library");
+    closeSourceSheet();
+    libraryInputRef.current?.click();
+  }
+
+  async function handleFileSelected(event: React.ChangeEvent<HTMLInputElement>, source: PhotoPickerSource) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    const validation = validateLocalImageFile(file);
+    if (!validation.ok) {
+      setImageError(validation.message);
+      if (source === "camera" && validation.code === "missing") {
+        setImageError(LOCAL_DEMO_CAMERA_FAILED_MESSAGE);
+      }
+      return;
+    }
+
+    revokeObjectUrl(previewUrl);
+    const nextPreviewUrl = URL.createObjectURL(file!);
+    setSelectedFile(file!);
+    setPreviewUrl(nextPreviewUrl);
+    setPhotoSource(source);
+    setCaption("");
+    setImageError("");
+    setComposerOpen(true);
+    setAppPanel("today");
+  }
+
+  async function handleSubmitPost() {
+    if (!selectedFile || !activeUser || !activeGroup || !activeTheme || !activeCycle) return;
+    if (!isCaptionWithinLimit(caption)) {
+      setImageError("キャプションは80文字までです。");
+      return;
+    }
+
+    setSubmitting(true);
+    setImageError("");
+    try {
+      const imageUrl = await optimizeLocalImage(selectedFile);
+      const nextState = appService.commands.submitPost({
         context: {
-          currentUserId: activeUser?.id,
+          currentUserId: activeUser.id,
           requestSource: "browser_demo"
         },
         input: {
-          userId: activeUser?.id,
+          userId: activeUser.id,
           groupId: activeGroup.id,
-          zineCycleId: activeCycle.id
+          themeId: activeTheme.id,
+          imageUrl,
+          caption: clampCaption(caption)
         }
-      })
-    );
-    setZineGenerateNotice("ZINEを生成しました。下のプレビューをご覧ください。");
-    window.requestAnimationFrame(() => scrollToElementById("generated-zine"));
+      });
+
+      setState(nextState);
+      clearComposerState();
+      setAppPanel("today");
+      setSubmitNotice(formatPostSubmitSuccessMessage());
+    } catch {
+      setImageError(LOCAL_DEMO_IMAGE_LOAD_FAILED_MESSAGE);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function handleRetake() {
+    clearComposerState();
+    if (photoSource === "camera") {
+      triggerCameraInput();
+    } else {
+      triggerLibraryInput();
+    }
   }
 
   function handleReset() {
     if (!window.confirm(LOCAL_DEMO_RESET_CONFIRM_MESSAGE)) return;
-
+    clearComposerState();
+    closeSourceSheet();
     const nextState = appService.demo.reset();
     setState(nextState);
     setSelectedThemeId(nextState.themes.find((theme) => theme.status === "active")?.id ?? nextState.themes[0]?.id ?? "");
     setPostListMode("all");
-    setCaption("");
-    setImageUrl("");
-    setSelectedFileName("");
-    setImageNotice("");
-    setPostSubmitNotice("");
+    setSubmitNotice("");
     setZineGenerateNotice("");
+    setProfileNotice("");
+    setGroupsSwitchNotice("");
+    setAppPanel("today");
+    requestAnimationFrame(() => {
+      feedPanelRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    });
   }
 
   function addSamplePosts() {
@@ -240,19 +477,22 @@ export default function HomePage() {
     });
   }
 
-  function useSampleImageForPost() {
-    if (!activeTheme) return;
-    setImageUrl(createSampleImageDataUrl(activeTheme.title, Math.max(0, cycleThemes.indexOf(activeTheme)), 0));
-    setSelectedFileName("サンプル画像");
-    setImageNotice("サンプル画像を選択しました。");
-    setCaption((current) => current || `${activeTheme.title} のサンプル`);
-  }
+  const handleGenerateZine = buildGenerateZineHandler(
+    activeCycle!,
+    activeGroup!,
+    activeUser,
+    zineReady,
+    publishedZine,
+    appService,
+    setState,
+    setZineGenerateNotice
+  );
 
-  if (!state || !activeGroup || !activeCycle) {
+  if (!state || !activeGroup || !activeCycle || !activeTheme || !activeUser) {
     return (
-      <main className="shell">
-        <section className="loadPanel">
-          <p className="kicker">Mewri MVP</p>
+      <main className="appShell sevenBamShell">
+        <section className="appPanel sevenBamLoadPanel">
+          <p className="sevenBamBrand">{SEVEN_BAM_BRAND}</p>
           <h1>読み込み中</h1>
           <p role={loadNotice ? "alert" : "status"} aria-live={loadNotice ? "assertive" : "polite"}>
             {loadNotice || "ローカル状態を読み込んでいます。"}
@@ -263,500 +503,190 @@ export default function HomePage() {
   }
 
   return (
-    <main className="shell">
-      <a className="skipLink" href="#active-zine">
+    <main className="appShell sevenBamShell">
+      <a className="skipLink" href="#seven-bam-main">
         メインコンテンツへスキップ
       </a>
-      <header className="masthead" role="banner">
-        <div className="mastLeft">
-          <p className="kicker">{activeGroup.name}</p>
-          <div className="brandRow">
-            <h1 className="brand">Mewri</h1>
-            <span className="brandMeta">{formatFullDate(new Date())}</span>
-          </div>
+
+      <p className="srOnly" role="status" aria-live="polite">
+        {panelAnnouncement}
+      </p>
+
+      <div
+        id="seven-bam-main"
+        className={`sevenBamViewPort sevenBamViewPort--${appPanel}${panelAnimating ? " sevenBamViewPort--animating" : ""}`}
+      >
+        <div
+          className="sevenBamViewPanel sevenBamViewPanel--today"
+          hidden={appPanel !== "today" || composerOpen}
+          inert={appPanel !== "today" || composerOpen || undefined}
+          aria-hidden={appPanel !== "today" || composerOpen}
+        >
+          {appPanel === "today" && !composerOpen ? (
+            <>
+              {gestureGuideVisible ? <GestureGuide onDismiss={dismissGestureGuide} /> : null}
+              <TodayScreen
+                currentUser={activeUser}
+                groupName={activeGroup.name}
+                members={groupMembers}
+                themeTitle={activeTheme.title}
+                themeDescription={activeTheme.description}
+                submitNotice={submitNotice}
+                onOpenPhotoSource={openSourceSheet}
+                onOpenFeed={openFeedPanel}
+                onOpenProfile={() => navigateTo("profile")}
+                onOpenGroups={() => navigateTo("groups")}
+                gestureDisabled={gestureBlocked}
+                gestureHandlers={todayGestureHandlers}
+                cameraButtonRef={cameraButtonRef}
+              />
+            </>
+          ) : null}
         </div>
-        <div className="mastRight">
-          <button
-            className="ghostButton compactOnly"
-            type="button"
-            aria-label="各テーマにサンプル投稿を追加"
-            onClick={addSamplePosts}
-          >
-            サンプル投入
-          </button>
-          <button className="ghostButton" type="button" aria-label="デモを初期状態に戻す" onClick={handleReset}>
-            リセット
-          </button>
-        </div>
-      </header>
 
-      <aside className="demoNotice" aria-label="デモの説明">
-        <p>
-          <strong>{LOCAL_DEMO_BANNER_TITLE}</strong>
-          {LOCAL_DEMO_BANNER_BODY}
-        </p>
-      </aside>
-
-      <LocalDemoSafetyNotice />
-
-      <section className="homeGrid" aria-label="ホーム">
-        <div className="mainCol">
-          <HomeSection
-            id="active-zine"
-            number="1"
-            title="参加中のZINE"
-            subtitle={`${activeCycle.title} / 今日の投稿`}
-            chipClass="chipEssential"
-            chipLabel="実装中"
-            toneClass="sectionEssential"
-          >
-            <div className="todayLayout">
-              <div className="heroPrimary">
-                <p className="kicker">今日のテーマ</p>
-                <h3 className="heroTitle">{activeTheme?.title ?? "今日のテーマ"}</h3>
-                <p className="heroBody">{activeTheme?.description ?? "このテーマで1投稿"}</p>
-
-                <a className="primaryCta strongAction" href="#post-form">
-                  今日の写真を投稿する
-                  <span className="ctaMeta">{formatRemainingToday()}</span>
-                </a>
-
-                <ActiveZineProgressCard postCount={cyclePosts.length} targetPostCount={targetPostCount} />
-
-                <form id="post-form" className="postForm editorialForm quickPostForm" onSubmit={handleSubmitPost}>
-                  <label className="photoUpload">
-                    <span>写真を選ぶ</span>
-                    <small>スマホやPCから、今日の1枚を選択</small>
-                    <input className="fileInput" type="file" accept="image/*" onChange={handleSelectFile} />
-                  </label>
-                  {imageNotice && (
-                    <p className="imageNotice" role="status" aria-live="polite">
-                      {imageNotice}
-                    </p>
-                  )}
-
-                  {imageUrl && (
-                    <div className="localPreview">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={imageUrl} alt="選択画像プレビュー" />
-                      <p className="fieldHint">{selectedFileName || "画像を選択済み"}</p>
-                    </div>
-                  )}
-
-                  <button className="ghostButton inlineToggle advancedAction" type="button" onClick={() => setShowUrlFallback((current) => !current)}>
-                    {showUrlFallback ? "URL入力を閉じる" : "URL入力（上級）"}
-                  </button>
-
-                  {showUrlFallback && (
-                    <label>
-                      画像URL
-                      <input value={imageUrl} onChange={(event) => setImageUrl(event.target.value)} placeholder="https://..." />
-                      <span className="fieldHint">サーバーアップロードは行いません</span>
-                    </label>
-                  )}
-
-                  <label>
-                    キャプション
-                    <textarea value={caption} onChange={(event) => setCaption(event.target.value)} placeholder="ひとこと" />
-                  </label>
-
-                  {postSubmitNotice && (
-                    <p className="postSubmitNotice" role="status" aria-live="polite">
-                      {postSubmitNotice}
-                    </p>
-                  )}
-
-                  <div className="formActions editorialActions">
-                    <button className="submitButton" type="submit" disabled={!imageUrl || !activeTheme?.id}>
-                      投稿
-                    </button>
-                    <button className="ghostButton formGhost" type="button" onClick={useSampleImageForPost}>
-                      サンプル画像を使う
-                    </button>
-                    <button className="ghostButton formGhost" type="button" onClick={addSamplePosts}>
-                      サンプル投稿を追加
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </HomeSection>
-
-          <HomeSection
-            id="zine-contents"
-            number="2"
-            title="このZINEの中身"
-            subtitle="投稿と生成ZINE"
-            chipClass="chipSupport"
-            chipLabel="閲覧"
-            toneClass="sectionSupport"
-          >
-            <div className="zinePostsBlock">
-              <div className="zineSubhead">
-                <p className="kicker">投稿アーカイブ</p>
-                <h3>投稿一覧</h3>
-              </div>
-
-              <div className="themeFilterRail" role="tablist" aria-label="テーマフィルター">
-                {visibleZineThemes.map((theme, index) => {
-                  const count = cyclePosts.filter((post) => post.themeId === theme.id).length;
-                  return (
-                    <button
-                      key={theme.id}
-                      className={theme.id === effectiveSelectedThemeId ? "themePill active" : "themePill"}
-                      type="button"
-                      onClick={() => {
-                        setSelectedThemeId(theme.id);
-                        setPostListMode("theme");
-                      }}
-                      role="tab"
-                      aria-selected={theme.id === effectiveSelectedThemeId}
-                    >
-                      <span>{index + 1}日目</span>
-                      <strong>{theme.title}</strong>
-                      <em>{count}件</em>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="postGrid editorialGrid sameThemeGrid">
-                <div className="postListHeader">
-                  <p className="kicker">{formatPostListKicker(postListMode, selectedTheme?.title)}</p>
-                  {postListMode === "theme" && (
-                    <button className="ghostButton formGhost" type="button" onClick={() => setPostListMode("all")}>
-                      全投稿に戻る
-                    </button>
-                  )}
+        <div
+          ref={feedPanelRef}
+          className="sevenBamViewPanel feedPanel appPanel--feed"
+          hidden={appPanel !== "feed"}
+          inert={appPanel !== "feed" || undefined}
+          aria-hidden={appPanel !== "feed"}
+          onPointerDown={feedGestureHandlers.onPointerDown}
+          onPointerMove={feedGestureHandlers.onPointerMove}
+          onPointerUp={feedGestureHandlers.onPointerUp}
+          onPointerCancel={feedGestureHandlers.onPointerCancel}
+        >
+          {appPanel === "feed" ? (
+            <>
+              <FeedPanelTopBar onReset={handleReset} onAddSamplePosts={addSamplePosts} />
+              <TodayFeed
+                items={todayFeedItems}
+                onBackToToday={goToToday}
+                backButtonRef={feedBackRef}
+                gestureDisabled={gestureBlocked}
+              />
+              <details className="sevenBamFutureFeatures">
+                <summary>{UNIMPLEMENTED_FEATURES_SECTION_LABEL}</summary>
+                <div className="sevenBamFutureFeaturesBody">
+                  <LocalDemoSafetyNotice />
                 </div>
-                {visiblePosts.length === 0 ? (
-                  <p className="emptyText" role="status">
-                    {formatEmptyPostListMessage(postListMode, selectedTheme?.title)}
-                  </p>
-                ) : (
-                  visiblePosts.map((post) => (
-                    <PostCard key={post.id} post={post} theme={state.themes.find((theme) => theme.id === post.themeId)} cycleTitle={activeCycle.title} />
-                  ))
-                )}
-              </div>
-            </div>
-
-            <div className="zineMakeBlock">
-              <div className="zineSubhead zineRewardHead">
-                <p className="kicker">ZINE生成</p>
-                <h3>投稿を1冊にする</h3>
-              </div>
-              <CycleProgressCard
-                cycleTitle={activeCycle.title}
-                dateRange={`${activeCycle.startDate} - ${activeCycle.endDate}`}
-                themes={visibleZineThemes}
-                posts={state.posts}
-                totalPostCount={cyclePosts.length}
+              </details>
+              <ZineToolsPanel
+                state={state}
+                activeCycle={activeCycle}
+                activeGroup={activeGroup}
+                cycleThemes={cycleThemes}
+                visibleZineThemes={visibleZineThemes}
+                cyclePosts={cyclePosts}
+                visiblePosts={visiblePosts}
+                postListMode={postListMode}
+                effectiveSelectedThemeId={effectiveSelectedThemeId}
+                selectedTheme={selectedTheme}
                 targetPostCount={targetPostCount}
                 zineReady={zineReady}
+                publishedZine={publishedZine}
+                publishedPages={publishedPages}
+                zineGenerateNotice={zineGenerateNotice}
+                onSelectTheme={(themeId) => {
+                  setSelectedThemeId(themeId);
+                  setPostListMode("theme");
+                }}
+                onShowAllPosts={() => setPostListMode("all")}
                 onGenerateZine={handleGenerateZine}
               />
-              {zineGenerateNotice && (
-                <p className="zineGenerateNotice" role="status" aria-live="polite">
-                  {zineGenerateNotice}
-                </p>
-              )}
-            </div>
-
-            {publishedZine ? (
-              <section className="zineBook" id="generated-zine" aria-label="生成済みZINE">
-                <article className="zineCover zinePaperPage coverPage">
-                  <p className="kicker">COVER</p>
-                  <h3>{publishedZine.title}</h3>
-                  <p>{publishedZine.intro || "このサイクルの投稿をまとめたZINE"}</p>
-                  <span className="pageNumber">p.0</span>
-                </article>
-                <div className="zinePages">
-                  {publishedPages.length === 0 ? (
-                    <div className="zineEmpty">
-                      <p className="kicker">PAGES</p>
-                      <p className="hintText">ページがまだありません。</p>
-                    </div>
-                  ) : (
-                    publishedPages.map((page) => {
-                      const post = state.posts.find((item) => item.id === page.postId);
-                      const theme = post ? state.themes.find((item) => item.id === post.themeId) : undefined;
-                      return (
-                        <article className="zinePaperPage zinePage" key={page.id}>
-                          <header className="zinePageHead">
-                            <span>{theme?.title || "テーマ未設定"}</span>
-                            <span className="pageNumber">p.{page.pageNumber}</span>
-                          </header>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={post?.imageUrl || createSampleImageDataUrl("ZINE", 0, 0)} alt={post?.caption || "ZINEページ"} />
-                          <p>{post?.caption || page.aiCaption || "キャプションなし"}</p>
-                        </article>
-                      );
-                    })
-                  )}
-                </div>
-                <article className="zinePaperPage zineClosingPage">
-                  <p className="kicker">END</p>
-                  <p className="zineClosingLine">このZINEはここで終了です。</p>
-                </article>
-              </section>
-            ) : (
-              <div className="zineEmpty">
-                <p className="kicker">生成済みZINE</p>
-                <p className="hintText">投稿をためると、ここにZINEを表示します。</p>
-              </div>
-            )}
-          </HomeSection>
-
-          <LocalDemoFeedbackNote />
-
-          <details className="futureModules">
-            <summary>
-              今後追加予定の機能
-              <span>未実装</span>
-            </summary>
-            <div className="futureModulesContent">
-              <HomeSection
-                id="relevant-updates"
-                number="3"
-                title="フォロー中ユーザーの投稿"
-                subtitle="未実装プレースホルダー"
-                chipClass="chipSupport"
-                chipLabel="未実装"
-                toneClass="sectionSupport"
-              >
-                <div className="followPostGrid">
-                  <PlaceholderModule label="未実装" title="フォロー中ユーザーの新着投稿" note="フォロー機能はMVP範囲外です" />
-                  <PlaceholderModule label="未実装" title="このZINEに関連する話題" note="コメント・リアクションはMVP範囲外です" />
-                  <PlaceholderModule label="未実装" title="参加したZINEへの導線" note="実ユーザー連携はMVP範囲外です" />
-                </div>
-              </HomeSection>
-
-              <HomeSection
-                id="discovery-circulation"
-                number="4"
-                title="発見と回遊"
-                subtitle="未実装プレースホルダー"
-                chipClass="chipDiscovery"
-                chipLabel="検討中"
-                toneClass="sectionDiscovery"
-              >
-                <div className="placeholderGrid" aria-label="プレースホルダーモジュール">
-                  <PlaceholderModule label="未実装" title="話題のZINE" note="公開ディスカバリーはMVP範囲外です" />
-                  <PlaceholderModule label="未実装" title="フォロー中のおすすめ" note="フォロー関係はMVP範囲外です" />
-                  <PlaceholderModule label="未実装" title="おすすめ参加先" note="レコメンドはMVP範囲外です" />
-                </div>
-              </HomeSection>
-            </div>
-          </details>
+              <LocalDemoFeedbackNote />
+            </>
+          ) : null}
         </div>
-      </section>
 
-      <nav className="bottomNav" aria-label="セクションナビ">
-        <a
-          className={activeSection === "active" ? "active" : ""}
-          href="#active-zine"
-          aria-current={activeSection === "active" ? "location" : undefined}
+        <div
+          className="sevenBamViewPanel sevenBamViewPanel--profile"
+          hidden={appPanel !== "profile"}
+          inert={appPanel !== "profile" || undefined}
+          aria-hidden={appPanel !== "profile"}
         >
-          参加中
-        </a>
-        <a
-          className={activeSection === "posts" ? "active" : ""}
-          href="#zine-contents"
-          aria-current={activeSection === "posts" ? "location" : undefined}
+          {appPanel === "profile" ? (
+            <ProfilePanel
+              user={activeUser}
+              posts={ownPosts}
+              unavailableNotice={profileNotice}
+              onUnavailableAction={showProfileUnavailableNotice}
+              onBackToToday={goToToday}
+              backButtonRef={profileBackRef}
+              gestureHandlers={profileGestureHandlers}
+              gestureDisabled={gestureBlocked}
+            />
+          ) : null}
+        </div>
+
+        <div
+          className="sevenBamViewPanel sevenBamViewPanel--groups"
+          hidden={appPanel !== "groups"}
+          inert={appPanel !== "groups" || undefined}
+          aria-hidden={appPanel !== "groups"}
         >
-          中身
-        </a>
-      </nav>
+          {appPanel === "groups" ? (
+            <GroupsPanel
+              currentGroup={activeGroup}
+              currentMemberCount={groupMembers.length}
+              switchNotice={groupsSwitchNotice}
+              onDemoGroupTap={showGroupSwitchUnavailableNotice}
+              onUnavailableAction={showGroupsUnavailableNotice}
+              onBackToToday={goToToday}
+              backButtonRef={groupsBackRef}
+              gestureHandlers={groupsGestureHandlers}
+              gestureDisabled={gestureBlocked}
+            />
+          ) : null}
+        </div>
+
+        {composerOpen && previewUrl && photoSource ? (
+          <PhotoComposer
+            open={composerOpen}
+            themeTitle={activeTheme.title}
+            previewUrl={previewUrl}
+            source={photoSource}
+            caption={caption}
+            errorMessage={imageError}
+            submitting={submitting}
+            onCaptionChange={setCaption}
+            onSubmit={handleSubmitPost}
+            onRetake={handleRetake}
+            onCancel={() => {
+              clearComposerState();
+              setAppPanel("today");
+              cameraButtonRef.current?.focus();
+            }}
+          />
+        ) : null}
+      </div>
+
+      <input
+        ref={cameraInputRef}
+        className="sevenBamHiddenInput"
+        type="file"
+        accept="image/*"
+        capture="environment"
+        aria-hidden="true"
+        tabIndex={-1}
+        onChange={(event) => void handleFileSelected(event, "camera")}
+      />
+      <input
+        ref={libraryInputRef}
+        className="sevenBamHiddenInput"
+        type="file"
+        accept="image/*"
+        aria-hidden="true"
+        tabIndex={-1}
+        onChange={(event) => void handleFileSelected(event, "library")}
+      />
+
+      <PhotoSourceSheet
+        open={sourceSheetOpen}
+        onClose={closeSourceSheet}
+        onPickCamera={triggerCameraInput}
+        onPickLibrary={triggerLibraryInput}
+        returnFocusRef={cameraButtonRef}
+      />
     </main>
   );
-}
-
-function HomeSection({
-  id,
-  number,
-  title,
-  subtitle,
-  toneClass,
-  chipClass,
-  chipLabel,
-  children
-}: {
-  id: string;
-  number: string;
-  title: string;
-  subtitle: string;
-  toneClass: string;
-  chipClass: string;
-  chipLabel: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section id={id} className={`sectionPanel ${toneClass}`}>
-      <div className="sectionHeader">
-        <div className="sectionTitleBlock">
-          <p className="sectionNum">{number}</p>
-          <div>
-            <h2>{title}</h2>
-            <p className="sectionSub">{subtitle}</p>
-          </div>
-        </div>
-        <div className="sectionChips" aria-label="セクションタグ">
-          <span className={`chip ${chipClass}`}>{chipLabel}</span>
-        </div>
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function PlaceholderModule({ label, title, note }: { label: string; title: string; note: string }) {
-  return (
-    <div className="placeholderCard">
-      <p className="kicker">{label}</p>
-      <p className="placeholderTitle">{title}</p>
-      <p className="hintText">{note}</p>
-    </div>
-  );
-}
-
-function ActiveZineProgressCard({
-  postCount,
-  targetPostCount
-}: {
-  postCount: number;
-  targetPostCount: number;
-}) {
-  const remainingPosts = Math.max(0, targetPostCount - postCount);
-  const headline =
-    postCount === 0 ? "最初の写真を投稿して、このZINEを始めましょう" : formatZineRemainingHeadline(remainingPosts);
-
-  return (
-    <section className="activeProgressCard" aria-label="参加中ZINEの進行">
-      <p>
-        <strong>{headline}</strong>
-        <span>{postCount}/{targetPostCount}</span>
-      </p>
-    </section>
-  );
-}
-
-function CycleProgressCard({
-  cycleTitle,
-  dateRange,
-  themes,
-  posts,
-  totalPostCount,
-  targetPostCount,
-  zineReady,
-  onGenerateZine
-}: {
-  cycleTitle: string;
-  dateRange: string;
-  themes: Theme[];
-  posts: Post[];
-  totalPostCount: number;
-  targetPostCount: number;
-  zineReady: boolean;
-  onGenerateZine: () => void;
-}) {
-  const postedThemeCount = themes.filter((theme) => posts.some((post) => post.themeId === theme.id)).length;
-  const remainingPosts = Math.max(0, targetPostCount - totalPostCount);
-  const readinessPercent = calcReadinessPercent(totalPostCount, targetPostCount);
-  const generateBlockedHint = formatZineGenerateBlockedHint(remainingPosts, zineReady);
-
-  return (
-    <section className="cycleCard">
-      <div className="cycleHeader">
-        <div>
-          <p className="kicker">3日サイクル</p>
-          <h4 className="cycleTitle">{cycleTitle}</h4>
-          <span className="cycleMeta">{dateRange}</span>
-        </div>
-        <strong className="cycleCount">
-          {postedThemeCount}/{themes.length}
-        </strong>
-      </div>
-      <div className="cycleSteps">
-        {themes.map((theme, index) => {
-          const themePosts = posts.filter((post) => post.themeId === theme.id);
-          return (
-            <div className={theme.status === "active" ? "cycleStep active" : "cycleStep"} key={theme.id}>
-              <span className="monoCaps">{index + 1}日目</span>
-              <strong>{theme.title}</strong>
-              <em>{themePosts.length}件の投稿</em>
-            </div>
-          );
-        })}
-      </div>
-      <div className="cycleProgressSummary">
-        <p>{zineReady ? "ZINEを作れる枚数が集まりました" : formatZineRemainingHeadline(remainingPosts)}</p>
-        <div className="progressTrack" role="progressbar" aria-label="ZINEの完成進捗" aria-valuemin={0} aria-valuemax={100} aria-valuenow={readinessPercent}>
-          <span style={{ width: `${readinessPercent}%` }} />
-        </div>
-        <small>{totalPostCount}/{targetPostCount}枚</small>
-      </div>
-      <div className="cycleGenerate">
-        <button
-          type="button"
-          disabled={!zineReady}
-          aria-describedby={generateBlockedHint ? "zine-generate-hint" : undefined}
-          onClick={onGenerateZine}
-        >
-          ZINEを作る
-        </button>
-        {generateBlockedHint && (
-          <p className="hintText" id="zine-generate-hint">
-            {generateBlockedHint}
-          </p>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function PostCard({ post, theme, cycleTitle }: { post: Post; theme?: Theme; cycleTitle: string }) {
-  return (
-    <article className="postCard">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={post.imageUrl} alt={post.caption || theme?.title || "Mewriの投稿"} />
-      <div>
-        <span>ZINE: {cycleTitle}</span>
-        <span>テーマ: {theme?.title ?? "テーマ未設定"}</span>
-        <p>{post.caption || "キャプションなし"}</p>
-      </div>
-    </article>
-  );
-}
-
-function optimizeLocalImage(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const sourceUrl = URL.createObjectURL(file);
-    const image = new Image();
-
-    image.onload = () => {
-      try {
-        const scale = calcLocalImageScale(image.naturalWidth, image.naturalHeight);
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
-        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-        const context = canvas.getContext("2d");
-        if (!context) throw new Error("Canvas is unavailable.");
-        context.fillStyle = "#fffdf8";
-        context.fillRect(0, 0, canvas.width, canvas.height);
-        context.drawImage(image, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.76));
-      } catch {
-        reject(new Error("Unable to prepare image."));
-      } finally {
-        URL.revokeObjectURL(sourceUrl);
-      }
-    };
-
-    image.onerror = () => {
-      URL.revokeObjectURL(sourceUrl);
-      reject(new Error("Unable to read image."));
-    };
-    image.src = sourceUrl;
-  });
 }
