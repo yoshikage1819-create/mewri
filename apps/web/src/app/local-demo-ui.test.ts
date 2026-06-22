@@ -19,7 +19,17 @@ import {
   formatRemainingToday,
   formatTodayThemeDayLabel,
   formatTrustedGroupCue,
-  formatViewAnnouncement,
+  FEED_SECTION_ID,
+  formatFeedScrollAnnouncement,
+  formatPanelAnnouncement,
+  formatTodayScrollAnnouncement,
+  FUTURE_FEATURES_SECTION_LABEL,
+  resolveSwipeTargetPanel,
+  SCROLL_TO_FEED_HINT,
+  swipeDirectionOnGroupsPanel,
+  swipeDirectionOnProfilePanel,
+  swipeDirectionOnTodayPanel,
+  TODAY_SECTION_ID,
   formatZineGenerateBlockedHint,
   formatZineRemainingHeadline,
   formatFeedbackCharCount,
@@ -175,7 +185,7 @@ describe("feed copy", () => {
     expect(TODAY_FEED_EMPTY_TITLE).toContain("まだ今日の投稿はありません");
     expect(TODAY_FEED_EMPTY_HINT).toContain("最初の一枚");
     expect(VIEW_FEED_LABEL).toBe("みんなの今日を見る");
-    expect(BACK_TO_TODAY_LABEL).toBe("今日のテーマへ戻る");
+    expect(BACK_TO_TODAY_LABEL).toBe("↑ 今日のテーマへ戻る");
     expect(LOCAL_DEMO_FEED_NOTICE).toContain("この端末内");
   });
 });
@@ -380,18 +390,41 @@ describe("revokeObjectUrl", () => {
 });
 
 describe("panel navigation helpers", () => {
-  it("maps swipe directions to views", () => {
+  it("maps today-panel swipes to horizontal panels only", () => {
+    expect(swipeDirectionOnTodayPanel("left")).toBe("profile");
+    expect(swipeDirectionOnTodayPanel("right")).toBe("groups");
+    expect(swipeDirectionOnTodayPanel(null)).toBeNull();
     expect(swipeDirectionToView("left")).toBe("profile");
     expect(swipeDirectionToView("right")).toBe("groups");
-    expect(swipeDirectionToView("down")).toBe("feed");
     expect(swipeDirectionToView(null)).toBeNull();
   });
 
-  it("announces view changes for screen readers", () => {
-    expect(formatViewAnnouncement("profile")).toContain("プロフィール");
-    expect(formatViewAnnouncement("groups")).toContain("グループ");
-    expect(formatViewAnnouncement("feed")).toContain("みんなの今日");
-    expect(formatViewAnnouncement("today")).toContain("今日のテーマ");
+  it("maps profile and groups return swipes to today", () => {
+    expect(swipeDirectionOnProfilePanel("right")).toBe("today");
+    expect(swipeDirectionOnProfilePanel("left")).toBeNull();
+    expect(swipeDirectionOnGroupsPanel("left")).toBe("today");
+    expect(swipeDirectionOnGroupsPanel("right")).toBeNull();
+  });
+
+  it("resolves swipe targets per active panel", () => {
+    expect(resolveSwipeTargetPanel("today", "left")).toBe("profile");
+    expect(resolveSwipeTargetPanel("profile", "right")).toBe("today");
+    expect(resolveSwipeTargetPanel("groups", "left")).toBe("today");
+  });
+
+  it("announces panel changes for screen readers", () => {
+    expect(formatPanelAnnouncement("profile")).toContain("プロフィール");
+    expect(formatPanelAnnouncement("groups")).toContain("グループ");
+    expect(formatPanelAnnouncement("today")).toContain("今日のテーマ");
+  });
+
+  it("announces in-page feed scroll helpers", () => {
+    expect(formatFeedScrollAnnouncement()).toContain("みんなの今日");
+    expect(formatTodayScrollAnnouncement()).toContain("今日のテーマ");
+    expect(SCROLL_TO_FEED_HINT).toContain("みんなの今日");
+    expect(TODAY_SECTION_ID).toBe("seven-bam-today-section");
+    expect(FEED_SECTION_ID).toBe("seven-bam-feed-section");
+    expect(FUTURE_FEATURES_SECTION_LABEL).toBe("今後の機能");
   });
 });
 
@@ -412,7 +445,7 @@ describe("swipe detection", () => {
     ).toBe("left");
   });
 
-  it("detects right and down swipes", () => {
+  it("detects left and right swipes only", () => {
     expect(
       detectSwipeDirection({
         ...base,
@@ -426,7 +459,7 @@ describe("swipe detection", () => {
         endX: base.startX + 4,
         endY: base.startY + SWIPE_MIN_DISTANCE_PX + 12
       })
-    ).toBe("down");
+    ).toBeNull();
   });
 
   it("ignores small, diagonal, and upward moves", () => {
@@ -487,6 +520,7 @@ describe("profile and groups fixtures", () => {
   it("stores gesture guide dismissal in a dedicated key", () => {
     expect(GESTURE_GUIDE_DISMISSED_KEY).toBe("7bam.local-demo.gesture-guide-dismissed");
     expect(GESTURE_GUIDE_TEXT).toContain("プロフィール");
+    expect(GESTURE_GUIDE_TEXT).toContain("スクロール");
   });
 });
 

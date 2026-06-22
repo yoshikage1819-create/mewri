@@ -43,11 +43,14 @@ import {
   PROFILE_PANEL_TITLE,
   PROFILE_POSTS_TITLE,
   PROFILE_SETTINGS_LABEL,
+  SCROLL_TO_FEED_HINT,
   SEVEN_BAM_BRAND,
   SEVEN_BAM_CAPTION_MAX_CHARS,
   TODAY_FEED_EMPTY_HINT,
   TODAY_FEED_EMPTY_TITLE,
   TODAY_FEED_TITLE,
+  TODAY_SECTION_ID,
+  FEED_SECTION_ID,
   TODAY_THEME_LABEL,
   VIEW_FEED_LABEL,
   formatRemainingToday
@@ -90,6 +93,8 @@ export type TodayGestureHandlers = {
   onPointerCancel: (event: ReactPointerEvent<HTMLElement>) => void;
 };
 
+export type PanelGestureHandlers = TodayGestureHandlers;
+
 type TodayScreenProps = {
   currentUser: User;
   groupName: string;
@@ -98,7 +103,7 @@ type TodayScreenProps = {
   themeDescription?: string;
   submitNotice: string;
   onOpenPhotoSource: () => void;
-  onOpenFeed: () => void;
+  onScrollToFeed: () => void;
   onOpenProfile: () => void;
   onOpenGroups: () => void;
   gestureDisabled?: boolean;
@@ -114,7 +119,7 @@ export function TodayScreen({
   themeDescription,
   submitNotice,
   onOpenPhotoSource,
-  onOpenFeed,
+  onScrollToFeed,
   onOpenProfile,
   onOpenGroups,
   gestureDisabled = false,
@@ -123,6 +128,7 @@ export function TodayScreen({
 }: TodayScreenProps) {
   return (
     <section
+      id={TODAY_SECTION_ID}
       className={`sevenBamToday${gestureDisabled ? " sevenBamToday--gestureDisabled" : ""}`}
       aria-labelledby="seven-bam-today-theme"
       onPointerDown={gestureHandlers?.onPointerDown}
@@ -178,7 +184,11 @@ export function TodayScreen({
           <span className="sevenBamCameraLabel">投稿する</span>
         </button>
 
-        <button type="button" className="sevenBamFeedLink" aria-label={VIEW_FEED_LABEL} onClick={onOpenFeed}>
+        <button type="button" className="sevenBamScrollHint" aria-label={VIEW_FEED_LABEL} onClick={onScrollToFeed}>
+          {SCROLL_TO_FEED_HINT}
+        </button>
+
+        <button type="button" className="sevenBamFeedLink" aria-label={VIEW_FEED_LABEL} onClick={onScrollToFeed}>
           {VIEW_FEED_LABEL}
         </button>
       </div>
@@ -383,11 +393,27 @@ type PanelBackProps = {
 
 type TodayFeedProps = PanelBackProps & {
   items: TodayFeedItem[];
+  gestureHandlers?: PanelGestureHandlers;
+  gestureDisabled?: boolean;
 };
 
-export function TodayFeed({ items, onBackToToday, backButtonRef }: TodayFeedProps) {
+export function TodayFeed({
+  items,
+  onBackToToday,
+  backButtonRef,
+  gestureHandlers,
+  gestureDisabled = false
+}: TodayFeedProps) {
   return (
-    <section className="sevenBamFeed" aria-labelledby="seven-bam-feed-title">
+    <section
+      id={FEED_SECTION_ID}
+      className={`sevenBamFeed${gestureDisabled ? " sevenBamFeed--gestureDisabled" : ""}`}
+      aria-labelledby="seven-bam-feed-title"
+      onPointerDown={gestureHandlers?.onPointerDown}
+      onPointerMove={gestureHandlers?.onPointerMove}
+      onPointerUp={gestureHandlers?.onPointerUp}
+      onPointerCancel={gestureHandlers?.onPointerCancel}
+    >
       <header className="sevenBamFeedHeader">
         <h1 id="seven-bam-feed-title" className="sevenBamFeedTitle">
           {TODAY_FEED_TITLE}
@@ -443,6 +469,8 @@ type ProfilePanelProps = PanelBackProps & {
   posts: Post[];
   unavailableNotice: string;
   onUnavailableAction: () => void;
+  gestureHandlers?: PanelGestureHandlers;
+  gestureDisabled?: boolean;
 };
 
 export function ProfilePanel({
@@ -451,10 +479,19 @@ export function ProfilePanel({
   unavailableNotice,
   onUnavailableAction,
   onBackToToday,
-  backButtonRef
+  backButtonRef,
+  gestureHandlers,
+  gestureDisabled = false
 }: ProfilePanelProps) {
   return (
-    <section className="sevenBamProfile" aria-labelledby="seven-bam-profile-title">
+    <section
+      className={`sevenBamProfile${gestureDisabled ? " sevenBamProfile--gestureDisabled" : ""}`}
+      aria-labelledby="seven-bam-profile-title"
+      onPointerDown={gestureHandlers?.onPointerDown}
+      onPointerMove={gestureHandlers?.onPointerMove}
+      onPointerUp={gestureHandlers?.onPointerUp}
+      onPointerCancel={gestureHandlers?.onPointerCancel}
+    >
       <header className="sevenBamPanelHeader">
         <h1 id="seven-bam-profile-title" className="sevenBamPanelTitle">
           {PROFILE_PANEL_TITLE}
@@ -538,6 +575,8 @@ type GroupsPanelProps = PanelBackProps & {
   switchNotice: string;
   onDemoGroupTap: () => void;
   onUnavailableAction: () => void;
+  gestureHandlers?: PanelGestureHandlers;
+  gestureDisabled?: boolean;
 };
 
 export function GroupsPanel({
@@ -547,12 +586,21 @@ export function GroupsPanel({
   onDemoGroupTap,
   onUnavailableAction,
   onBackToToday,
-  backButtonRef
+  backButtonRef,
+  gestureHandlers,
+  gestureDisabled = false
 }: GroupsPanelProps) {
   const demoGroups = LOCAL_DEMO_JOINED_GROUPS.filter((group) => !group.isCurrent);
 
   return (
-    <section className="sevenBamGroups" aria-labelledby="seven-bam-groups-title">
+    <section
+      className={`sevenBamGroups${gestureDisabled ? " sevenBamGroups--gestureDisabled" : ""}`}
+      aria-labelledby="seven-bam-groups-title"
+      onPointerDown={gestureHandlers?.onPointerDown}
+      onPointerMove={gestureHandlers?.onPointerMove}
+      onPointerUp={gestureHandlers?.onPointerUp}
+      onPointerCancel={gestureHandlers?.onPointerCancel}
+    >
       <header className="sevenBamPanelHeader">
         <h1 id="seven-bam-groups-title" className="sevenBamPanelTitle">
           {GROUPS_PANEL_TITLE}

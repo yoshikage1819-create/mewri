@@ -19,46 +19,65 @@
 ## 画面フロー
 
 ```text
-Today（初期）
+Horizontal: Profile ← Today → Groups
+Vertical（同一ページ内スクロール）:
+  Today セクション（100dvh 以上）
+  ↓ 通常スクロール
+  みんなの今日 Feed セクション（100dvh 以上）
+  ↓
+  今後の機能（折りたたみ: ZINE 開発用・安全注意）
+  ↓
+  フィードバック（LocalDemoFeedbackNote）
+
+Today 列の操作:
 ├─ 左スワイプ / アバタータップ → Profile
 ├─ 右スワイプ / グループ名タップ → Groups
-├─ 下スワイプ / みんなの今日タップ → Feed
-├─ カメラボタン → 写真source選択（bottom sheet）
+├─ ↓ みんなの今日 / みんなの今日を見る → Feed セクションへスクロール（画面切替ではない）
+├─ カメラボタン → 写真 source 選択（bottom sheet）
 └─ Photo Composer（preview + caption）
 
-Profile / Groups / Feed からは「今日のテーマへ戻る」で Today に戻る
+Profile: 右スワイプ / 戻るボタン → Today（スクロール位置を復元）
+Groups: 左スワイプ / 戻るボタン → Today（スクロール位置を復元）
+Feed 内: ↑ 今日のテーマへ戻る → Today セクションへスクロール
 ```
 
-ZINE 製本・プルーフ確認は `ZINE（開発用）` の折りたたみ内に残しています。
+ZINE 製本・プルーフ確認は `今後の機能` 折りたたみ内に移動しました。
 
 ## パネルナビゲーション（local demo）
 
-### スワイプ（Today のみ）
+### 水平スワイプ
 
-| 方向 | 行き先 |
-| --- | --- |
-| 左 | プロフィール |
-| 右 | グループ |
-| 下 | みんなの今日 |
+| パネル | 左 | 右 |
+| --- | --- | --- |
+| Today | プロフィール | グループ |
+| Profile | （無視） | Today へ戻る |
+| Groups | Today へ戻る | （無視） |
 
 - 最小移動距離: 72px
-- 水平スワイプは縦より 1.25 倍以上優先
+- 水平スワイプは縦より 1.25 倍以上優先（`absX > absY * 1.25`）
+- **下スワイプによる Feed 画面切替は廃止**。縦方向はブラウザの通常スクロールのみ
 - 画面左右 28px 以内から始まった水平スワイプは無視
 - `button` / `textarea` / `dialog` 上から始まった操作は無視
 - Composer / source sheet 表示中、切り替えアニメ中は無効
 - 専用ライブラリは使わず pointer events のみ
 - `touch-action: none` や global `preventDefault` は使わない
 
+### 垂直スクロール（Today 列）
+
+- `↓ みんなの今日` ヒントと `みんなの今日を見る` ボタンは `scrollIntoView` で Feed セクションへ移動
+- Feed の `↑ 今日のテーマへ戻る` は Today セクションへスクロール
+- `prefers-reduced-motion` 時は instant scroll
+
 ### タップ導線（Today）
 
 - アバター → プロフィール（`aria-label`: プロフィールを開く）
 - グループ名・メンバー → グループ（`aria-label`: グループを開く）
-- `みんなの今日` → フィード（`aria-label`: みんなの今日を見る）
+- `↓ みんなの今日` / `みんなの今日を見る` → Feed セクションへスクロール（`aria-label`: みんなの今日を見る）
 - カメラ → 既存の source sheet（変更なし）
 
 ### 初回ヒント
 
-- 文言: `左：プロフィール / 右：グループ / 下：みんなの今日`
+- 文言: `左：プロフィール / 右：グループ / 下にスクロール：みんなの今日`
 - 閉じると `localStorage` キー `7bam.local-demo.gesture-guide-dismissed` に記録
 
 ### Profile / Groups の local 制限
@@ -70,10 +89,12 @@ ZINE 製本・プルーフ確認は `ZINE（開発用）` の折りたたみ内�
 
 ### アニメーションとアクセシビリティ
 
-- パネル切替: 250–300ms（プロフィールは左から、グループは右から、フィードは下から）
+- 水平パネル切替: 250–300ms（プロフィールは左から、グループは右から）
+- Today / Feed / Profile / Groups は `min-height: 100dvh` + safe-area insets
 - `prefers-reduced-motion` 時はアニメーションなし
-- 非表示パネルは `hidden` + `inert` + `aria-hidden`
-- 画面遷移は `aria-live` で読み上げ
+- 非表示水平パネルは `hidden` + `inert` + `aria-hidden`
+- 水平パネル遷移と Feed スクロールは `aria-live` で読み上げ
+- Profile / Groups から Today に戻るとき、直前の縦スクロール位置を復元
 
 ### スマホ確認
 
@@ -84,9 +105,9 @@ cd C:\dev\mewri\ph-cursor\apps\web
 npm.cmd run dev -- --hostname 0.0.0.0
 ```
 
-同一 Wi‑Fi のスマホブラウザで `http://<PCのIP>:3000` を開いてスワイプを確認します。
+同一 Wi‑Fi のスマホブラウザで `http://<PCのIP>:3000` を開いて操作を確認します。
 
-pull-to-refresh（ブラウザの下に引っ張って更新）と下スワイプが競合する場合があります。競合時は `みんなの今日` ボタンか戻るボタンを使ってください。
+pull-to-refresh（ブラウザの下に引っ張って更新）と縦スクロールは共存します。Feed へは `↓ みんなの今日` ボタンか通常スクロールを使ってください。
 
 ## Today 画面
 
@@ -121,10 +142,11 @@ bottom sheet で次を表示します。
 
 ## Feed（みんなの今日）
 
+- Today 列内の独立セクション（`100dvh` 以上）。別 AppView ではない
 - 縦1列
 - 写真・ユーザー名・アイコン・短い caption
 - いいね・コメント数などは表示しない
-- 空状態と `今日のテーマへ戻る` ボタン
+- 空状態と `↑ 今日のテーマへ戻る` ボタン（Today セクションへスクロール）
 
 ## エラー状態
 
@@ -139,7 +161,7 @@ bottom sheet で次を表示します。
 - source sheet は `role="dialog"` + focus trap + Escape
 - 投稿結果は `aria-live`
 - reduced motion 対応
-- Feed / Today 間はボタンで移動
+- Feed / Today 間はボタンと通常スクロールで移動（画面切替なし）
 
 ## Mobile 確認
 
@@ -157,12 +179,12 @@ desktop では中央カラム（最大 560px 前後）に収めます。
 
 | Presentational | Local adapter |
 | --- | --- |
-| `TodayScreen` | `page.tsx` が state / service を保持 |
+| `TodayScreen` / `TodayFeed` | `page.tsx` が state / service を保持。Feed は Today 列のセクション |
 | `ProfilePanel` / `GroupsPanel` | fixture 値 + local state の UI のみ |
 | `GestureGuide` | `localStorage` で初回のみ |
 | `PhotoSourceSheet` | hidden file inputs を page が制御 |
 | `PhotoComposer` | `optimizeLocalImage` + `submitPost` |
-| `TodayFeed` | active theme の posts を整形 |
+| `TodayFeed` | active theme の posts を整形（Today 列内セクション） |
 
 ## 将来の staging adapter との境界
 
