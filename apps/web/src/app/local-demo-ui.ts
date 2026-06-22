@@ -60,13 +60,24 @@ export const PHOTO_COMPOSER_CANCEL_LABEL = "キャンセル";
 
 export const VIEW_FEED_LABEL = "みんなの今日を見る";
 
-export const BACK_TO_TODAY_LABEL = "今日のテーマへ戻る";
+export const SCROLL_TO_FEED_HINT = "↓ みんなの今日";
+
+export const BACK_TO_TODAY_LABEL = "↑ 今日のテーマへ戻る";
 
 export const POST_CAMERA_BUTTON_LABEL = "写真を投稿する";
 
-export type AppView = "today" | "profile" | "groups" | "feed";
+export const TODAY_SECTION_ID = "seven-bam-today-section";
 
-export type SwipeDirection = "left" | "right" | "down" | null;
+export const FEED_SECTION_ID = "seven-bam-feed-section";
+
+export const FUTURE_FEATURES_SECTION_LABEL = "今後の機能";
+
+export type HorizontalPanel = "today" | "profile" | "groups";
+
+/** @deprecated use HorizontalPanel */
+export type AppView = HorizontalPanel;
+
+export type SwipeDirection = "left" | "right" | null;
 
 export const SWIPE_MIN_DISTANCE_PX = 72;
 
@@ -78,7 +89,7 @@ export const PANEL_TRANSITION_MS = 300;
 
 export const GESTURE_GUIDE_DISMISSED_KEY = "7bam.local-demo.gesture-guide-dismissed";
 
-export const GESTURE_GUIDE_TEXT = "左：プロフィール / 右：グループ / 下：みんなの今日";
+export const GESTURE_GUIDE_TEXT = "左：プロフィール / 右：グループ / 下にスクロール：みんなの今日";
 
 export const OPEN_PROFILE_LABEL = "プロフィールを開く";
 
@@ -147,24 +158,63 @@ export type SwipeGestureOptions = {
   nearHorizontalEdge?: boolean;
 };
 
-export function formatViewAnnouncement(view: AppView): string {
-  switch (view) {
+export function formatPanelAnnouncement(panel: HorizontalPanel): string {
+  switch (panel) {
     case "profile":
       return "プロフィールを表示しています";
     case "groups":
       return "グループを表示しています";
-    case "feed":
-      return "みんなの今日を表示しています";
     default:
       return "今日のテーマを表示しています";
   }
 }
 
-export function swipeDirectionToView(direction: SwipeDirection): AppView | null {
+/** @deprecated use formatPanelAnnouncement */
+export function formatViewAnnouncement(view: HorizontalPanel): string {
+  return formatPanelAnnouncement(view);
+}
+
+export function formatFeedScrollAnnouncement(): string {
+  return "みんなの今日へ移動しました";
+}
+
+export function formatTodayScrollAnnouncement(): string {
+  return "今日のテーマへ戻りました";
+}
+
+export function swipeDirectionOnTodayPanel(direction: SwipeDirection): HorizontalPanel | null {
   if (direction === "left") return "profile";
   if (direction === "right") return "groups";
-  if (direction === "down") return "feed";
   return null;
+}
+
+export function swipeDirectionOnProfilePanel(direction: SwipeDirection): HorizontalPanel | null {
+  if (direction === "right") return "today";
+  return null;
+}
+
+export function swipeDirectionOnGroupsPanel(direction: SwipeDirection): HorizontalPanel | null {
+  if (direction === "left") return "today";
+  return null;
+}
+
+export function resolveSwipeTargetPanel(
+  panel: HorizontalPanel,
+  direction: SwipeDirection
+): HorizontalPanel | null {
+  switch (panel) {
+    case "profile":
+      return swipeDirectionOnProfilePanel(direction);
+    case "groups":
+      return swipeDirectionOnGroupsPanel(direction);
+    default:
+      return swipeDirectionOnTodayPanel(direction);
+  }
+}
+
+/** @deprecated use resolveSwipeTargetPanel */
+export function swipeDirectionToView(direction: SwipeDirection): HorizontalPanel | null {
+  return swipeDirectionOnTodayPanel(direction);
 }
 
 export function isGestureGuideDismissed(): boolean {
@@ -196,14 +246,6 @@ export function detectSwipeDirection(sample: SwipePointerSample): SwipeDirection
   const absY = Math.abs(deltaY);
 
   if (absX < SWIPE_MIN_DISTANCE_PX && absY < SWIPE_MIN_DISTANCE_PX) return null;
-
-  if (
-    deltaY > 0 &&
-    absY >= SWIPE_MIN_DISTANCE_PX &&
-    absY > absX * SWIPE_HORIZONTAL_DOMINANCE_RATIO
-  ) {
-    return "down";
-  }
 
   if (absX >= SWIPE_MIN_DISTANCE_PX && absX > absY * SWIPE_HORIZONTAL_DOMINANCE_RATIO) {
     if (deltaX < 0) return "left";

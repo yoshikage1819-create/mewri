@@ -151,8 +151,25 @@ a {
 }
 
 .sevenBamViewPort {
-  min-height: calc(100dvh - 120px);
   position: relative;
+}
+
+.sevenBamViewPort--profile .sevenBamViewPanel--profile,
+.sevenBamViewPort--groups .sevenBamViewPanel--groups {
+  inset: 0;
+  position: fixed;
+  z-index: 20;
+}
+
+.sevenBamViewPort--profile .sevenBamViewPanel--profile,
+.sevenBamViewPort--groups .sevenBamViewPanel--groups {
+  background: var(--7bam-page-bg, #f6f1e8);
+  overflow-y: auto;
+  padding:
+    max(12px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right))
+    max(24px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
 }
 
 .sevenBamViewPort--animating {
@@ -171,11 +188,7 @@ a {
   animation-name: sevenBamPanelFromRight;
 }
 
-.sevenBamViewPort--feed .sevenBamViewPanel--feed {
-  animation-name: sevenBamPanelFromBottom;
-}
-
-.sevenBamViewPort--today .sevenBamViewPanel:not(.sevenBamViewPanel--profile):not(.sevenBamViewPanel--groups):not(.sevenBamViewPanel--feed) {
+.sevenBamViewPort--today .sevenBamViewPanel--todayColumn {
   animation-name: sevenBamPanelFadeIn;
 }
 
@@ -201,17 +214,6 @@ a {
   }
 }
 
-@keyframes sevenBamPanelFromBottom {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @keyframes sevenBamPanelFadeIn {
   from {
     opacity: 0;
@@ -227,14 +229,25 @@ a {
   }
 }
 
+.sevenBamTodayColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
 .sevenBamToday {
   background: var(--7bam-yellow);
   border: 1px solid var(--7bam-rule);
   display: flex;
   flex-direction: column;
   gap: 20px;
-  min-height: calc(100dvh - 140px);
-  padding: 20px 18px 24px;
+  min-height: 100dvh;
+  padding:
+    max(20px, env(safe-area-inset-top))
+    max(18px, env(safe-area-inset-right))
+    max(24px, env(safe-area-inset-bottom))
+    max(18px, env(safe-area-inset-left));
+  scroll-margin-top: 12px;
 }
 
 .sevenBamTodayHeader {
@@ -354,8 +367,12 @@ a {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  min-height: calc(100dvh - 140px);
-  padding: 20px 18px 24px;
+  min-height: 100dvh;
+  padding:
+    max(20px, env(safe-area-inset-top))
+    max(18px, env(safe-area-inset-right))
+    max(24px, env(safe-area-inset-bottom))
+    max(18px, env(safe-area-inset-left));
 }
 
 .sevenBamProfileHero {
@@ -575,6 +592,7 @@ a {
   font-weight: 700;
 }
 
+.sevenBamScrollHint,
 .sevenBamFeedLink,
 .sevenBamBackButton {
   background: transparent;
@@ -585,6 +603,10 @@ a {
   font-weight: 600;
   min-height: 44px;
   padding: 10px 18px;
+}
+
+.sevenBamScrollHint {
+  font-size: 0.9rem;
 }
 
 .sevenBamLocalNotice {
@@ -773,7 +795,17 @@ a {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  min-height: calc(100dvh - 140px);
+  min-height: 100dvh;
+  padding:
+    max(20px, env(safe-area-inset-top))
+    max(18px, env(safe-area-inset-right))
+    max(24px, env(safe-area-inset-bottom))
+    max(18px, env(safe-area-inset-left));
+  scroll-margin-top: 12px;
+}
+
+.sevenBamFeedHeader {
+  padding-top: 4px;
 }
 
 .sevenBamFeedTitle {
@@ -866,6 +898,32 @@ a {
   pointer-events: none;
   position: absolute;
   width: 1px;
+}
+
+.sevenBamFutureFeatures {
+  border-top: 1px dashed var(--7bam-rule);
+  color: var(--7bam-ink-soft);
+  font-size: 0.85rem;
+  margin-top: 8px;
+}
+
+.sevenBamFutureFeatures summary {
+  cursor: pointer;
+  font-weight: 600;
+  list-style: none;
+  min-height: 44px;
+  padding: 14px 18px;
+}
+
+.sevenBamFutureFeatures summary::-webkit-details-marker {
+  display: none;
+}
+
+.sevenBamFutureFeaturesBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 14px 20px;
 }
 
 .sevenBamFooter {
