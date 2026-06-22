@@ -19,13 +19,74 @@
 ## 画面フロー
 
 ```text
-Today
-├─ 写真source選択（bottom sheet）
-├─ Photo Composer（preview + caption）
-└─ みんなの今日（縦1列フィード）
+Today（初期）
+├─ 左スワイプ / アバタータップ → Profile
+├─ 右スワイプ / グループ名タップ → Groups
+├─ 下スワイプ / みんなの今日タップ → Feed
+├─ カメラボタン → 写真source選択（bottom sheet）
+└─ Photo Composer（preview + caption）
+
+Profile / Groups / Feed からは「今日のテーマへ戻る」で Today に戻る
 ```
 
 ZINE 製本・プルーフ確認は `ZINE（開発用）` の折りたたみ内に残しています。
+
+## パネルナビゲーション（local demo）
+
+### スワイプ（Today のみ）
+
+| 方向 | 行き先 |
+| --- | --- |
+| 左 | プロフィール |
+| 右 | グループ |
+| 下 | みんなの今日 |
+
+- 最小移動距離: 72px
+- 水平スワイプは縦より 1.25 倍以上優先
+- 画面左右 28px 以内から始まった水平スワイプは無視
+- `button` / `textarea` / `dialog` 上から始まった操作は無視
+- Composer / source sheet 表示中、切り替えアニメ中は無効
+- 専用ライブラリは使わず pointer events のみ
+- `touch-action: none` や global `preventDefault` は使わない
+
+### タップ導線（Today）
+
+- アバター → プロフィール（`aria-label`: プロフィールを開く）
+- グループ名・メンバー → グループ（`aria-label`: グループを開く）
+- `みんなの今日` → フィード（`aria-label`: みんなの今日を見る）
+- カメラ → 既存の source sheet（変更なし）
+
+### 初回ヒント
+
+- 文言: `左：プロフィール / 右：グループ / 下：みんなの今日`
+- 閉じると `localStorage` キー `7bam.local-demo.gesture-guide-dismissed` に記録
+
+### Profile / Groups の local 制限
+
+- 編集・設定・グループ作成・招待は `この機能はlocal demoでは利用できません。`
+- デモ用参加グループのタップは `グループ切り替えは、このlocal demoでは利用できません。`
+- フォロー数は `LOCAL_DEMO_PROFILE_STATS` 固定値（UI のみ）
+- 参加グループ一覧は `LOCAL_DEMO_JOINED_GROUPS` 固定値（UI のみ）
+
+### アニメーションとアクセシビリティ
+
+- パネル切替: 250–300ms（プロフィールは左から、グループは右から、フィードは下から）
+- `prefers-reduced-motion` 時はアニメーションなし
+- 非表示パネルは `hidden` + `inert` + `aria-hidden`
+- 画面遷移は `aria-live` で読み上げ
+
+### スマホ確認
+
+開発サーバーを LAN 公開する例:
+
+```powershell
+cd C:\dev\mewri\ph-cursor\apps\web
+npm.cmd run dev -- --hostname 0.0.0.0
+```
+
+同一 Wi‑Fi のスマホブラウザで `http://<PCのIP>:3000` を開いてスワイプを確認します。
+
+pull-to-refresh（ブラウザの下に引っ張って更新）と下スワイプが競合する場合があります。競合時は `みんなの今日` ボタンか戻るボタンを使ってください。
 
 ## Today 画面
 
@@ -97,6 +158,8 @@ desktop では中央カラム（最大 560px 前後）に収めます。
 | Presentational | Local adapter |
 | --- | --- |
 | `TodayScreen` | `page.tsx` が state / service を保持 |
+| `ProfilePanel` / `GroupsPanel` | fixture 値 + local state の UI のみ |
+| `GestureGuide` | `localStorage` で初回のみ |
 | `PhotoSourceSheet` | hidden file inputs を page が制御 |
 | `PhotoComposer` | `optimizeLocalImage` + `submitPost` |
 | `TodayFeed` | active theme の posts を整形 |

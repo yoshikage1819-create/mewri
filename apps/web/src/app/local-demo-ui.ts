@@ -64,6 +64,164 @@ export const BACK_TO_TODAY_LABEL = "今日のテーマへ戻る";
 
 export const POST_CAMERA_BUTTON_LABEL = "写真を投稿する";
 
+export type AppView = "today" | "profile" | "groups" | "feed";
+
+export type SwipeDirection = "left" | "right" | "down" | null;
+
+export const SWIPE_MIN_DISTANCE_PX = 72;
+
+export const SWIPE_EDGE_MARGIN_PX = 28;
+
+export const SWIPE_HORIZONTAL_DOMINANCE_RATIO = 1.25;
+
+export const PANEL_TRANSITION_MS = 300;
+
+export const GESTURE_GUIDE_DISMISSED_KEY = "7bam.local-demo.gesture-guide-dismissed";
+
+export const GESTURE_GUIDE_TEXT = "左：プロフィール / 右：グループ / 下：みんなの今日";
+
+export const OPEN_PROFILE_LABEL = "プロフィールを開く";
+
+export const OPEN_GROUPS_LABEL = "グループを開く";
+
+export const LOCAL_DEMO_UNAVAILABLE_FEATURE_NOTICE = "この機能はlocal demoでは利用できません。";
+
+export const LOCAL_DEMO_GROUP_SWITCH_UNAVAILABLE =
+  "グループ切り替えは、このlocal demoでは利用できません。";
+
+export const PROFILE_PANEL_TITLE = "プロフィール";
+
+export const GROUPS_PANEL_TITLE = "グループ";
+
+export const PROFILE_EDIT_LABEL = "プロフィールを編集";
+
+export const PROFILE_SETTINGS_LABEL = "設定";
+
+export const GROUPS_CREATE_LABEL = "グループを作成";
+
+export const GROUPS_INVITE_LABEL = "メンバーを招待";
+
+export const PROFILE_POSTS_TITLE = "自分の投稿";
+
+export const PROFILE_FOLLOWING_LABEL = "フォロー中";
+
+export const PROFILE_FOLLOWERS_LABEL = "フォロワー";
+
+export const GROUPS_CURRENT_LABEL = "いまのグループ";
+
+export const GROUPS_JOINED_LABEL = "参加中のグループ（デモ表示）";
+
+export type LocalDemoProfileStats = {
+  following: number;
+  followers: number;
+};
+
+export const LOCAL_DEMO_PROFILE_STATS: LocalDemoProfileStats = {
+  following: 12,
+  followers: 8
+};
+
+export type LocalDemoJoinedGroup = {
+  id: string;
+  name: string;
+  memberCount: number;
+  isCurrent?: boolean;
+};
+
+export const LOCAL_DEMO_JOINED_GROUPS: readonly LocalDemoJoinedGroup[] = [
+  { id: "demo-park-zine", name: "公園ZINE", memberCount: 4, isCurrent: true },
+  { id: "demo-morning-cafe", name: "朝カフェ部", memberCount: 6 },
+  { id: "demo-walk-notes", name: "散歩ノート", memberCount: 3 }
+] as const;
+
+export type SwipePointerSample = {
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  viewportWidth: number;
+};
+
+export type SwipeGestureOptions = {
+  blockedStartTarget?: boolean;
+  nearHorizontalEdge?: boolean;
+};
+
+export function formatViewAnnouncement(view: AppView): string {
+  switch (view) {
+    case "profile":
+      return "プロフィールを表示しています";
+    case "groups":
+      return "グループを表示しています";
+    case "feed":
+      return "みんなの今日を表示しています";
+    default:
+      return "今日のテーマを表示しています";
+  }
+}
+
+export function swipeDirectionToView(direction: SwipeDirection): AppView | null {
+  if (direction === "left") return "profile";
+  if (direction === "right") return "groups";
+  if (direction === "down") return "feed";
+  return null;
+}
+
+export function isGestureGuideDismissed(): boolean {
+  if (typeof window === "undefined") return true;
+  return window.localStorage.getItem(GESTURE_GUIDE_DISMISSED_KEY) === "1";
+}
+
+export function dismissGestureGuide(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(GESTURE_GUIDE_DISMISSED_KEY, "1");
+}
+
+export function isSwipeBlockedStartTarget(target: EventTarget | null): boolean {
+  if (!target || typeof Element === "undefined" || !(target instanceof Element)) return false;
+  return Boolean(
+    target.closest('button, a, input, select, textarea, [role="dialog"], form, label')
+  );
+}
+
+export function isSwipeStartNearHorizontalEdge(startX: number, viewportWidth: number): boolean {
+  if (viewportWidth <= 0) return false;
+  return startX <= SWIPE_EDGE_MARGIN_PX || startX >= viewportWidth - SWIPE_EDGE_MARGIN_PX;
+}
+
+export function detectSwipeDirection(sample: SwipePointerSample): SwipeDirection {
+  const deltaX = sample.endX - sample.startX;
+  const deltaY = sample.endY - sample.startY;
+  const absX = Math.abs(deltaX);
+  const absY = Math.abs(deltaY);
+
+  if (absX < SWIPE_MIN_DISTANCE_PX && absY < SWIPE_MIN_DISTANCE_PX) return null;
+
+  if (
+    deltaY > 0 &&
+    absY >= SWIPE_MIN_DISTANCE_PX &&
+    absY > absX * SWIPE_HORIZONTAL_DOMINANCE_RATIO
+  ) {
+    return "down";
+  }
+
+  if (absX >= SWIPE_MIN_DISTANCE_PX && absX > absY * SWIPE_HORIZONTAL_DOMINANCE_RATIO) {
+    if (deltaX < 0) return "left";
+    if (deltaX > 0) return "right";
+  }
+
+  return null;
+}
+
+export function resolveSwipeGesture(sample: SwipePointerSample, options: SwipeGestureOptions): SwipeDirection {
+  if (options.blockedStartTarget || options.nearHorizontalEdge) return null;
+  return detectSwipeDirection(sample);
+}
+
+export function resolvePanelTransitionMs(prefersReduced: boolean): number {
+  return prefersReduced ? 0 : PANEL_TRANSITION_MS;
+}
+
 export const FORBIDDEN_SHARED_COPY_PATTERNS = [
   "グループに投稿",
   "友達に共有",

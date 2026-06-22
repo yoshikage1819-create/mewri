@@ -35,6 +35,8 @@ html {
   }
 
   .sevenBamView,
+  .sevenBamViewPort,
+  .sevenBamViewPanel,
   .sevenBamSheet,
   .sevenBamCameraButton {
     transition: none !important;
@@ -148,6 +150,83 @@ a {
   transition: opacity var(--7bam-transition);
 }
 
+.sevenBamViewPort {
+  min-height: calc(100dvh - 120px);
+  position: relative;
+}
+
+.sevenBamViewPort--animating {
+  pointer-events: none;
+}
+
+.sevenBamViewPanel {
+  animation: sevenBamPanelIn var(--7bam-panel-transition, 300ms) ease;
+}
+
+.sevenBamViewPort--profile .sevenBamViewPanel--profile {
+  animation-name: sevenBamPanelFromLeft;
+}
+
+.sevenBamViewPort--groups .sevenBamViewPanel--groups {
+  animation-name: sevenBamPanelFromRight;
+}
+
+.sevenBamViewPort--feed .sevenBamViewPanel--feed {
+  animation-name: sevenBamPanelFromBottom;
+}
+
+.sevenBamViewPort--today .sevenBamViewPanel:not(.sevenBamViewPanel--profile):not(.sevenBamViewPanel--groups):not(.sevenBamViewPanel--feed) {
+  animation-name: sevenBamPanelFadeIn;
+}
+
+@keyframes sevenBamPanelFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes sevenBamPanelFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes sevenBamPanelFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sevenBamPanelFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sevenBamViewPanel {
+    animation: none !important;
+  }
+}
+
 .sevenBamToday {
   background: var(--7bam-yellow);
   border: 1px solid var(--7bam-rule);
@@ -163,6 +242,224 @@ a {
   display: flex;
   gap: 12px;
   justify-content: space-between;
+}
+
+.sevenBamProfileAvatarButton,
+.sevenBamGroupOpenButton {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0;
+  text-align: left;
+}
+
+.sevenBamGroupOpenButton {
+  align-items: center;
+  display: flex;
+  flex: 1;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.sevenBamProfileAvatar,
+.sevenBamProfileHeroAvatar {
+  align-items: center;
+  background: var(--7bam-white);
+  border: 1px solid var(--7bam-rule);
+  border-radius: 50%;
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 700;
+  height: 44px;
+  justify-content: center;
+  overflow: hidden;
+  width: 44px;
+}
+
+.sevenBamProfileAvatar img,
+.sevenBamProfileHeroAvatar img {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.sevenBamGestureGuide {
+  align-items: center;
+  background: rgba(17, 17, 17, 0.88);
+  border-radius: 12px;
+  color: var(--7bam-white);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+}
+
+.sevenBamGestureGuideText {
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+.sevenBamGestureGuideDismiss {
+  background: var(--7bam-white);
+  border: 0;
+  border-radius: 999px;
+  color: var(--7bam-ink);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+  min-height: 36px;
+  padding: 6px 12px;
+}
+
+.sevenBamPanelHeader {
+  margin-bottom: 12px;
+}
+
+.sevenBamPanelTitle,
+.sevenBamSectionTitle {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 500;
+  margin: 0 0 8px;
+}
+
+.sevenBamSectionTitle {
+  font-size: 0.95rem;
+}
+
+.sevenBamPanelNotice {
+  background: var(--7bam-yellow-soft);
+  border: 1px solid var(--7bam-rule);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin: 0;
+  padding: 10px 12px;
+}
+
+.sevenBamPanelEmpty {
+  color: var(--7bam-ink-soft);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.sevenBamProfile,
+.sevenBamGroups {
+  background: var(--7bam-white);
+  border: 1px solid var(--7bam-rule);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: calc(100dvh - 140px);
+  padding: 20px 18px 24px;
+}
+
+.sevenBamProfileHero {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+}
+
+.sevenBamProfileHeroAvatar {
+  height: 72px;
+  width: 72px;
+}
+
+.sevenBamProfileName {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.sevenBamProfileHandle {
+  color: var(--7bam-ink-soft);
+  font-size: 0.9rem;
+  margin: 2px 0 0;
+}
+
+.sevenBamProfileStats {
+  display: flex;
+  gap: 20px;
+  margin: 0;
+}
+
+.sevenBamProfileStats div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sevenBamProfileStats dt {
+  color: var(--7bam-ink-soft);
+  font-size: 0.78rem;
+}
+
+.sevenBamProfileStats dd {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.sevenBamProfileActions,
+.sevenBamGroupsActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sevenBamProfilePostList,
+.sevenBamGroupsList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sevenBamProfilePostPhoto img {
+  border-radius: 8px;
+  display: block;
+  max-height: 220px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.sevenBamProfilePostCaption {
+  font-size: 0.88rem;
+  margin: 6px 0 0;
+}
+
+.sevenBamGroupsCard {
+  align-items: center;
+  background: var(--7bam-feed-bg);
+  border: 1px solid var(--7bam-rule);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 12px 14px;
+  text-align: left;
+  width: 100%;
+}
+
+.sevenBamGroupsCard--current {
+  cursor: default;
+}
+
+.sevenBamGroupsName {
+  font-weight: 700;
+  margin: 0;
+}
+
+.sevenBamGroupsMeta {
+  color: var(--7bam-ink-soft);
+  font-size: 0.82rem;
+  margin: 0;
 }
 
 .sevenBamTodayBrandRow {

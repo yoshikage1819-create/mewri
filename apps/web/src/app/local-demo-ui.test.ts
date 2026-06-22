@@ -8,6 +8,7 @@ import {
   clampCaption,
   containsForbiddenSharedCopy,
   createSampleImageDataUrl,
+  detectSwipeDirection,
   escapeSvgText,
   formatEmptyPostListHint,
   formatEmptyPostListMessage,
@@ -18,6 +19,7 @@ import {
   formatRemainingToday,
   formatTodayThemeDayLabel,
   formatTrustedGroupCue,
+  formatViewAnnouncement,
   formatZineGenerateBlockedHint,
   formatZineRemainingHeadline,
   formatFeedbackCharCount,
@@ -28,9 +30,13 @@ import {
   formatThemePostCount,
   formatVolStamp,
   FORBIDDEN_SHARED_COPY_PATTERNS,
+  GESTURE_GUIDE_DISMISSED_KEY,
+  GESTURE_GUIDE_TEXT,
   getMemberInitials,
   isAllowedLocalImageMime,
   isCaptionWithinLimit,
+  isSwipeBlockedStartTarget,
+  isSwipeStartNearHorizontalEdge,
   LOCAL_DEMO_BANNER_BODY,
   LOCAL_DEMO_BANNER_TITLE,
   LOCAL_DEMO_CAMERA_FAILED_MESSAGE,
@@ -40,17 +46,21 @@ import {
   LOCAL_DEMO_FEEDBACK_INTRO,
   LOCAL_DEMO_FEEDBACK_MAX_CHARS,
   LOCAL_DEMO_FEEDBACK_TEXTAREA_ID,
+  LOCAL_DEMO_GROUP_SWITCH_UNAVAILABLE,
   LOCAL_DEMO_IMAGE_TOO_LARGE_MESSAGE,
   LOCAL_DEMO_IMAGE_UNSUPPORTED_MESSAGE,
+  LOCAL_DEMO_JOINED_GROUPS,
   LOCAL_DEMO_MAX_IMAGE_BYTES,
   LOCAL_DEMO_NOTICE_BODY,
   LOCAL_DEMO_NOTICE_TITLE,
   LOCAL_DEMO_POST_SUCCESS_MESSAGE,
+  LOCAL_DEMO_PROFILE_STATS,
   LOCAL_DEMO_SAFETY_PANEL_ID,
   LOCAL_DEMO_SAFETY_POINTS,
   LOCAL_DEMO_SAFETY_SUMMARY,
   LOCAL_DEMO_SAFETY_SUMMARY_ID,
   LOCAL_DEMO_RESET_CONFIRM_MESSAGE,
+  LOCAL_DEMO_UNAVAILABLE_FEATURE_NOTICE,
   PHOTO_COMPOSER_RESELECT_LIBRARY_LABEL,
   PHOTO_COMPOSER_RETAKE_CAMERA_LABEL,
   PHOTO_COMPOSER_SUBMIT_LABEL,
@@ -59,9 +69,12 @@ import {
   PHOTO_SOURCE_LIBRARY_LABEL,
   PHOTO_SOURCE_SHEET_TITLE,
   resolveScrollBehavior,
+  resolveSwipeGesture,
   revokeObjectUrl,
   SEVEN_BAM_BRAND,
   SEVEN_BAM_CAPTION_MAX_CHARS,
+  SWIPE_MIN_DISTANCE_PX,
+  swipeDirectionToView,
   TODAY_FEED_EMPTY_HINT,
   TODAY_FEED_EMPTY_TITLE,
   TODAY_FEED_TITLE,
@@ -363,6 +376,117 @@ describe("revokeObjectUrl", () => {
   it("ignores non-blob urls", () => {
     expect(() => revokeObjectUrl("data:image/png;base64,abc")).not.toThrow();
     expect(() => revokeObjectUrl(null)).not.toThrow();
+  });
+});
+
+describe("panel navigation helpers", () => {
+  it("maps swipe directions to views", () => {
+    expect(swipeDirectionToView("left")).toBe("profile");
+    expect(swipeDirectionToView("right")).toBe("groups");
+    expect(swipeDirectionToView("down")).toBe("feed");
+    expect(swipeDirectionToView(null)).toBeNull();
+  });
+
+  it("announces view changes for screen readers", () => {
+    expect(formatViewAnnouncement("profile")).toContain("プロフィール");
+    expect(formatViewAnnouncement("groups")).toContain("グループ");
+    expect(formatViewAnnouncement("feed")).toContain("みんなの今日");
+    expect(formatViewAnnouncement("today")).toContain("今日のテーマ");
+  });
+});
+
+describe("swipe detection", () => {
+  const base = {
+    startX: 200,
+    startY: 300,
+    viewportWidth: 390
+  };
+
+  it("detects left swipes with enough horizontal distance", () => {
+    expect(
+      detectSwipeDirection({
+        ...base,
+        endX: base.startX - SWIPE_MIN_DISTANCE_PX - 8,
+        endY: base.startY + 4
+      })
+    ).toBe("left");
+  });
+
+  it("detects right and down swipes", () => {
+    expect(
+      detectSwipeDirection({
+        ...base,
+        endX: base.startX + SWIPE_MIN_DISTANCE_PX + 8,
+        endY: base.startY + 2
+      })
+    ).toBe("right");
+    expect(
+      detectSwipeDirection({
+        ...base,
+        endX: base.startX + 4,
+        endY: base.startY + SWIPE_MIN_DISTANCE_PX + 12
+      })
+    ).toBe("down");
+  });
+
+  it("ignores small, diagonal, and upward moves", () => {
+    expect(
+      detectSwipeDirection({
+        ...base,
+        endX: base.startX - 20,
+        endY: base.startY - 20
+      })
+    ).toBeNull();
+    expect(
+      detectSwipeDirection({
+        ...base,
+        endX: base.startX - 40,
+        endY: base.startY - 40
+      })
+    ).toBeNull();
+    expect(
+      detectSwipeDirection({
+        ...base,
+        endX: base.startX + 10,
+        endY: base.startY + 10
+      })
+    ).toBeNull();
+  });
+
+  it("ignores swipes that start near horizontal edges", () => {
+    expect(isSwipeStartNearHorizontalEdge(20, 390)).toBe(true);
+    expect(isSwipeStartNearHorizontalEdge(370, 390)).toBe(true);
+    expect(isSwipeStartNearHorizontalEdge(100, 390)).toBe(false);
+    expect(isSwipeBlockedStartTarget(null)).toBe(false);
+
+    expect(
+      resolveSwipeGesture(
+        {
+          ...base,
+          endX: base.startX - 90,
+          endY: base.startY
+        },
+        { nearHorizontalEdge: true }
+      )
+    ).toBeNull();
+  });
+});
+
+describe("profile and groups fixtures", () => {
+  it("exposes local-only profile stats", () => {
+    expect(LOCAL_DEMO_PROFILE_STATS.following).toBeGreaterThan(0);
+    expect(LOCAL_DEMO_PROFILE_STATS.followers).toBeGreaterThan(0);
+  });
+
+  it("lists demo joined groups without implying real switching", () => {
+    expect(LOCAL_DEMO_JOINED_GROUPS.length).toBeGreaterThan(1);
+    expect(LOCAL_DEMO_GROUP_SWITCH_UNAVAILABLE).toContain("local demo");
+    expect(LOCAL_DEMO_UNAVAILABLE_FEATURE_NOTICE).toContain("local demo");
+  });
+
+  it("stores gesture guide dismissal in a dedicated key", () => {
+    expect(GESTURE_GUIDE_DISMISSED_KEY).toBe("7bam.local-demo.gesture-guide-dismissed");
+    expect(GESTURE_GUIDE_TEXT).toContain("プロフィール");
   });
 });
 
