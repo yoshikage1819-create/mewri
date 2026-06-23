@@ -176,10 +176,14 @@ a {
 
 .sevenBamBrand,
 .sevenBamBrandCompact {
-  font-size: 1rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
+  display: block;
+  height: auto;
   margin: 0;
+  width: clamp(4.25rem, 17vw, 6rem);
+}
+
+.sevenBamBrandCompact {
+  width: clamp(3.5rem, 14vw, 4.75rem);
 }
 
 .sevenBamTopTools {

@@ -44,7 +44,6 @@ import {
   PROFILE_POSTS_TITLE,
   PROFILE_SETTINGS_LABEL,
   SCROLL_TO_FEED_HINT,
-  SEVEN_BAM_BRAND,
   SEVEN_BAM_CAPTION_MAX_CHARS,
   TODAY_FEED_EMPTY_HINT,
   TODAY_FEED_EMPTY_TITLE,
@@ -55,6 +54,7 @@ import {
   VIEW_FEED_LABEL,
   formatRemainingToday
 } from "./local-demo-ui";
+import { SevenBamLogo } from "./seven-bam-logo";
 
 export type TodayFeedItem = {
   post: Post;
@@ -149,7 +149,7 @@ export function TodayScreen({
         </button>
         <button type="button" className="sevenBamGroupOpenButton" aria-label={OPEN_GROUPS_LABEL} onClick={onOpenGroups}>
           <div className="sevenBamTodayBrandRow">
-            <p className="sevenBamBrand">{SEVEN_BAM_BRAND}</p>
+            <SevenBamLogo className="sevenBamBrand" />
             <p className="sevenBamGroupName">{groupName}</p>
           </div>
           <MemberAvatars members={members} />
@@ -395,7 +395,7 @@ type FeedPanelTopBarProps = {
 export function FeedPanelTopBar({ onReset, onAddSamplePosts }: FeedPanelTopBarProps) {
   return (
     <header className="sevenBamFeedTopBar" role="banner">
-      <span className="sevenBamBrandCompact">{SEVEN_BAM_BRAND}</span>
+      <SevenBamLogo className="sevenBamBrandCompact" />
       <div className="sevenBamTopTools">
         {onAddSamplePosts ? (
           <button
